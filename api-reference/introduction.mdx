@@ -1,33 +1,179 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: 'Monkei Gateway API v1'
+description: 'API principal para integração com pagamentos e transações cripto'
 ---
 
 <Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
+  Esta é a documentação da API v1 do Monkei Gateway. Para começar, você precisará de uma chave de API válida.
 </Note>
 
-## Welcome
+## Bem-vindo à API Monkei Gateway v1
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
+A API v1 do Monkei Gateway permite que você integre pagamentos PIX, transações USDT, remessas, saques e cobranças em sua aplicação. Nossa API é RESTful e retorna respostas em JSON.
 
 <Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
+  title="OpenAPI Specification"
+  icon="code"
+  href="https://github.com/monkei/gateway/blob/main/docs/openapi.json"
 >
-  View the OpenAPI specification file
+  Baixar especificação OpenAPI completa
 </Card>
 
-## Authentication
+## Endpoints Disponíveis
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+### 💳 Transações
+
+<CardGroup cols={2}>
+  <Card title="Pagamentos" icon="credit-card">
+    - Criar pagamentos
+    - Consultar status
+    - Suporte a PIX e USDT
+  </Card>
+  <Card title="Remessas" icon="arrow-right-arrow-left">
+    - Enviar PIX
+    - Transferir USDT
+    - Consultar status
+  </Card>
+  <Card title="Saques" icon="arrow-up-from-bracket">
+    - Saques em BRL
+    - Saques em USDT
+    - Múltiplas redes
+  </Card>
+  <Card title="QR Codes" icon="qrcode">
+    - PIX QR Code
+    - USDT QR Code
+    - Expiração configurável
+  </Card>
+</CardGroup>
+
+### 📋 Billing
+
+<CardGroup cols={2}>
+  <Card title="Cobranças" icon="receipt">
+    - Criar cobranças
+    - Listar cobranças
+    - Cancelar cobranças
+  </Card>
+  <Card title="Produtos" icon="box">
+    - Múltiplos produtos
+    - Preços personalizados
+    - Quantidades variáveis
+  </Card>
+</CardGroup>
+
+## Autenticação
+
+Todos os endpoints da API v1 requerem autenticação via Bearer Token:
+
+```bash
+curl -H "Authorization: Bearer YOUR_API_KEY" \
+     https://api.monkei.com/api/v1/transactions/payments
+```
+
+### Obtendo uma API Key
+
+<Steps>
+  <Step title="Acesse o Dashboard">
+    Faça login em [dashboard.monkei.com](https://dashboard.monkei.com)
+  </Step>
+  <Step title="Vá para API Keys">
+    Navegue para **Configurações > API Keys**
+  </Step>
+  <Step title="Crie uma nova chave">
+    Clique em **"Nova API Key"** e escolha o ambiente
+  </Step>
+  <Step title="Copie a chave">
+    **Importante**: A chave só é exibida uma vez!
+  </Step>
+</Steps>
+
+## Base URLs
+
+<CardGroup cols={2}>
+  <Card title="Produção" icon="server">
+    `https://api.monkei.com`
+  </Card>
+  <Card title="Staging" icon="flask">
+    `https://staging-api.monkei.com`
+  </Card>
+</CardGroup>
+
+## Rate Limits
+
+Nossa API implementa rate limiting para garantir estabilidade:
+
+- **API v1**: 1000 requests/minuto
+- **Transações**: 100 requests/minuto
+- **Billing**: 200 requests/minuto
+
+Headers de rate limit são incluídos em todas as respostas:
+
+```http
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 999
+X-RateLimit-Reset: 1640995200
+```
+
+## Códigos de Status HTTP
+
+<CardGroup cols={2}>
+  <Card title="2xx - Sucesso">
+    - `200` - OK
+    - `201` - Created
+    - `204` - No Content
+  </Card>
+  <Card title="4xx - Erro do Cliente">
+    - `400` - Bad Request
+    - `401` - Unauthorized
+    - `403` - Forbidden
+    - `404` - Not Found
+    - `429` - Too Many Requests
+  </Card>
+</CardGroup>
+
+## Exemplo Rápido
+
+### Criar um Pagamento PIX
+
+```bash
+curl -X POST https://api.monkei.com/api/v1/transactions/payments/pix \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount_in_brl": 10050,
+    "description": "Pagamento de produto XYZ",
+    "idempotency_key": "pix_123456789"
+  }'
+```
+
+### Resposta
 
 ```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "amount_in_brl": 10050,
+  "status": "PENDING",
+  "expires_in": 3600,
+  "qr_code": "00020126580014br.gov.bcb.pix...",
+  "qr_code_url": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB..."
+}
 ```
+
+## Próximos Passos
+
+<CardGroup cols={2}>
+  <Card
+    title="Guia de Início Rápido"
+    icon="rocket"
+    href="/quickstart"
+  >
+    Comece a integrar em minutos
+  </Card>
+  <Card
+    title="Autenticação"
+    icon="key"
+    href="/essentials/authentication"
+  >
+    Configure sua API Key
+  </Card>
+</CardGroup>
