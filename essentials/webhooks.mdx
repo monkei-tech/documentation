@@ -1,0 +1,53 @@
+---
+title: 'Webhooks'
+description: 'Listen to real-time events from Monkei'
+---
+
+# Webhooks
+
+Webhooks allow your application to receive real-time notifications about events happening in your Monkei account, such as when a payment is confirmed.
+
+## Configuring Webhooks
+
+<Steps>
+  <Step title="Access Integrations Section">
+    In the dashboard, navigate to **Integrations > Webhooks**.
+    
+    ![Webhooks Dashboard](/images/webhook_start.png)
+  </Step>
+  <Step title="Create New Webhook">
+    Click on **"New Webhook"**. Enter the URL of your application that will receive the events (e.g., `https://api.yoursite.com/webhooks/monkei`) and select the events you want to listen to.
+    
+    ![Create Webhook Modal](/images/webhook_modal.png)
+  </Step>
+  <Step title="Save and Activate">
+    Save your webhook. It will be active and ready to send events to your URL.
+    
+    ![Webhook Created](/images/webhook_created.png)
+  </Step>
+</Steps>
+
+## Supported Events
+
+| Event | Description |
+|-------|-------------|
+| `PAYMENT_RECEIVED` | Triggered when a payment (PIX or Crypto) is successfully received. |
+| `PAYMENT_FAILED` | Triggered when a payment fails or expires. |
+| `WITHDRAWAL_COMPLETED` | Triggered when a withdrawal is successfully processed. |
+
+## Verifying Signatures
+
+To ensure the webhook request comes from Monkei, verify the signature header `X-Monkei-Signature`.
+
+```javascript
+const crypto = require('crypto');
+
+function verifySignature(payload, signature, secret) {
+  const hash = crypto
+    .createHmac('sha256', secret)
+    .update(payload)
+    .digest('hex');
+    
+  return hash === signature;
+}
+```

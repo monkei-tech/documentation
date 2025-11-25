@@ -1,0 +1,85 @@
+---
+title: "Billing Overview"
+description: "Learn how to create and manage bills and invoices with Monkei"
+---
+
+# Billing Overview
+
+The Billing API allows you to create, manage, and process one-time or recurring charges through multiple payment methods. It supports products, discount coupons, and transparent checkout processing.
+
+## What is Billing?
+
+Billing enables you to create invoices that customers can pay using PIX, Bitcoin, or USDT. You can configure multiple products per bill, apply discount coupons, and customize the checkout experience.
+
+<Note>
+  Bills can be used for one-time charges (ONE_TIME) or multiple payments (MULTIPLE_PAYMENTS), with support for coupons and different payment methods.
+</Note>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Multiple Products" icon="box">
+    <ul>
+      <li>Add multiple products per bill</li>
+      <li>Configurable quantities and prices</li>
+      <li>Minimum price: R$5.00 per product</li>
+    </ul>
+  </Card>
+  <Card title="Payment Methods" icon="credit-card">
+    <Badge text="PIX" color="blue"/>
+    <Badge text="BTC" color="orange"/>
+    <Badge text="USDT" color="green"/>
+    <ul>
+      <li>PIX (Brazilian Real)</li>
+      <li>Bitcoin (USD)</li>
+      <li>USDT (USD)</li>
+    </ul>
+  </Card>
+  <Card title="Discount Coupons" icon="ticket">
+    <ul>
+      <li>Support for configurable coupons</li>
+      <li>Automatic validation</li>
+      <li>Restriction by specific codes</li>
+    </ul>
+  </Card>
+  <Card title="Transparent Checkout" icon="eye">
+    <ul>
+      <li>Optional transparent checkout</li>
+      <li>URL customization</li>
+      <li>White-label branding</li>
+    </ul>
+  </Card>
+</CardGroup>
+
+## Use Cases
+
+- **E-commerce**: Create invoices for online purchases
+- **Subscription Services**: Set up recurring billing for subscriptions
+- **Marketplace**: Generate bills for multiple vendors
+- **SaaS Platforms**: Invoice customers for service usage
+
+## Getting Started
+
+<Steps>
+  <Step title="Create a Bill">
+    Use the <a href="/billing/create">Create Bill</a> endpoint to generate a new invoice with products and payment methods.
+  </Step>
+  <Step title="Share Payment URL">
+    Customers receive a payment URL where they can complete the transaction using their preferred payment method.
+  </Step>
+  <Step title="Receive Webhooks">
+    Get notified in real-time when bills are paid, canceled, or fail through webhook events.
+  </Step>
+</Steps>
+
+## Next Steps
+
+- <a href="/billing/create">Create a Bill</a> - Learn how to create your first invoice
+- <a href="/billing/list">List Bills</a> - Retrieve and filter your bills
+- <a href="/billing/find">Find Bill</a> - Get details of a specific bill
+
+## Related Resources
+
+- <a href="/essentials/webhooks">Webhooks Guide</a> - Learn about billing webhook events
+- <a href="/coupons/overview">Coupons Overview</a> - Understand how to use discount coupons
+- <a href="/api-reference/billing/bills">API Reference</a> - Complete API documentation

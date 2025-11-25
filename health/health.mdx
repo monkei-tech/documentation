@@ -1,0 +1,212 @@
+---
+title: "Health Check"
+description: "Verify system health and API availability"
+---
+
+# Health Check
+
+Check the operational status of the Monkei API. This endpoint is public and doesn't require authentication, making it perfect for monitoring and uptime checks.
+
+## Endpoint
+
+```http
+GET /health
+HEAD /health
+```
+
+## Overview
+
+The health check endpoint provides a simple way to verify that the Monkei API is operational and responding to requests. It's commonly used by monitoring systems, load balancers, and automated health checks.
+
+<Info>
+  This endpoint is public and doesn't require authentication. It's designed to be lightweight and fast, returning a simple response.
+</Info>
+
+## Request
+
+### GET Request
+
+```bash
+curl -X GET https://api.monkei.com/health
+```
+
+### HEAD Request
+
+```bash
+curl -X HEAD https://api.monkei.com/health
+```
+
+<Note>
+  Both GET and HEAD methods are supported. HEAD is useful when you only need to check the status code without receiving a response body.
+</Note>
+
+## Response
+
+### Success Response
+
+**Status Code**: `200 OK`
+
+**Response Body**:
+```
+OK
+```
+
+### Example Response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: text/plain
+Content-Length: 2
+
+OK
+```
+
+## Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | System is healthy and operational |
+| `503` | System is unavailable (service down or maintenance) |
+
+<Warning>
+  If you receive a status code other than 200, the system may be experiencing issues. Wait a moment and try again, or check our status page.
+</Warning>
+
+## Examples
+
+### cURL
+
+```bash
+# Simple health check
+curl -X GET https://api.monkei.com/health
+
+# Check only status code
+curl -I https://api.monkei.com/health
+```
+
+### JavaScript
+
+```javascript
+async function checkHealth() {
+  try {
+    const response = await fetch('https://api.monkei.com/health');
+    
+    if (response.ok) {
+      const text = await response.text();
+      console.log('System is healthy:', text);
+      return true;
+    } else {
+      console.error('System is unhealthy:', response.status);
+      return false;
+    }
+  } catch (error) {
+    console.error('Health check failed:', error);
+    return false;
+  }
+}
+
+// Check health
+const isHealthy = await checkHealth();
+```
+
+### Python
+
+```python
+import requests
+
+def check_health():
+    try:
+        response = requests.get('https://api.monkei.com/health')
+        
+        if response.status_code == 200:
+            print('System is healthy:', response.text)
+            return True
+        else:
+            print(f'System is unhealthy: {response.status_code}')
+            return False
+    except Exception as e:
+        print(f'Health check failed: {e}')
+        return False
+
+# Check health
+is_healthy = check_health()
+```
+
+### Monitoring Script
+
+```bash
+#!/bin/bash
+# health_monitor.sh
+
+HEALTH_URL="https://api.monkei.com/health"
+MAX_RETRIES=3
+RETRY_DELAY=5
+
+for i in $(seq 1 $MAX_RETRIES); do
+    if curl -f -s "$HEALTH_URL" > /dev/null; then
+        echo "✅ System is healthy"
+        exit 0
+    else
+        echo "❌ Health check failed (attempt $i/$MAX_RETRIES)"
+        if [ $i -lt $MAX_RETRIES ]; then
+            sleep $RETRY_DELAY
+        fi
+    fi
+done
+
+echo "❌ System is unhealthy after $MAX_RETRIES attempts"
+exit 1
+```
+
+## Use Cases
+
+### Load Balancer Health Checks
+
+Configure your load balancer to use this endpoint:
+
+```yaml
+health_check:
+  path: /health
+  interval: 30s
+  timeout: 5s
+  healthy_threshold: 2
+  unhealthy_threshold: 3
+```
+
+### Monitoring Systems
+
+Set up monitoring to alert when the health check fails:
+
+```javascript
+// Example monitoring check
+setInterval(async () => {
+  const isHealthy = await checkHealth();
+  if (!isHealthy) {
+    // Send alert
+    sendAlert('Monkei API is down!');
+  }
+}, 60000); // Check every minute
+```
+
+### CI/CD Pipelines
+
+Use health checks in deployment pipelines:
+
+```yaml
+# Example GitHub Actions
+- name: Health Check
+  run: |
+    curl -f https://api.monkei.com/health || exit 1
+```
+
+## Best Practices
+
+1. **Polling Frequency**: Don't poll too frequently. Once per minute is usually sufficient for most use cases.
+2. **Timeout Settings**: Set appropriate timeouts (5-10 seconds) to avoid hanging requests.
+3. **Error Handling**: Implement retry logic with exponential backoff for failed checks.
+4. **Status Page**: For production monitoring, consider using our status page instead of polling this endpoint.
+
+## Next Steps
+
+- <a href="/limits">Limits</a> - Check your account limits
+- <a href="/health/overview">Health Overview</a> - Learn more about health checks

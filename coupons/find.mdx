@@ -1,0 +1,221 @@
+---
+title: "Find Coupon"
+description: "Get details of a specific coupon by ID or code"
+---
+
+# Find Coupon
+
+Retrieve detailed information about a specific coupon by its unique identifier (UUID) or code. The coupon must belong to the authenticated account.
+
+## Endpoint
+
+```http
+GET /api/dashboard/v1/coupons/{couponId}
+```
+
+## Path Parameters
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `couponId` | string | ✅ | UUID of the coupon |
+
+## Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `code` | string | ❌ | Coupon code (alternative to couponId) |
+
+<Note>
+  You can search by either `couponId` (UUID) in the path or `code` as a query parameter. If both are provided, `couponId` takes precedence.
+</Note>
+
+## Response
+
+<Response>
+  <Title>FindCouponResponse</Title>
+  ```json
+  {
+    "coupon": {
+      "code": "WELCOME10",
+      "description": "Welcome discount 10% off",
+      "discount_kind": "PERCENTAGE",
+      "discount_value": 10,
+      "max_redeems": 100,
+      "status": "ACTIVE",
+      "created_at": "2024-01-01T12:00:00Z",
+      "updated_at": "2024-01-01T12:00:00Z"
+    }
+  }
+  ```
+</Response>
+
+## Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | Coupon found successfully |
+| `400` | Bad request - invalid coupon ID |
+| `401` | Unauthorized |
+| `404` | Coupon not found |
+| `500` | Internal server error |
+
+## Examples
+
+### By ID
+
+#### cURL
+
+```bash
+curl -X GET "https://api.monkei.com/api/dashboard/v1/coupons/550e8400-e29b-41d4-a716-446655440000" \
+  -H "Authorization: Bearer sk_live_1234567890abcdef"
+```
+
+#### JavaScript
+
+```javascript
+async function getCouponById(couponId) {
+  const response = await fetch(
+    `https://api.monkei.com/api/dashboard/v1/coupons/${couponId}`,
+    {
+      headers: {
+        'Authorization': 'Bearer sk_live_1234567890abcdef'
+      }
+    }
+  );
+
+  if (response.status === 404) {
+    throw new Error('Coupon not found');
+  }
+
+  const result = await response.json();
+  return result.coupon;
+}
+
+// Get coupon by ID
+const coupon = await getCouponById('550e8400-e29b-41d4-a716-446655440000');
+console.log(`Coupon code: ${coupon.code}`);
+```
+
+### By Code
+
+#### cURL
+
+```bash
+curl -X GET "https://api.monkei.com/api/dashboard/v1/coupons/WELCOME10?code=WELCOME10" \
+  -H "Authorization: Bearer sk_live_1234567890abcdef"
+```
+
+#### JavaScript
+
+```javascript
+async function getCouponByCode(code) {
+  const response = await fetch(
+    `https://api.monkei.com/api/dashboard/v1/coupons/${code}?code=${code}`,
+    {
+      headers: {
+        'Authorization': 'Bearer sk_live_1234567890abcdef'
+      }
+    }
+  );
+
+  if (response.status === 404) {
+    throw new Error('Coupon not found');
+  }
+
+  const result = await response.json();
+  return result.coupon;
+}
+
+// Get coupon by code
+const coupon = await getCouponByCode('WELCOME10');
+console.log(`Coupon status: ${coupon.status}`);
+```
+
+#### Python
+
+```python
+import requests
+
+def get_coupon(coupon_id=None, code=None):
+    headers = {
+        'Authorization': 'Bearer sk_live_1234567890abcdef'
+    }
+    
+    if coupon_id:
+        url = f'https://api.monkei.com/api/dashboard/v1/coupons/{coupon_id}'
+    elif code:
+        url = f'https://api.monkei.com/api/dashboard/v1/coupons/{code}?code={code}'
+    else:
+        raise ValueError('Either coupon_id or code must be provided')
+    
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        return response.json()['coupon']
+    elif response.status_code == 404:
+        raise Exception('Coupon not found')
+    else:
+        raise Exception(f'Error: {response.status_code}')
+
+# Get coupon by ID
+coupon = get_coupon(coupon_id='550e8400-e29b-41d4-a716-446655440000')
+print(f"Coupon code: {coupon['code']}")
+
+# Get coupon by code
+coupon = get_coupon(code='WELCOME10')
+print(f"Coupon status: {coupon['status']}")
+```
+
+## Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `code` | string | Coupon code |
+| `description` | string | Coupon description |
+| `discount_kind` | string | Type of discount (`PERCENTAGE`, `FIXED`, `FREE_SHIPPING`) |
+| `discount_value` | integer | Discount value (percentage, cents, or 0) |
+| `max_redeems` | integer | Maximum number of redemptions |
+| `status` | string | Current coupon status |
+| `created_at` | string | Coupon creation timestamp |
+| `updated_at` | string | Last update timestamp |
+
+## Coupon Statuses
+
+| Status | Description |
+|--------|-------------|
+| `ACTIVE` | Coupon is active and can be used |
+| `INACTIVE` | Coupon is inactive and cannot be used |
+| `MAX_REDEEMS_REACHED` | Coupon has reached its maximum redemption limit |
+
+## Error Handling
+
+### Coupon Not Found
+
+If the coupon doesn't exist or doesn't belong to your account:
+
+```json
+{
+  "error": "COUPON_NOT_FOUND",
+  "message": "Coupon not found",
+  "code": 404,
+  "account": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+### Invalid Coupon ID
+
+If the coupon ID format is invalid:
+
+```json
+{
+  "error": "INVALID_COUPON_ID",
+  "message": "Invalid coupon ID",
+  "code": 400
+}
+```
+
+## Next Steps
+
+- <a href="/coupons/list">List Coupons</a> - Retrieve all your coupons
+- <a href="/coupons/create">Create Coupon</a> - Create a new coupon
+- <a href="/billing/create">Create Bill</a> - Use coupons with bills

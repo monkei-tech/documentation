@@ -1,0 +1,133 @@
+---
+title: "Testing & Sandbox"
+description: "How to test your integration safely"
+---
+
+# Testing & Sandbox
+
+Before going live, test your integration in a safe environment without affecting real transactions or payments.
+
+## Environments
+
+Monkei provides two environments for your integration:
+
+<CardGroup cols={2}>
+  <Card title="Test Mode" icon="flask">
+    Use `sk_test_...` API keys for development and testing. No real money is moved.
+  </Card>
+  <Card title="Live Mode" icon="rocket">
+    Use `sk_live_...` API keys for production. Real transactions and payments.
+  </Card>
+</CardGroup>
+
+<Warning>
+  Never use Live API keys in your test or development environment.
+</Warning>
+
+## Getting Test API Keys
+
+1. Log in to [app.monkei.co](https://app.monkei.co)
+2. Go to **Integrations > API Keys**
+3. Create a new key and select **"Test"** as the environment
+4. Copy the key (starts with `sk_test_...`)
+
+## Test Data
+
+In Test Mode, you can use specific values to simulate different payment outcomes:
+
+### Magic Amounts (PIX)
+
+Use these amounts (in cents) to trigger specific responses:
+
+| Amount | BRL Value | Result |
+|--------|-----------|--------|
+| `1000` | R$ 10.00 | Payment approved (instant) |
+| `2000` | R$ 20.00 | Payment failed |
+| `3000` | R$ 30.00 | Payment pending (expires after 1 hour) |
+| `5000` | R$ 50.00 | Payment approved (delayed by 30s) |
+
+### Example Test Request
+
+```bash
+curl -X POST https://api.monkei.com/api/v1/transactions/payments/pix \
+  -H "Authorization: Bearer sk_test_YOUR_TEST_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount_in_brl": 1000,
+    "description": "Test payment",
+    "idempotency_key": "test_order_123"
+  }'
+```
+
+<Note>
+  In Test Mode, the QR Code generated is for testing only. You won't be able to scan and pay with a real banking app.
+</Note>
+
+## Simulating Webhooks
+
+To test webhook events without waiting for real payments:
+
+1. Go to **Integrations > Webhooks** in the dashboard
+2. Select your webhook
+3. Click on **"Send Test Event"**
+4. Choose the event type (e.g., `PAYMENT_RECEIVED`)
+5. Your endpoint will receive a test webhook payload
+
+### Test Webhook Payload
+
+```json
+{
+  "event": "PAYMENT_RECEIVED",
+  "test": true,
+  "data": {
+    "id": "test_550e8400-e29b-41d4-a716-446655440000",
+    "amount_in_brl": 1000,
+    "status": "PAID",
+    "paid_at": "2024-01-01T12:00:00Z"
+  }
+}
+```
+
+<Tip>
+  Test webhooks include a `"test": true` flag so you can identify them in your system.
+</Tip>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Separate Test and Live Data">
+    - Use different databases or tables for Test and Live modes
+    - Add a `is_test` flag to your records
+    - Never mix test and production data
+  </Accordion>
+  
+  <Accordion title="Test All Scenarios">
+    - Test successful payments
+    - Test failed payments
+    - Test webhook retries
+    - Test quota/rate limits
+  </Accordion>
+  
+  <Accordion title="Monitor Test Mode Usage">
+    - Check the dashboard for test transactions
+    - Verify webhook deliveries
+    - Review API logs
+  </Accordion>
+</AccordionGroup>
+
+## Going Live
+
+When you're ready to go live:
+
+1. Create a **Live** API Key from the dashboard
+2. Update your environment variables to use `sk_live_...`
+3. Deploy your application
+4. Monitor the first few transactions closely
+
+<Card title="Production Checklist" icon="clipboard-check">
+  - [ ] Test all payment flows
+  - [ ] Configure webhooks for production URL
+  - [ ] Set up error monitoring
+  - [ ] Add logging for debugging
+  - [ ] Verify API keys are stored securely
+</Card>

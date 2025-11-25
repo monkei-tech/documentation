@@ -1,0 +1,111 @@
+---
+title: "Transactions Overview"
+description: "Learn how to process payments with PIX, USDT, and BTC"
+---
+
+# Transactions Overview
+
+The Transactions API allows you to create and manage payments using multiple methods: PIX (Brazilian Real), USDT (Tether), and BTC (Bitcoin). All methods support idempotency to prevent duplicates and return QR Codes for processing.
+
+## What are Transactions?
+
+Transactions represent payment operations in the Monkei system. Each transaction can be a payment (incoming money) or a withdrawal (outgoing money). Payments generate QR codes that customers can scan to complete the transaction.
+
+<Note>
+  All payment endpoints require Bearer Token authentication and implement idempotency through the `idempotency_key` field.
+</Note>
+
+## Supported Payment Methods
+
+<CardGroup cols={3}>
+  <Card title="PIX" icon="money-check">
+    <Badge text="BRL" color="blue"/>
+    <ul>
+      <li>Currency: Brazilian Real (BRL)</li>
+      <li>Min: R$ 7.00</li>
+      <li>Precision: 2 decimals</li>
+      <li>EMVCo QR Code</li>
+    </ul>
+  </Card>
+  <Card title="USDT" icon="coins">
+    <Badge text="USD" color="green"/>
+    <ul>
+      <li>Currency: Tether (USDT)</li>
+      <li>Network: Polygon</li>
+      <li>Precision: 6 decimals</li>
+      <li>ERC-20 Token</li>
+    </ul>
+  </Card>
+  <Card title="BTC" icon="bitcoinsign">
+    <Badge text="USD" color="orange"/>
+    <ul>
+      <li>Currency: Bitcoin (BTC)</li>
+      <li>Network: Lightning Network</li>
+      <li>Precision: 8 decimals</li>
+      <li>Instant confirmation</li>
+    </ul>
+  </Card>
+</CardGroup>
+
+## Transaction Flow
+
+<Steps>
+  <Step title="Create Payment">
+    Create a payment transaction using one of the payment methods (<a href="/transactions/pix">PIX</a>, <a href="/transactions/usdt">USDT</a>, or <a href="/transactions/btc">BTC</a>).
+  </Step>
+  <Step title="Get QR Code">
+    Receive a QR code that your customer can scan to complete the payment.
+  </Step>
+  <Step title="Monitor Status">
+    Use <a href="/transactions/check-status">Check Status</a> to monitor the transaction status or configure webhooks for real-time updates.
+  </Step>
+  <Step title="Payment Confirmed">
+    Once the payment is confirmed, you'll receive a webhook notification and the transaction status will update to `COMPLETED`.
+  </Step>
+</Steps>
+
+## Transaction Statuses
+
+| Status | Description |
+|--------|-------------|
+| `PENDING` | Transaction created, awaiting payment |
+| `PROCESSING` | Payment detected, being processed |
+| `COMPLETED` | Payment confirmed and completed |
+| `FAILED` | Payment failed or expired |
+| `CANCELED` | Transaction was canceled |
+
+## Key Features
+
+- **Idempotency**: Prevent duplicate transactions using `idempotency_key`
+- **QR Codes**: Automatic QR code generation for all payment methods
+- **Real-time Updates**: Webhook notifications for status changes
+- **Multiple Currencies**: Support for BRL (PIX) and USD (crypto)
+- **Expiration Control**: Set expiration times for payment requests
+
+## Use Cases
+
+- **E-commerce**: Accept payments for online purchases
+- **Marketplace**: Process payments between buyers and sellers
+- **SaaS**: Collect subscription payments
+- **Donations**: Accept donations via multiple payment methods
+
+## Getting Started
+
+1. <a href="/transactions/pix">Create PIX Payment</a> - Start with PIX for Brazilian customers
+2. <a href="/transactions/usdt">Create USDT Payment</a> - Accept USDT payments
+3. <a href="/transactions/btc">Create BTC Payment</a> - Accept Bitcoin payments
+4. <a href="/transactions/check-status">Check Status</a> - Monitor transaction status
+
+## Next Steps
+
+- <a href="/transactions/pix">PIX Payments</a> - Learn about PIX payment processing
+- <a href="/transactions/usdt">USDT Payments</a> - Learn about USDT payment processing
+- <a href="/transactions/btc">BTC Payments</a> - Learn about Bitcoin payment processing
+- <a href="/transactions/check-status">Check Status</a> - Monitor your transactions
+- <a href="/essentials/webhooks">Webhooks</a> - Receive real-time transaction updates
+
+## Related Resources
+
+- <a href="/withdrawals/overview">Withdrawals Overview</a> - Learn about withdrawing funds
+- <a href="/accounts/overview">Accounts Overview</a> - Manage your account balance
+- <a href="/api-reference/transactions/payments">API Reference</a> - Complete API documentation

@@ -1,0 +1,400 @@
+---
+title: "Rate Limits"
+description: "Understand rate limits and how to avoid 429 errors"
+---
+
+# Rate Limits
+
+Monkei API implements rate limiting to ensure fair usage and system stability. Understanding rate limits helps you avoid `429 Too Many Requests` errors and optimize your API usage.
+
+## What are Rate Limits?
+
+Rate limits control how many requests you can make to the API within a specific time window. When you exceed the limit, the API returns a `429 Too Many Requests` status code.
+
+<Warning>
+  Exceeding rate limits will result in your requests being rejected. Always monitor the rate limit headers to stay within limits.
+</Warning>
+
+## Rate Limit Architecture
+
+Monkei uses a two-layer rate limiting system:
+
+- **Global Token Bucket**: 1000 requests per minute (applies to all requests globally)
+- **Per-Key/IP Sliding Window**: Individual limits based on authentication (see below)
+
+<Info>
+  The global rate limit (1000 req/min) will be increased according to platform growth, capacity, and needs. This limit is designed to scale with the platform's infrastructure and usage patterns.
+</Info>
+
+## Rate Limit Types
+
+Monkei uses two types of rate limits based on how you authenticate:
+
+### IP-Based Rate Limits
+
+When making requests without an API key (or with invalid authentication), rate limits are applied per IP address.
+
+- **Default Rate**: 30 requests per second
+- **Window**: 1 second sliding window
+- **Tracking**: Based on client IP address
+
+### API Key-Based Rate Limits
+
+When using a valid API key (via `Authorization: Bearer` header or `X-API-Key` header), you get higher rate limits.
+
+- **API Rate**: 100 requests per second
+- **Window**: 1 second sliding window
+- **Tracking**: Based on your API key
+
+<Info>
+  Always use API key authentication to get higher rate limits. This is the recommended approach for production applications.
+</Info>
+
+<Warning>
+  If your volume is higher than the default rate limits (30 req/s for IP-based or 100 req/s for API key-based), contact support to increase your rate limit.
+</Warning>
+
+## Rate Limit Headers
+
+Every API response includes rate limit information in the headers:
+
+| Header | Description | Example |
+|--------|-------------|---------|
+| `X-RateLimit-Limit` | Maximum requests allowed per window | `100` |
+| `X-RateLimit-Remaining` | Remaining requests in current window | `95` |
+| `X-RateLimit-Reset` | Unix timestamp when the limit resets | `1640995200` |
+
+### Example Response Headers
+
+```http
+HTTP/1.1 200 OK
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1640995200
+Content-Type: application/json
+```
+
+## How Rate Limiting Works
+
+### Rate Limit Keys
+
+The system identifies you using:
+
+- **With API Key**: `ratelimit:api:{your_api_key}`
+- **Without API Key**: `ratelimit:ip:{your_ip_address}`
+
+<Note>
+  Rate limits are enforced per API key or IP address. Different API keys have separate rate limit counters.
+</Note>
+
+### What Happens When You Exceed Limits ?
+
+The rate limiting system uses a two-layer approach:
+
+1. **Global Token Bucket**: A global rate limiter (1000 requests per minute) that blocks requests, making them wait before processing. If you make requests faster than 1000 req/min, they will be delayed (slowed down) as they wait for tokens to become available. This applies to all requests globally, regardless of API key or IP address.
+
+2. **Per-Key/IP Sliding Window**: After passing the global limiter, each request is checked against your specific rate limit (based on API key or IP address) using Redis. If you exceed your limit, the request is immediately rejected with `429 Too Many Requests`.
+
+**Behavior when limits are exceeded:**
+
+- **Initial slowdown**: If you start making requests faster than allowed, the token bucket will make your requests wait, causing slower response times.
+- **Progressive blocking**: As you continue to exceed limits and don't respect the time window, requests will experience increasing delays.
+- **Complete rejection**: Once you exceed your per-key/IP limit in the sliding window, all subsequent requests will be rejected with `429` until the window resets.
+
+<Warning>
+  If you persistently ignore rate limits and continue making requests above your limit, you will first experience slower response times (as requests wait in the token bucket), and then complete rejection with `429` errors. This can severely impact your application's functionality. Always implement proper rate limit handling and respect the `X-RateLimit-Remaining` header.
+</Warning>
+
+## Avoiding 429 Errors
+
+### Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Use API Keys" icon="key">
+    <ul>
+      <li>Always authenticate with API keys</li>
+      <li>Get 100 req/s instead of 30 req/s</li>
+      <li>Better for production use</li>
+    </ul>
+  </Card>
+  <Card title="Monitor Headers" icon="chart-line">
+    <ul>
+      <li>Check X-RateLimit-Remaining</li>
+      <li>Implement exponential backoff</li>
+      <li>Respect reset timestamps</li>
+    </ul>
+  </Card>
+  <Card title="Implement Retry Logic" icon="refresh">
+    <ul>
+      <li>Handle 429 responses gracefully</li>
+      <li>Wait before retrying</li>
+      <li>Use exponential backoff</li>
+    </ul>
+  </Card>
+  <Card title="Batch Requests" icon="layer-group">
+    <ul>
+      <li>Combine multiple operations</li>
+      <li>Use pagination efficiently</li>
+      <li>Avoid unnecessary requests</li>
+    </ul>
+  </Card>
+</CardGroup>
+
+### Implementing Rate Limit Handling
+
+#### JavaScript Example
+
+```javascript
+async function makeRequestWithRetry(url, options, maxRetries = 3) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const response = await fetch(url, options);
+    
+    // Check rate limit headers
+    const remaining = parseInt(response.headers.get('X-RateLimit-Remaining') || '0');
+    const reset = parseInt(response.headers.get('X-RateLimit-Reset') || '0');
+    
+    if (response.status === 429) {
+      // Calculate wait time
+      const waitTime = Math.max(
+        (reset * 1000) - Date.now(), // Time until reset
+        Math.pow(2, attempt) * 1000  // Exponential backoff
+      );
+      
+      console.log(`Rate limit hit. Waiting ${waitTime}ms before retry...`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      continue;
+    }
+    
+    // Check if approaching limit
+    if (remaining < 10) {
+      const waitTime = (reset * 1000) - Date.now();
+      if (waitTime > 0) {
+        console.log(`Approaching rate limit. Waiting ${waitTime}ms...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      }
+    }
+    
+    return response;
+  }
+  
+  throw new Error('Max retries exceeded');
+}
+```
+
+#### Python Example
+
+```python
+import requests
+import time
+import math
+
+def make_request_with_retry(url, headers, max_retries=3):
+    for attempt in range(max_retries):
+        response = requests.get(url, headers=headers)
+        
+        # Check rate limit headers
+        remaining = int(response.headers.get('X-RateLimit-Remaining', 0))
+        reset = int(response.headers.get('X-RateLimit-Reset', 0))
+        
+        if response.status_code == 429:
+            # Calculate wait time
+            wait_time = max(
+                (reset * 1000) - (time.time() * 1000),  # Time until reset
+                math.pow(2, attempt) * 1000              # Exponential backoff
+            )
+            
+            print(f"Rate limit hit. Waiting {wait_time}ms before retry...")
+            time.sleep(wait_time / 1000)
+            continue
+        
+        # Check if approaching limit
+        if remaining < 10:
+            wait_time = (reset * 1000) - (time.time() * 1000)
+            if wait_time > 0:
+                print(f"Approaching rate limit. Waiting {wait_time}ms...")
+                time.sleep(wait_time / 1000)
+        
+        return response
+    
+    raise Exception('Max retries exceeded')
+```
+
+## Rate Limit Rules
+
+### Default Limits
+
+| Authentication | Rate Limit | Window |
+|----------------|------------|--------|
+| No API Key (IP-based) | 30 requests/second | 1 second |
+| With API Key | 100 requests/second | 1 second |
+
+### Exempted Endpoints
+
+Some endpoints are exempt from rate limiting:
+
+- `GET /health` - Health check endpoint
+- `HEAD /health` - Health check endpoint
+
+<Info>
+  Health check endpoints are exempt from rate limiting to allow continuous monitoring without affecting your rate limit quota.
+</Info>
+
+## Handling 429 Errors
+
+### Error Response
+
+When you exceed the rate limit, you'll receive:
+
+**Status Code**: `429 Too Many Requests`
+
+**Response Body**:
+```
+Too Many Requests
+```
+
+**Headers**:
+```http
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1640995200
+```
+
+### Retry Strategy
+
+When you receive a `429` error:
+
+1. **Read Headers**: Check `X-RateLimit-Reset` to know when to retry
+2. **Wait**: Wait until the reset time before retrying
+3. **Exponential Backoff**: If multiple retries are needed, use exponential backoff
+4. **Respect Limits**: Don't retry immediately - this will only make it worse
+
+### Example Retry Implementation
+
+```javascript
+async function handleRateLimit(response, retryCount = 0) {
+  if (response.status !== 429) {
+    return response;
+  }
+  
+  const reset = parseInt(response.headers.get('X-RateLimit-Reset') || '0');
+  const waitTime = Math.max(
+    (reset * 1000) - Date.now(),
+    Math.pow(2, retryCount) * 1000 // Exponential backoff
+  );
+  
+  console.log(`Rate limited. Waiting ${waitTime}ms...`);
+  await new Promise(resolve => setTimeout(resolve, waitTime));
+  
+  // Retry the request
+  return fetch(response.url, {
+    method: response.method,
+    headers: response.headers
+  });
+}
+```
+
+## Monitoring Rate Limits
+
+### Check Remaining Requests
+
+Always check the `X-RateLimit-Remaining` header to monitor your usage:
+
+```javascript
+function checkRateLimit(response) {
+  const remaining = parseInt(response.headers.get('X-RateLimit-Remaining') || '0');
+  const limit = parseInt(response.headers.get('X-RateLimit-Limit') || '0');
+  
+  if (remaining < limit * 0.1) { // Less than 10% remaining
+    console.warn(`Rate limit warning: ${remaining}/${limit} requests remaining`);
+  }
+  
+  return { remaining, limit };
+}
+```
+
+### Rate Limit Dashboard
+
+Consider implementing a simple dashboard to track your rate limit usage:
+
+```javascript
+class RateLimitMonitor {
+  constructor() {
+    this.usage = [];
+  }
+  
+  record(response) {
+    const remaining = parseInt(response.headers.get('X-RateLimit-Remaining') || '0');
+    const limit = parseInt(response.headers.get('X-RateLimit-Limit') || '0');
+    const reset = parseInt(response.headers.get('X-RateLimit-Reset') || '0');
+    
+    this.usage.push({
+      timestamp: Date.now(),
+      remaining,
+      limit,
+      reset,
+      usagePercent: ((limit - remaining) / limit) * 100
+    });
+    
+    // Keep only last 100 records
+    if (this.usage.length > 100) {
+      this.usage.shift();
+    }
+  }
+  
+  getUsageStats() {
+    if (this.usage.length === 0) return null;
+    
+    const avgUsage = this.usage.reduce((sum, u) => sum + u.usagePercent, 0) / this.usage.length;
+    const latest = this.usage[this.usage.length - 1];
+    
+    return {
+      averageUsage: avgUsage,
+      currentRemaining: latest.remaining,
+      currentLimit: latest.limit,
+      nextReset: new Date(latest.reset * 1000)
+    };
+  }
+}
+```
+
+## Tips for Optimal API Usage
+
+1. **Use API Keys**: Always authenticate to get higher limits (100 req/s vs 30 req/s)
+2. **Batch Operations**: Combine multiple operations when possible
+3. **Cache Responses**: Cache data that doesn't change frequently
+4. **Use Webhooks**: Instead of polling, use webhooks for real-time updates
+5. **Implement Queuing**: Queue requests instead of making them all at once
+6. **Monitor Headers**: Always check rate limit headers in responses
+7. **Respect Limits**: Don't try to bypass limits - it will result in IP blocking
+
+## Common Scenarios
+
+### High-Volume Applications
+
+For applications making many requests:
+
+- Use multiple API keys (each has separate limits)
+- Implement request queuing
+- Use webhooks instead of polling
+- Cache frequently accessed data
+
+### Development/Testing
+
+For development environments:
+
+- Use separate API keys for testing
+- Implement proper retry logic early
+- Monitor rate limit usage during development
+
+## Error Codes
+
+| Code | Description | Solution |
+|------|-------------|----------|
+| `429` | Too Many Requests | Wait until `X-RateLimit-Reset` before retrying |
+| `401` | Unauthorized | Check your API key - invalid keys get lower limits |
+
+## Next Steps
+
+- <a href="/essentials/authentication">Authentication</a> - Learn how to use API keys
+- <a href="/essentials/errors">Error Handling</a> - Learn about error responses
+- <a href="/essentials/webhooks">Webhooks</a> - Use webhooks to reduce API calls

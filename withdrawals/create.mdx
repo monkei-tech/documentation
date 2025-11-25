@@ -1,0 +1,207 @@
+---
+title: "Create Withdrawal"
+description: "Create a new withdrawal to bank account or crypto wallet"
+---
+
+# Create Withdrawal
+
+Create a new withdrawal transaction to transfer funds from your Monkei account to an external destination (bank account via PIX or cryptocurrency wallet).
+
+## Endpoint
+
+```http
+POST /api/v1/transactions/withdrawals
+```
+
+## Request
+
+<Request>
+  <Title>InitWithdrawRequest</Title>
+  ```json
+  {
+    "idempotency_key": "withdraw_123456789",
+    "currency": "BRL",
+    "method": "PIX",
+    "amount_in_brl": 1000.50,
+    "description": "Withdrawal to personal account",
+    "pix_key": "user@example.com",
+    "pix_key_type": "EMAIL"
+  }
+  ```
+</Request>
+
+## Parameters
+
+| Field | Type | Required | Validation | Description |
+|-------|------|----------|------------|-------------|
+| `idempotency_key` | string | ✅ | - | Idempotency key to prevent duplicates |
+| `currency` | string | ✅ | Enum | Currency code |
+| `method` | string | ✅ | Enum | Withdrawal method |
+| `amount_in_brl` | decimal | ⚠️¹ | `min=7.00` | Amount in BRL (if currency=BRL) |
+| `amount_in_crypto` | decimal | ⚠️¹ | `min=0.00001` | Amount in crypto (if crypto) |
+| `description` | string | ❌ | - | Withdrawal description |
+| `network` | string | ⚠️² | Enum | Blockchain network (crypto only) |
+| `to_address` | string | ⚠️² | - | Destination address (crypto only) |
+| `pix_key` | string | ⚠️³ | - | PIX key (PIX only) |
+| `pix_key_type` | string | ⚠️³ | Enum | PIX key type |
+
+¹ **One of the amount fields is required**  
+² **Required for cryptocurrencies**  
+³ **Required for PIX**
+
+### Allowed Values
+
+| Field | Values |
+|-------|--------|
+| `currency` | `"BRL"`, `"USD"` |
+| `method` | `"PIX"`, `"BTC"`, `"USDT"` |
+| `network` | `"POLYGON"` (USDT), `"LIGHTNING"` (BTC) |
+| `pix_key_type` | `"EMAIL"`, `"PHONE"`, `"CPF"`, `"CNPJ"`, `"RANDOM"` |
+
+## Response
+
+<Response>
+  <Title>InitWithdrawResponse</Title>
+  ```json
+  {
+    "transaction": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "method": "PIX",
+      "status": "PENDING",
+      "expires_in": 3600
+    },
+    "next_step": "Awaiting processing"
+  }
+  ```
+</Response>
+
+## Status Codes
+
+| Code | Description |
+|------|-------------|
+| `201` | Withdrawal created successfully |
+| `400` | Bad request - validation error |
+| `401` | Unauthorized |
+| `402` | Insufficient balance |
+| `500` | Internal server error |
+
+## Examples
+
+### PIX Withdrawal
+
+#### cURL
+
+```bash
+curl -X POST https://api.monkei.com/api/v1/transactions/withdrawals \
+  -H "Authorization: Bearer sk_live_1234567890abcdef" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "idempotency_key": "pix_withdraw_123",
+    "currency": "BRL",
+    "method": "PIX",
+    "amount_in_brl": 1000.00,
+    "description": "Monthly withdrawal",
+    "pix_key": "joao.silva@example.com",
+    "pix_key_type": "EMAIL"
+  }'
+```
+
+#### JavaScript
+
+```javascript
+async function createPixWithdrawal() {
+  const response = await fetch('https://api.monkei.com/api/v1/transactions/withdrawals', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer sk_live_1234567890abcdef',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      idempotency_key: `pix_withdraw_${Date.now()}`,
+      currency: 'BRL',
+      method: 'PIX',
+      amount_in_brl: 1000.00,
+      description: 'Monthly withdrawal',
+      pix_key: 'joao.silva@example.com',
+      pix_key_type: 'EMAIL'
+    })
+  });
+
+  return await response.json();
+}
+```
+
+### USDT Withdrawal
+
+#### cURL
+
+```bash
+curl -X POST https://api.monkei.com/api/v1/transactions/withdrawals \
+  -H "Authorization: Bearer sk_live_1234567890abcdef" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "idempotency_key": "usdt_withdraw_456",
+    "currency": "USD",
+    "method": "USDT",
+    "amount_in_crypto": 100.5,
+    "description": "Transfer to external wallet",
+    "network": "POLYGON",
+    "to_address": "0x1234567890123456789012345678901234567890"
+  }'
+```
+
+### BTC Withdrawal
+
+#### cURL
+
+```bash
+curl -X POST https://api.monkei.com/api/v1/transactions/withdrawals \
+  -H "Authorization: Bearer sk_live_1234567890abcdef" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "idempotency_key": "btc_withdraw_789",
+    "currency": "USD",
+    "method": "BTC",
+    "amount_in_crypto": 0.001,
+    "description": "Bitcoin withdrawal",
+    "network": "LIGHTNING",
+    "to_address": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
+  }'
+```
+
+## PIX Key Types
+
+| Type | Example | Description |
+|------|---------|-------------|
+| `EMAIL` | `user@example.com` | Email address as PIX key |
+| `PHONE` | `+5511999999999` | Phone number with country code |
+| `CPF` | `12345678901` | Brazilian CPF (11 digits) |
+| `CNPJ` | `12345678000190` | Brazilian CNPJ (14 digits) |
+| `RANDOM` | `550e8400-e29b-41d4-a716-446655440000` | Random PIX key (UUID) |
+
+## Important Notes
+
+<Warning>
+  Always verify the destination address before confirming a cryptocurrency withdrawal. Transactions are irreversible once confirmed on the blockchain.
+</Warning>
+
+<Info>
+  PIX withdrawals are typically processed immediately, while cryptocurrency withdrawals require network confirmation (usually 1-60 minutes depending on the network).
+</Info>
+
+## Error Handling
+
+### Common Errors
+
+| Code | Description | Solution |
+|------|-------------|----------|
+| `VALIDATION_ERROR` | Invalid field | Check the parameters sent |
+| `INSUFFICIENT_BALANCE` | Not enough balance | Ensure sufficient balance including fees |
+| `INVALID_ADDRESS` | Invalid destination address | Verify the address format |
+| `INVALID_PIX_KEY` | Invalid PIX key | Check PIX key format and type |
+
+## Next Steps
+
+- <a href="/withdrawals/list">List Withdrawals</a> - View withdrawal history
+- <a href="/withdrawals/find">Find Withdrawal</a> - Check withdrawal status
+- <a href="/balance">Check Balance</a> - Verify available balance

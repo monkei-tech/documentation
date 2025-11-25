@@ -1,0 +1,115 @@
+---
+title: "Withdrawals Overview"
+description: "Learn how to withdraw funds from your Monkei account"
+---
+
+# Withdrawals Overview
+
+The Withdrawals API allows you to withdraw cryptocurrencies and fiat currencies from your account to external addresses or bank accounts. It supports multiple withdrawal methods with specific validations for each type.
+
+## What are Withdrawals?
+
+Withdrawals enable you to transfer funds from your Monkei account balance to external destinations. You can withdraw to bank accounts via PIX or to cryptocurrency wallets.
+
+<Note>
+  Withdrawals are available through the `/api/v1/transactions/withdrawals` endpoint and require user authentication. Ensure you have sufficient balance before initiating a withdrawal.
+</Note>
+
+## Supported Withdrawal Methods
+
+<CardGroup cols={2}>
+  <Card title="PIX" icon="money-check">
+    <Badge text="BRL" color="blue"/>
+    <ul>
+      <li>Withdraw to bank account</li>
+      <li>PIX key required</li>
+      <li>Types: EMAIL, PHONE, CPF, CNPJ, RANDOM</li>
+      <li>Processing: Immediate</li>
+    </ul>
+  </Card>
+  <Card title="Cryptocurrencies" icon="coins">
+    <Badge text="USD" color="green"/>
+    <ul>
+      <li>BTC, USDT supported</li>
+      <li>Destination address required</li>
+      <li>Network-specific per currency</li>
+      <li>Automatic address validation</li>
+    </ul>
+  </Card>
+</CardGroup>
+
+## Withdrawal Flow
+
+<Steps>
+  <Step title="Check Balance">
+    Ensure you have sufficient balance in your account for the withdrawal amount plus fees.
+  </Step>
+  <Step title="Create Withdrawal">
+    Use the <a href="/withdrawals/create">Create Withdrawal</a> endpoint with the appropriate method and destination.
+  </Step>
+  <Step title="Processing">
+    The withdrawal is processed according to the method (immediate for PIX, network confirmation for crypto).
+  </Step>
+  <Step title="Completion">
+    Receive confirmation when the withdrawal is completed via webhook or status check.
+  </Step>
+</Steps>
+
+## Withdrawal Methods
+
+### PIX Withdrawals
+
+Withdraw Brazilian Real (BRL) to any bank account using PIX keys:
+
+- **Email**: Use an email address as PIX key
+- **Phone**: Use a phone number with country code
+- **CPF/CNPJ**: Use tax ID as PIX key
+- **Random**: Use a random PIX key
+
+### Cryptocurrency Withdrawals
+
+Withdraw cryptocurrencies to external wallets:
+
+- **BTC**: Bitcoin withdrawals (Lightning network)
+- **USDT**: USDT withdrawals (Polygon network)
+
+<Warning>
+  Always verify the destination address before confirming a cryptocurrency withdrawal. Transactions are irreversible.
+</Warning>
+
+## Withdrawal Limits
+
+<Warning>
+  **Daily Withdrawal Limit**: The default withdrawal limit is **$1,000 USD per day**. To increase this limit, please contact our support team via chat.
+</Warning>
+
+<Info>
+  **Best Practice**: We recommend making withdrawals daily and avoiding large single withdrawals to stay within the daily limit. This helps ensure smooth operations and prevents hitting withdrawal limits.
+</Info>
+
+## Use Cases
+
+- **Business Payouts**: Transfer funds to business bank accounts
+- **Personal Withdrawals**: Withdraw earnings to personal accounts
+- **Crypto Transfers**: Move cryptocurrencies to external wallets
+- **Vendor Payments**: Pay vendors via PIX or crypto
+
+## Getting Started
+
+1. <a href="/withdrawals/create">Create Withdrawal</a> - Learn how to create your first withdrawal
+2. <a href="/withdrawals/list">List Withdrawals</a> - View your withdrawal history
+3. <a href="/withdrawals/find">Find Withdrawal</a> - Check withdrawal status
+4. <a href="/balance">Check Balance</a> - Verify available balance
+
+## Next Steps
+
+- <a href="/withdrawals/create">Create Withdrawal</a> - Create a new withdrawal
+- <a href="/withdrawals/list">List Withdrawals</a> - View withdrawal history
+- <a href="/withdrawals/find">Find Withdrawal</a> - Check withdrawal details
+- <a href="/accounts/overview">Accounts Overview</a> - Manage your account
+
+## Related Resources
+
+- <a href="/balance">Account Balance</a> - Check available balance
+- <a href="/essentials/webhooks">Webhooks</a> - Receive withdrawal notifications
+- <a href="/transactions/overview">Transactions Overview</a> - Learn about payments

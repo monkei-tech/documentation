@@ -1,0 +1,233 @@
+---
+title: "Check Transaction Status"
+description: "Get the current status of a transaction"
+---
+
+# Check Transaction Status
+
+Retrieve detailed information about a specific transaction by its unique identifier. Use this endpoint to monitor payment status, check if a payment was completed, or get transaction details.
+
+## Endpoint
+
+```http
+GET /api/v1/transactions/{transactionId}
+```
+
+## Path Parameters
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `transactionId` | string | UUID of the transaction |
+
+## Response
+
+<Response>
+  <Title>GetTransactionResponse</Title>
+  ```json
+  {
+    "transaction": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "transaction_id": "550e8400-e29b-41d4-a716-446655440000",
+      "billing_id": "550e8400-e29b-41d4-a716-446655440000",
+      "account_id": "550e8400-e29b-41d4-a716-446655440000",
+      "customer_id": "550e8400-e29b-41d4-a716-446655440000",
+      "method": "PIX",
+      "status": "COMPLETED",
+      "type": "PAYMENT",
+      "operation": "CREDIT",
+      "currency": "BRL",
+      "gross_amount": "100.50",
+      "net_amount": "98.00",
+      "platform_fee": "2.00",
+      "description": "Payment for product XYZ",
+      "hash": "hash123456",
+      "external_id": "ext_123456",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:30:00Z",
+      "completed_at": "2024-01-01T00:30:00Z"
+    }
+  }
+  ```
+</Response>
+
+## Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | Transaction found successfully |
+| `401` | Unauthorized |
+| `404` | Transaction not found |
+| `500` | Internal server error |
+
+## Transaction Statuses
+
+| Status | Description |
+|--------|-------------|
+| `PENDING` | Transaction created, awaiting payment |
+| `PROCESSING` | Payment detected, being processed |
+| `COMPLETED` | Payment confirmed and completed |
+| `FAILED` | Payment failed or expired |
+| `CANCELED` | Transaction was canceled |
+| `BLOCKED` | Transaction is blocked |
+
+## Examples
+
+### cURL
+
+```bash
+curl -X GET "https://api.monkei.com/api/v1/transactions/550e8400-e29b-41d4-a716-446655440000" \
+  -H "Authorization: Bearer sk_live_1234567890abcdef"
+```
+
+### JavaScript
+
+```javascript
+async function getTransactionStatus(transactionId) {
+  const response = await fetch(
+    `https://api.monkei.com/api/v1/transactions/${transactionId}`,
+    {
+      headers: {
+        'Authorization': 'Bearer sk_live_1234567890abcdef'
+      }
+    }
+  );
+
+  if (response.status === 404) {
+    throw new Error('Transaction not found');
+  }
+
+  const result = await response.json();
+  return result.transaction;
+}
+
+// Check transaction status
+const transaction = await getTransactionStatus('550e8400-e29b-41d4-a716-446655440000');
+console.log(`Status: ${transaction.status}`);
+console.log(`Amount: ${transaction.gross_amount} ${transaction.currency}`);
+```
+
+### Python
+
+```python
+import requests
+
+def get_transaction_status(transaction_id):
+    headers = {
+        'Authorization': 'Bearer sk_live_1234567890abcdef'
+    }
+
+    response = requests.get(
+        f'https://api.monkei.com/api/v1/transactions/{transaction_id}',
+        headers=headers
+    )
+
+    if response.status_code == 200:
+        return response.json()['transaction']
+    elif response.status_code == 404:
+        raise Exception('Transaction not found')
+    else:
+        raise Exception(f'Error: {response.status_code}')
+
+# Check transaction status
+transaction = get_transaction_status('550e8400-e29b-41d4-a716-446655440000')
+print(f"Status: {transaction['status']}")
+print(f"Amount: {transaction['gross_amount']} {transaction['currency']}")
+```
+
+## Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique transaction identifier (UUID) |
+| `transaction_id` | string | Transaction ID (same as id) |
+| `billing_id` | string | Associated billing ID (if applicable) |
+| `account_id` | string | Account ID that owns the transaction |
+| `customer_id` | string | Customer ID (if applicable) |
+| `method` | string | Payment method (`PIX`, `USDT`, `BTC`) |
+| `status` | string | Current transaction status |
+| `type` | string | Transaction type (`PAYMENT`, `WITHDRAWAL`) |
+| `operation` | string | Operation type (`CREDIT`, `DEBIT`) |
+| `currency` | string | Currency code (`BRL`, `USD`) |
+| `gross_amount` | decimal | Gross transaction amount |
+| `net_amount` | decimal | Net amount after fees |
+| `platform_fee` | decimal | Platform fee deducted |
+| `description` | string | Transaction description |
+| `hash` | string | Blockchain transaction hash (for crypto) |
+| `external_id` | string | External transaction ID |
+| `created_at` | string | Transaction creation timestamp |
+| `updated_at` | string | Last update timestamp |
+| `completed_at` | string | Completion timestamp (if completed) |
+
+## Monitoring Payment Status
+
+### Polling Pattern
+
+For real-time status updates, you can poll this endpoint periodically:
+
+```javascript
+async function pollTransactionStatus(transactionId, maxAttempts = 30) {
+  for (let i = 0; i < maxAttempts; i++) {
+    const transaction = await getTransactionStatus(transactionId);
+    
+    if (transaction.status === 'COMPLETED') {
+      return transaction;
+    }
+    
+    if (transaction.status === 'FAILED' || transaction.status === 'CANCELED') {
+      throw new Error(`Transaction ${transaction.status}`);
+    }
+    
+    // Wait 5 seconds before next check
+    await new Promise(resolve => setTimeout(resolve, 5000));
+  }
+  
+  throw new Error('Transaction timeout');
+}
+```
+
+<Warning>
+  Polling should be used sparingly. For production, prefer webhooks for real-time updates.
+</Warning>
+
+## Using Webhooks
+
+Instead of polling, configure webhooks to receive real-time status updates:
+
+<Info>
+  Configure webhooks in your dashboard to receive notifications when transaction status changes. This is more efficient than polling.
+</Info>
+
+See <a href="/essentials/webhooks">Webhooks Guide</a> for more information.
+
+## Error Handling
+
+### Transaction Not Found
+
+If the transaction doesn't exist or doesn't belong to your account:
+
+```json
+{
+  "error": "TRANSACTION_NOT_FOUND",
+  "message": "Transaction not found",
+  "code": 404,
+  "resource": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+### Invalid Transaction ID
+
+If the transaction ID format is invalid:
+
+```json
+{
+  "error": "INVALID_TRANSACTION_ID",
+  "message": "Invalid transaction ID",
+  "code": 400
+}
+```
+
+## Next Steps
+
+- <a href="/transactions/overview">Transactions Overview</a> - Learn about transactions
+- <a href="/essentials/webhooks">Webhooks</a> - Receive real-time updates
+- <a href="/transactions/pix">PIX Payments</a> - Create PIX payments

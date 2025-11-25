@@ -1,47 +1,50 @@
 ---
-title: 'Autenticação'
-description: 'Como autenticar com a API Monkei Gateway v1'
+title: 'Authentication'
+description: 'How to authenticate with Monkei Gateway API v1'
 ---
 
-# Autenticação
+# Authentication
 
-A API v1 do Monkei Gateway usa autenticação via Bearer Token (JWT) para todos os endpoints.
+The Monkei Gateway API v1 uses Bearer Token (JWT) authentication for all endpoints.
 
-## Visão Geral
+## Overview
 
 <Note>
-  Todos os endpoints da API v1 requerem autenticação. Você precisará de uma API Key válida para fazer requisições.
+  All API v1 endpoints require authentication. You will need a valid API Key to make requests.
 </Note>
 
-## Obtendo uma API Key
+## Getting an API Key
 
 <Steps>
-  <Step title="Acesse o Dashboard">
-    Faça login em [dashboard.monkei.com](https://dashboard.monkei.com)
+  <Step title="Access the Dashboard">
+    Log in to [app.monkei.co](https://app.monkei.co) and go to **Integrations > API Keys**.
+    
+    ![API Keys Dashboard](/images/api_key_stat.png)
   </Step>
-  <Step title="Vá para API Keys">
-    Navegue para **Configurações > API Keys**
+  <Step title="Create a new key">
+    Click on **"New API Key"**, choose the environment (Production or Test) and give it a name.
+    
+    ![Create API Key Modal](/images/api_key_modal.png)
   </Step>
-  <Step title="Crie uma nova chave">
-    Clique em **"Nova API Key"** e escolha o ambiente
-  </Step>
-  <Step title="Copie a chave">
-    **Importante**: A chave só é exibida uma vez!
+  <Step title="Copy the key">
+    **Important**: The key is shown only once! Copy it and store it securely.
+    
+    ![API Key Created](/images/api_key_created.png)
   </Step>
 </Steps>
 
-## Usando a API Key
+## Using the API Key
 
-### Header Authorization
+### Authorization Header
 
-Inclua sua API Key no header `Authorization` de todas as requisições:
+Include your API Key in the `Authorization` header of all requests:
 
 ```bash
 curl -H "Authorization: Bearer sk_live_1234567890abcdef" \
      https://api.monkei.com/api/v1/transactions/payments
 ```
 
-### Exemplo com JavaScript
+### JavaScript Example
 
 ```javascript
 const response = await fetch('https://api.monkei.com/api/v1/transactions/payments', {
@@ -52,67 +55,67 @@ const response = await fetch('https://api.monkei.com/api/v1/transactions/payment
   },
   body: JSON.stringify({
     amount_in_brl: 10050,
-    description: 'Pagamento de produto XYZ',
+    description: 'Payment for product XYZ',
     idempotency_key: 'pix_123456789'
   })
 });
 ```
 
-## Ambientes
+## Environments
 
 <CardGroup cols={2}>
-  <Card title="Produção" icon="server">
-    `sk_live_...` - Para uso em produção
+  <Card title="Production" icon="server">
+    `sk_live_...` - For production use
   </Card>
-  <Card title="Teste" icon="flask">
-    `sk_test_...` - Para desenvolvimento e testes
+  <Card title="Test" icon="flask">
+    `sk_test_...` - For development and testing
   </Card>
 </CardGroup>
 
-## Códigos de Erro de Autenticação
+## Authentication Error Codes
 
 <CardGroup cols={2}>
   <Card title="401 Unauthorized">
-    - Token inválido ou expirado
-    - Chave de API incorreta
-    - Token revogado
+    - Invalid or expired token
+    - Incorrect API Key
+    - Revoked token
   </Card>
   <Card title="403 Forbidden">
-    - Token válido mas sem permissão
-    - Acesso negado ao recurso
-    - Limite de rate excedido
+    - Valid token but no permission
+    - Access denied to resource
+    - Rate limit exceeded
   </Card>
 </CardGroup>
 
-## Segurança
+## Security
 
 <Warning>
-  **Nunca exponha suas chaves de API** em código frontend ou repositórios públicos.
+  **Never expose your API keys** in frontend code or public repositories.
 </Warning>
 
-### Boas Práticas
+### Best Practices
 
 <AccordionGroup>
-  <Accordion title="Armazenamento Seguro">
-    - Armazene chaves em variáveis de ambiente
-    - Use serviços de gerenciamento de segredos em produção
-    - Nunca commite chaves no controle de versão
+  <Accordion title="Secure Storage">
+    - Store keys in environment variables
+    - Use secret management services in production
+    - Never commit keys to version control
   </Accordion>
   
-  <Accordion title="Rotação de Chaves">
-    - Rotacione chaves regularmente
-    - Monitore uso das chaves
-    - Revogue chaves comprometidas imediatamente
+  <Accordion title="Key Rotation">
+    - Rotate keys regularly
+    - Monitor key usage
+    - Revoke compromised keys immediately
   </Accordion>
   
-  <Accordion title="HTTPS Obrigatório">
-    - Sempre use HTTPS em produção
-    - Valide certificados SSL
-    - Use TLS 1.2 ou superior
+  <Accordion title="Mandatory HTTPS">
+    - Always use HTTPS in production
+    - Validate SSL certificates
+    - Use TLS 1.2 or higher
   </Accordion>
 </AccordionGroup>
 
-## Exemplos de Implementação
+## Implementation Examples
 
 ### Node.js
 

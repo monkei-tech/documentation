@@ -1,0 +1,101 @@
+---
+title: "Accounts Overview"
+description: "Learn how to manage your Monkei account and check balances"
+---
+
+# Accounts Overview
+
+The Accounts API allows you to query detailed information about your account, including balances by ledger type, account status, and configured payment methods.
+
+## What is an Account?
+
+Your Monkei account represents your business or personal account in the platform. It holds your balances, tracks transactions, and manages your payment settings.
+
+<Note>
+  Account balance endpoints are available for both public API and internal dashboard. The API version has more restricted authentication while the dashboard allows greater flexibility.
+</Note>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Multiple Ledgers" icon="book">
+    <ul>
+      <li>Total balance by ledger type</li>
+      <li>Available balance for use</li>
+      <li>Blocked/hold balance</li>
+      <li>Different currencies supported</li>
+    </ul>
+  </Card>
+  <Card title="Smart Caching" icon="timer">
+    <ul>
+      <li>30-minute cache by default</li>
+      <li>Forced refresh available</li>
+      <li>Cache per user and ledger</li>
+      <li>Performance optimization</li>
+    </ul>
+  </Card>
+  <Card title="Real-time Updates" icon="sync">
+    <ul>
+      <li>Force refresh option</li>
+      <li>Cache invalidation</li>
+      <li>Live balance queries</li>
+    </ul>
+  </Card>
+  <Card title="Multi-Currency" icon="coins">
+    <ul>
+      <li>BRL (Brazilian Real)</li>
+      <li>USDT (Tether)</li>
+      <li>BTC (Bitcoin)</li>
+    </ul>
+  </Card>
+</CardGroup>
+
+## Supported Ledger Types
+
+| Ledger Type | Description | Currency |
+|-------------|-------------|----------|
+| `BRL_AVAILABLE` | Brazilian Real balance | BRL |
+| `USDT_AVAILABLE` | USDT balance | USD |
+| `BTC_AVAILABLE` | Bitcoin balance | USD |
+
+## Balance Information
+
+Each ledger provides three balance values:
+
+- **Total**: Complete balance in the ledger
+- **Available**: Balance available for use (withdrawals, payments)
+- **Hold**: Balance blocked or pending (pending transactions, holds)
+
+## Use Cases
+
+- **Balance Monitoring**: Check available funds before creating payments or withdrawals
+- **Financial Reporting**: Track balances across different currencies
+- **Transaction Planning**: Verify sufficient balance for operations
+- **Account Management**: Monitor account status and health
+
+## Getting Started
+
+<Steps>
+  <Step title="Check Balance">
+    Use the <a href="/balance">Account Balance</a> endpoint to query your current balances.
+  </Step>
+  <Step title="Force Refresh">
+    Use the `refresh=true` parameter to get real-time balance data, bypassing cache.
+  </Step>
+  <Step title="Monitor Changes">
+    Balance updates automatically as transactions are processed. Use webhooks for real-time notifications.
+  </Step>
+</Steps>
+
+## Next Steps
+
+- <a href="/balance">Account Balance</a> - Query your account balances
+- <a href="/limits">Limits</a> - Check your account limits
+- <a href="/transactions/overview">Transactions Overview</a> - Learn about payments
+- <a href="/withdrawals/overview">Withdrawals Overview</a> - Learn about withdrawals
+
+## Related Resources
+
+- <a href="/transactions/check-status">Check Transaction Status</a> - Monitor transaction status
+- <a href="/essentials/webhooks">Webhooks</a> - Receive balance update notifications
+- <a href="/api-reference/accounts/balance">API Reference</a> - Complete API documentation

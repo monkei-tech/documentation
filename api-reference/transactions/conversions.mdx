@@ -1,0 +1,560 @@
+---
+title: "Conversions"
+description: "Conversões entre moedas fiduciárias e criptomoedas"
+---
+
+# Conversions
+
+A API de Conversions permite converter valores entre moedas fiduciárias (BRL, USD) e criptomoedas (BTC, ETH, USDT), suportando múltiplas direções de conversão com taxas atualizadas em tempo real.
+
+## Visão Geral
+
+<Note>
+  As conversões utilizam as cotações mais recentes disponíveis e incluem taxas de plataforma configuráveis. O sistema suporta conversões bidirecionais entre todos os pares suportados.
+</Note>
+
+## Pares de Conversão Suportados
+
+<CardGroup cols={2}>
+  <Card title="Fiat → Crypto" icon="arrow-right">
+    <ul>
+      <li>BRL → BTC</li>
+      <li>BRL → ETH</li>
+      <li>BRL → USDT</li>
+      <li>USD → BTC</li>
+      <li>USD → ETH</li>
+      <li>USD → USDT</li>
+    </ul>
+  </Card>
+  <Card title="Crypto → Fiat" icon="arrow-left">
+    <ul>
+      <li>BTC → BRL</li>
+      <li>ETH → BRL</li>
+      <li>USDT → BRL</li>
+      <li>BTC → USD</li>
+      <li>ETH → USD</li>
+      <li>USDT → USD</li>
+    </ul>
+  </Card>
+</CardGroup>
+
+## Endpoint
+
+### Criar Conversão
+Cria uma nova transação de conversão entre duas moedas.
+
+```http
+POST /api/v1/transactions/conversions
+```
+
+#### Request
+
+<Request>
+  <Title>ConversionTransactionRequest</Title>
+  ```json
+  {
+    "amount_in_brl": 1000.00,
+    "amount_in_crypto": null,
+    "expires_in": 3600,
+    "description": "Conversão BRL para BTC",
+    "idempotency_key": "conversion_123456789",
+    "source_currency": "BRL",
+    "target_currency": "BTC"
+  }
+  ```
+</Request>
+
+#### Parâmetros
+
+| Campo | Tipo | Obrigatório | Validação | Descrição |
+|-------|------|-------------|-----------|-----------|
+| `amount_in_brl` | decimal | ⚠️¹ | `min=7.00` | Valor em reais (obrigatório se source/target for BRL) |
+| `amount_in_crypto` | decimal | ⚠️¹ | `min=0.00001` | Valor em cripto (obrigatório se source/target for crypto) |
+| `expires_in` | integer | ✅ | `min=120` | Expiração em segundos (mín: 2min) |
+| `description` | string | ❌ | - | Descrição da conversão |
+| `idempotency_key` | string | ✅ | - | Chave de idempotência |
+| `source_currency` | string | ✅ | Enum | Moeda de origem |
+| `target_currency` | string | ✅ | Enum | Moeda de destino |
+
+¹ **Um dos dois campos de amount é obrigatório**, dependendo das moedas envolvidas.
+
+#### Valores Permitidos
+
+| Campo | Valores |
+|-------|---------|
+| `source_currency` | `"BRL"`, `"BTC"`, `"ETH"`, `"USDT"` |
+| `target_currency` | `"BRL"`, `"BTC"`, `"ETH"`, `"USDT"` |
+| `source_currency` ≠ `target_currency` | Obrigatório |
+
+<Warning>
+  `source_currency` e `target_currency` devem ser diferentes. Conversões entre a mesma moeda não são permitidas.
+</Warning>
+
+#### Exemplos de Request
+
+**Conversão BRL → BTC (informando amount em BRL):**
+```json
+{
+  "amount_in_brl": 1000.00,
+  "amount_in_crypto": null,
+  "source_currency": "BRL",
+  "target_currency": "BTC",
+  "expires_in": 3600,
+  "idempotency_key": "brl_to_btc_123"
+}
+```
+
+**Conversão BTC → BRL (informando amount em crypto):**
+```json
+{
+  "amount_in_brl": null,
+  "amount_in_crypto": 0.001,
+  "source_currency": "BTC",
+  "target_currency": "BRL",
+  "expires_in": 3600,
+  "idempotency_key": "btc_to_brl_456"
+}
+```
+
+#### Response
+
+<Response>
+  <Title>ConversionTransactionResponse</Title>
+  ```json
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "amount_in_brl": 1000.00,
+    "amount_in_crypto": 0.00123456,
+    "status": "PENDING",
+    "expires_in": 3600,
+    "exchange_rate": 810000.00,
+    "platform_fee": 10.00,
+    "net_amount": 990.00,
+    "created_at": "2024-01-01T12:00:00Z"
+  }
+  ```
+</Response>
+
+#### Campos de Resposta
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `id` | string | UUID único da conversão |
+| `amount_in_brl` | decimal | Valor em reais (se aplicável) |
+| `amount_in_crypto` | decimal | Valor em criptomoeda (se aplicável) |
+| `status` | string | Status da conversão |
+| `expires_in` | integer | Tempo de expiração em segundos |
+| `exchange_rate` | decimal | Taxa de câmbio utilizada |
+| `platform_fee` | decimal | Taxa de plataforma |
+| `net_amount` | decimal | Valor líquido (após taxas) |
+| `created_at` | datetime | Timestamp de criação |
+
+#### Status Codes
+
+| Código | Descrição |
+|--------|-----------|
+| `201` | Conversão criada com sucesso |
+| `200` | Conversão existente retornado (idempotência) |
+| `400` | Requisição inválida ou erro de validação |
+| `401` | Não autorizado |
+| `500` | Erro interno do servidor |
+
+---
+
+## Fluxo de Conversão
+
+### 1. Validação
+
+O sistema valida:
+- Moedas de origem e destino são diferentes
+- Um dos campos de amount está preenchido
+- Valores mínimos são respeitados
+- Taxa de câmbio está disponível
+
+### 2. Cálculo
+
+```
+Se source_currency = "BRL":
+  amount_in_crypto = amount_in_brl / exchange_rate
+  platform_fee = amount_in_brl * fee_rate
+  net_amount = amount_in_brl - platform_fee
+
+Se source_currency = crypto:
+  amount_in_brl = amount_in_crypto * exchange_rate
+  platform_fee = amount_in_brl * fee_rate
+  net_amount = amount_in_brl - platform_fee
+```
+
+### 3. Processamento
+
+- Transação criada com status `PENDING`
+- QR Code ou endereço gerado (se necessário)
+- Expiração configurada
+- Webhooks disparados
+
+---
+
+## Exemplos de Código
+
+### cURL - Conversão BRL → USDT
+
+```bash
+curl -X POST https://api.monkei.com/api/v1/transactions/conversions \
+  -H "Authorization: Bearer sk_live_1234567890abcdef" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount_in_brl": 500.00,
+    "source_currency": "BRL",
+    "target_currency": "USDT",
+    "expires_in": 3600,
+    "description": "Compra de USDT",
+    "idempotency_key": "brl_to_usdt_' $(date +%s) '"
+  }'
+```
+
+### JavaScript - Conversão Genérica
+
+```javascript
+class ConversionAPI {
+  constructor(apiKey) {
+    this.apiKey = apiKey;
+    this.baseURL = 'https://api.monkei.com/api/v1/transactions/conversions';
+  }
+
+  async createConversion(sourceCurrency, targetCurrency, amount, isFiatAmount = true) {
+    const payload = {
+      idempotency_key: `conversion_${Date.now()}`,
+      expires_in: 3600,
+      source_currency: sourceCurrency,
+      target_currency: targetCurrency
+    };
+
+    if (isFiatAmount) {
+      payload.amount_in_brl = amount;
+      payload.amount_in_crypto = null;
+    } else {
+      payload.amount_in_brl = null;
+      payload.amount_in_crypto = amount;
+    }
+
+    const response = await fetch(this.baseURL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  async estimateConversion(sourceCurrency, targetCurrency, amount, isFiatAmount = true) {
+    try {
+      const conversion = await this.createConversion(sourceCurrency, targetCurrency, amount, isFiatAmount);
+
+      return {
+        estimatedAmount: isFiatAmount ? conversion.amount_in_crypto : conversion.amount_in_brl,
+        exchangeRate: conversion.exchange_rate,
+        platformFee: conversion.platform_fee,
+        netAmount: conversion.net_amount
+      };
+    } catch (error) {
+      console.error('Erro na conversão:', error);
+      throw error;
+    }
+  }
+}
+
+// Uso
+const api = new ConversionAPI('sk_live_1234567890abcdef');
+
+// Estimar conversão BRL → BTC
+const estimate = await api.estimateConversion('BRL', 'BTC', 1000, true);
+console.log(`R$ 1000.00 ≈ ${estimate.estimatedAmount} BTC`);
+console.log(`Taxa: ${estimate.platformFee} (${(estimate.platformFee / 1000 * 100).toFixed(2)}%)`);
+console.log(`Valor líquido: R$ ${estimate.netAmount}`);
+
+// Criar conversão BTC → BRL
+const conversion = await api.createConversion('BTC', 'BRL', 0.001, false);
+console.log(`ID da conversão: ${conversion.id}`);
+console.log(`Status: ${conversion.status}`);
+```
+
+### Python - Conversor de Moedas
+
+```python
+import requests
+from decimal import Decimal
+from typing import Optional, Tuple
+
+class CurrencyConverter:
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        self.base_url = "https://api.monkei.com/api/v1/transactions/conversions"
+        self.headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        }
+
+    def create_conversion(
+        self,
+        source_currency: str,
+        target_currency: str,
+        amount: Decimal,
+        is_fiat_amount: bool = True,
+        description: Optional[str] = None
+    ) -> dict:
+        """Cria uma conversão entre moedas"""
+
+        payload = {
+            'idempotency_key': f'conversion_{int(time.time())}',
+            'expires_in': 3600,
+            'source_currency': source_currency,
+            'target_currency': target_currency
+        }
+
+        if is_fiat_amount:
+            payload['amount_in_brl'] = float(amount)
+            payload['amount_in_crypto'] = None
+        else:
+            payload['amount_in_brl'] = None
+            payload['amount_in_crypto'] = float(amount)
+
+        if description:
+            payload['description'] = description
+
+        response = requests.post(
+            self.base_url,
+            headers=self.headers,
+            json=payload
+        )
+
+        if response.status_code == 201:
+            return response.json()
+        else:
+            raise Exception(f'Erro na conversão: {response.status_code} - {response.text}')
+
+    def calculate_conversion(
+        self,
+        source_currency: str,
+        target_currency: str,
+        amount: Decimal,
+        is_fiat_amount: bool = True
+    ) -> Tuple[Decimal, Decimal, Decimal]:
+        """Calcula conversão sem executar transação"""
+
+        try:
+            conversion = self.create_conversion(
+                source_currency, target_currency, amount, is_fiat_amount
+            )
+
+            if is_fiat_amount:
+                converted_amount = Decimal(str(conversion['amount_in_crypto']))
+            else:
+                converted_amount = Decimal(str(conversion['amount_in_brl']))
+
+            exchange_rate = Decimal(str(conversion['exchange_rate']))
+            platform_fee = Decimal(str(conversion['platform_fee']))
+
+            return converted_amount, exchange_rate, platform_fee
+
+        except Exception as e:
+            raise Exception(f'Falha no cálculo: {str(e)}')
+
+    def get_best_rate(
+        self,
+        source_currency: str,
+        target_currency: str,
+        amount: Decimal
+    ) -> dict:
+        """Compara taxas entre diferentes fontes"""
+
+        # Para este exemplo, vamos simular múltiplas tentativas
+        # Em um ambiente real, você implementaria lógica de fallback
+
+        try:
+            conversion = self.create_conversion(source_currency, target_currency, amount)
+
+            return {
+                'source': 'monkei',
+                'rate': Decimal(str(conversion['exchange_rate'])),
+                'fee': Decimal(str(conversion['platform_fee'])),
+                'converted_amount': Decimal(str(conversion['amount_in_crypto'] if amount > 0 else conversion['amount_in_brl'])),
+                'total_cost': amount if source_currency in ['BRL', 'USD'] else Decimal(str(conversion['amount_in_brl']))
+            }
+
+        except Exception as e:
+            print(f"Erro ao obter taxa: {e}")
+            return {}
+
+# Uso
+converter = CurrencyConverter('sk_live_1234567890abcdef')
+
+# Calcular conversão BRL → ETH
+amount_brl = Decimal('1000.00')
+eth_amount, rate, fee = converter.calculate_conversion('BRL', 'ETH', amount_brl)
+
+print(f"R$ {amount_brl} → {eth_amount:.6f} ETH")
+print(f"Taxa: 1 ETH = R$ {rate:.2f}")
+print(f"Taxa de plataforma: R$ {fee:.2f}")
+
+# Comparar múltiplas conversões
+pairs = [
+    ('BRL', 'BTC'),
+    ('BRL', 'ETH'),
+    ('BRL', 'USDT'),
+    ('USD', 'BTC'),
+    ('USD', 'ETH')
+]
+
+for source, target in pairs:
+    try:
+        converted, rate, fee = converter.calculate_conversion(source, target, Decimal('1000.00'))
+        print(f"{source} → {target}: 1000 = {converted:.6f} (taxa: {fee})")
+    except Exception as e:
+        print(f"Erro em {source} → {target}: {e}")
+```
+
+---
+
+## Rate Limiting
+
+| Endpoint | Limite | Período |
+|----------|--------|---------|
+| `POST /transactions/conversions` | 100 requests | por minuto |
+
+Headers retornados:
+```http
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 99
+X-RateLimit-Reset: 1640995200
+```
+
+---
+
+## Tratamento de Erros
+
+### Estrutura de Erro
+
+```json
+{
+  "error": "INVALID_CURRENCY_PAIR",
+  "message": "Par de moedas não suportado: DOGE → BRL",
+  "details": "Supported currencies: BRL, USD, BTC, ETH, USDT",
+  "code": 400,
+  "operation": "conversion.CreateConversion"
+}
+```
+
+### Erros Comuns
+
+| Código | Descrição | Solução |
+|--------|-----------|---------|
+| `INVALID_CURRENCY_PAIR` | Par não suportado | Use moedas permitidas |
+| `INSUFFICIENT_AMOUNT` | Valor abaixo do mínimo | Verifique valores mínimos |
+| `SAME_CURRENCY` | Mesma moeda em origem/destino | Use moedas diferentes |
+| `RATE_NOT_AVAILABLE` | Taxa não disponível | Tente novamente |
+| `CONVERSION_FAILED` | Falha na conversão | Verifique parâmetros |
+
+---
+
+## Webhooks
+
+<Info>
+  Configure webhooks para receber notificações sobre eventos de conversão.
+</Info>
+
+### Eventos de Conversão
+
+- `CONVERSION_CREATED` - Conversão criada
+- `CONVERSION_COMPLETED` - Conversão concluída
+- `CONVERSION_FAILED` - Falha na conversão
+- `CONVERSION_EXPIRED` - Conversão expirou
+
+### Payload de Exemplo
+
+```json
+{
+  "event": "CONVERSION_COMPLETED",
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "source_currency": "BRL",
+    "target_currency": "BTC",
+    "amount_in_brl": 1000.00,
+    "amount_in_crypto": 0.00123456,
+    "exchange_rate": 810000.00,
+    "platform_fee": 10.00,
+    "completed_at": "2024-01-01T12:30:00Z"
+  },
+  "timestamp": "2024-01-01T12:30:00Z"
+}
+```
+
+---
+
+## Melhores Práticas
+
+### 1. Validação Prévia
+
+```javascript
+function validateConversion(source, target, amount) {
+  if (source === target) {
+    throw new Error('Moedas de origem e destino devem ser diferentes');
+  }
+
+  const supportedCurrencies = ['BRL', 'USD', 'BTC', 'ETH', 'USDT'];
+  if (!supportedCurrencies.includes(source) || !supportedCurrencies.includes(target)) {
+    throw new Error('Moeda não suportada');
+  }
+
+  if (amount <= 0) {
+    throw new Error('Valor deve ser positivo');
+  }
+}
+```
+
+### 2. Estimativas Antes da Conversão
+
+```javascript
+async function getConversionEstimate(source, target, amount) {
+  // Chamar endpoint de quotes para obter taxa atual
+  const quote = await getQuote(
+    target in ['BRL', 'USD'] ? source : target,
+    target in ['BRL', 'USD'] ? target : source
+  );
+
+  const estimatedAmount = calculateEstimatedAmount(
+    source, target, amount, quote.exchange_rate
+  );
+
+  return {
+    estimatedAmount,
+    exchangeRate: quote.exchange_rate,
+    timeUntilExpiration: quote.time_until_expiration
+  };
+}
+```
+
+### 3. Retry Inteligente
+
+```javascript
+async function createConversionWithRetry(source, target, amount, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await createConversion(source, target, amount);
+    } catch (error) {
+      if (error.code === 'RATE_NOT_AVAILABLE' && attempt < maxRetries) {
+        console.log(`Tentativa ${attempt} falhou, aguardando...`);
+        await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+```

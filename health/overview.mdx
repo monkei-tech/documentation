@@ -1,0 +1,77 @@
+---
+title: "Health Overview"
+description: "Monitor system health and API availability"
+---
+
+# Health Overview
+
+The Health API allows you to monitor the system status and verify that the Monkei API is operational and responding to requests.
+
+## What is Health Check?
+
+Health checks provide a simple way to verify that the Monkei API is operational. This is essential for monitoring systems, load balancers, and automated health checks.
+
+<Note>
+  Health checks are public endpoints that don't require authentication. They're designed to be lightweight and fast, returning a simple response.
+</Note>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="System Health" icon="heartbeat">
+    <ul>
+      <li>Real-time system status</li>
+      <li>No authentication required</li>
+      <li>Simple OK/Not OK response</li>
+      <li>Perfect for monitoring</li>
+    </ul>
+  </Card>
+  <Card title="Monitoring Integration" icon="chart-line">
+    <ul>
+      <li>Load balancer health checks</li>
+      <li>Uptime monitoring</li>
+      <li>Automated alerts</li>
+      <li>CI/CD pipeline checks</li>
+    </ul>
+  </Card>
+  <Card title="Simple & Fast" icon="bolt">
+    <ul>
+      <li>Lightweight endpoint</li>
+      <li>No authentication required</li>
+      <li>Instant response</li>
+      <li>Minimal resource usage</li>
+    </ul>
+  </Card>
+</CardGroup>
+
+## Use Cases
+
+- **System Monitoring**: Check API availability before making requests
+- **Load Balancer Health Checks**: Configure load balancers to route traffic based on health status
+- **Uptime Monitoring**: Set up monitoring systems to alert when the API is down
+- **CI/CD Pipelines**: Verify API health in deployment pipelines
+
+## Getting Started
+
+<Steps>
+  <Step title="Check System Health">
+    Use the <a href="/health/health">Health Check</a> endpoint to verify the API is operational.
+  </Step>
+  <Step title="Set Up Monitoring">
+    Configure your monitoring system to poll the health endpoint periodically.
+  </Step>
+  <Step title="Configure Alerts">
+    Set up alerts to notify you when the health check fails.
+  </Step>
+</Steps>
+
+## Next Steps
+
+- <a href="/health/health">Health Check</a> - Learn how to use the health check endpoint
+- <a href="/accounts/overview">Accounts Overview</a> - Manage your account
+- <a href="/transactions/overview">Transactions Overview</a> - Learn about payments
+
+## Related Resources
+
+- <a href="/accounts/overview">Accounts Overview</a> - Manage your account
+- <a href="/accounts/balance">Account Balance</a> - Check your account balance

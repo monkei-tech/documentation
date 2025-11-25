@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Monkei Gateway API v1",
+    "title": "Monkei",
     "description": "API principal para integração com o sistema de pagamentos e transações cripto do Monkei Gateway",
     "version": "1.0.0",
     "contact": {
@@ -14,7 +14,7 @@
   },
   "servers": [
     {
-      "url": "https://api.monkei.com",
+      "url": "https://api.monkei.co",
       "description": "Production server"
     },
     {

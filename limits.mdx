@@ -1,0 +1,329 @@
+---
+title: "Limits"
+description: "Check your account limits and remaining amounts"
+---
+
+# Limits
+
+Retrieve information about your account's daily and monthly limits, including how much you've used and how much remains available.
+
+## Endpoint
+
+```http
+GET /api/dashboard/v1/limit-configurations/daily-limits
+```
+
+## Overview
+
+The limits endpoint provides detailed information about your account's usage limits. This includes daily and monthly limits for withdrawals and deposits, showing both the total limit amount and how much you've already used.
+
+<Info>
+  Limits are automatically reset daily or monthly based on the limit type. Check the `reset_date` field to know when limits will reset.
+</Info>
+
+## Query Parameters
+
+| Parameter | Type | Required | Description | Values |
+|-----------|------|----------|-------------|--------|
+| `account_id` | string | ✅ | Account ID (UUID) | Valid UUID |
+| `limit_type` | string | ❌ | Filter by limit type | See Limit Types below |
+| `limit_configuration_id` | string | ❌ | Filter by configuration ID | UUID |
+| `is_active` | boolean | ❌ | Filter only active limits | `true`, `false` |
+| `reset_date_from` | string | ❌ | Filter from reset date | ISO 8601 format |
+| `reset_date_to` | string | ❌ | Filter to reset date | ISO 8601 format |
+
+## Limit Types
+
+| Limit Type | Description |
+|------------|-------------|
+| `WITHDRAW_DAILY` | Daily withdrawal limit |
+| `WITHDRAW_MONTHLY` | Monthly withdrawal limit |
+| `DEPOSIT_DAILY` | Daily deposit limit |
+| `DEPOSIT_MONTHLY` | Monthly deposit limit |
+| `WITHDRAW_USDT_DAILY` | Daily USDT withdrawal limit |
+| `WITHDRAW_BTC_DAILY` | Daily BTC withdrawal limit |
+| `DEPOSIT_BTC_DAILY` | Daily BTC deposit limit |
+
+## Response
+
+<Response>
+  <Title>DailyLimitsResponse</Title>
+  ```json
+  {
+    "daily_limits": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "account_id": "550e8400-e29b-41d4-a716-446655440000",
+        "limit_type": "WITHDRAW_DAILY",
+        "limit_configuration_id": "550e8400-e29b-41d4-a716-446655440000",
+        "amount": "1000.00",
+        "used_amount": "250.50",
+        "remaining_amount": "749.50",
+        "reset_date": "2024-01-02T00:00:00Z",
+        "is_active": true,
+        "created_at": "2024-01-01T00:00:00Z",
+        "updated_at": "2024-01-01T12:30:00Z"
+      },
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440001",
+        "account_id": "550e8400-e29b-41d4-a716-446655440000",
+        "limit_type": "WITHDRAW_MONTHLY",
+        "limit_configuration_id": "550e8400-e29b-41d4-a716-446655440001",
+        "amount": "30000.00",
+        "used_amount": "5000.00",
+        "remaining_amount": "25000.00",
+        "reset_date": "2024-02-01T00:00:00Z",
+        "is_active": true,
+        "created_at": "2024-01-01T00:00:00Z",
+        "updated_at": "2024-01-15T10:20:00Z"
+      }
+    ],
+    "total": 2
+  }
+  ```
+</Response>
+
+## Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `daily_limits` | array | Array of daily limit objects |
+| `total` | integer | Total number of limits found |
+
+### Daily Limit Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique limit identifier (UUID) |
+| `account_id` | string | Account ID that owns this limit |
+| `limit_type` | string | Type of limit (see Limit Types above) |
+| `limit_configuration_id` | string | Associated limit configuration ID |
+| `amount` | decimal | Total limit amount |
+| `used_amount` | decimal | Amount already used |
+| `remaining_amount` | decimal | Amount remaining (amount - used_amount) |
+| `reset_date` | string | Date when the limit will reset (ISO 8601) |
+| `is_active` | boolean | Whether the limit is currently active |
+| `created_at` | string | Limit creation timestamp |
+| `updated_at` | string | Last update timestamp |
+
+## Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | Limits retrieved successfully |
+| `400` | Bad request - invalid parameters |
+| `401` | Unauthorized |
+| `500` | Internal server error |
+
+## Examples
+
+### cURL
+
+```bash
+curl -X GET "https://api.monkei.com/api/dashboard/v1/limit-configurations/daily-limits?account_id=550e8400-e29b-41d4-a716-446655440000" \
+  -H "Authorization: Bearer sk_live_1234567890abcdef"
+```
+
+### JavaScript
+
+```javascript
+async function getLimits(accountId, limitType = null) {
+  const params = new URLSearchParams({
+    account_id: accountId
+  });
+  
+  if (limitType) {
+    params.append('limit_type', limitType);
+  }
+
+  const response = await fetch(
+    `https://api.monkei.com/api/dashboard/v1/limit-configurations/daily-limits?${params}`,
+    {
+      headers: {
+        'Authorization': 'Bearer sk_live_1234567890abcdef'
+      }
+    }
+  );
+
+  const data = await response.json();
+  return data.daily_limits;
+}
+
+// Get all limits
+const limits = await getLimits('550e8400-e29b-41d4-a716-446655440000');
+
+// Get only withdrawal limits
+const withdrawLimits = await getLimits(
+  '550e8400-e29b-41d4-a716-446655440000',
+  'WITHDRAW_DAILY'
+);
+
+// Check remaining amount
+const dailyWithdraw = withdrawLimits.find(l => l.limit_type === 'WITHDRAW_DAILY');
+console.log(`Remaining: $${dailyWithdraw.remaining_amount} of $${dailyWithdraw.amount}`);
+```
+
+### Python
+
+```python
+import requests
+
+def get_limits(account_id, limit_type=None):
+    headers = {
+        'Authorization': 'Bearer sk_live_1234567890abcdef'
+    }
+    
+    params = {
+        'account_id': account_id
+    }
+    
+    if limit_type:
+        params['limit_type'] = limit_type
+    
+    response = requests.get(
+        'https://api.monkei.com/api/dashboard/v1/limit-configurations/daily-limits',
+        headers=headers,
+        params=params
+    )
+    
+    return response.json()['daily_limits']
+
+# Get all limits
+limits = get_limits('550e8400-e29b-41d4-a716-446655440000')
+
+# Get only withdrawal limits
+withdraw_limits = get_limits(
+    '550e8400-e29b-41d4-a716-446655440000',
+    'WITHDRAW_DAILY'
+)
+
+# Check remaining amount
+daily_withdraw = next(
+    (l for l in withdraw_limits if l['limit_type'] == 'WITHDRAW_DAILY'),
+    None
+)
+if daily_withdraw:
+    print(f"Remaining: ${daily_withdraw['remaining_amount']} of ${daily_withdraw['amount']}")
+```
+
+## Understanding Limits
+
+### Limit Calculation
+
+The remaining amount is calculated as:
+
+```
+remaining_amount = amount - used_amount
+```
+
+### Limit Reset
+
+Limits automatically reset based on their type:
+
+- **Daily Limits**: Reset at midnight UTC each day
+- **Monthly Limits**: Reset on the first day of each month at midnight UTC
+
+The `reset_date` field shows when the next reset will occur.
+
+### Usage Tracking
+
+When you perform operations (withdrawals, deposits), the `used_amount` is automatically updated, and `remaining_amount` decreases accordingly.
+
+<Warning>
+  If `remaining_amount` is less than the amount you want to withdraw, the operation will be rejected. Always check your limits before creating withdrawals.
+</Warning>
+
+## Filtering Limits
+
+### By Limit Type
+
+Get only specific limit types:
+
+```javascript
+// Get only daily withdrawal limits
+const dailyWithdrawLimits = await getLimits(accountId, 'WITHDRAW_DAILY');
+
+// Get only monthly limits
+const monthlyLimits = await getLimits(accountId, 'WITHDRAW_MONTHLY');
+```
+
+### By Active Status
+
+Filter only active limits:
+
+```http
+GET /api/dashboard/v1/limit-configurations/daily-limits?account_id={id}&is_active=true
+```
+
+## Use Cases
+
+### Check Before Withdrawal
+
+```javascript
+async function canWithdraw(accountId, amount) {
+  const limits = await getLimits(accountId, 'WITHDRAW_DAILY');
+  const dailyLimit = limits.find(l => l.limit_type === 'WITHDRAW_DAILY');
+  
+  if (!dailyLimit) {
+    return { canWithdraw: false, reason: 'No limit configured' };
+  }
+  
+  if (parseFloat(dailyLimit.remaining_amount) >= amount) {
+    return { canWithdraw: true, remaining: dailyLimit.remaining_amount };
+  } else {
+    return {
+      canWithdraw: false,
+      reason: 'Insufficient limit',
+      remaining: dailyLimit.remaining_amount,
+      needed: amount
+    };
+  }
+}
+
+// Check before withdrawal
+const check = await canWithdraw(accountId, 500);
+if (check.canWithdraw) {
+  // Proceed with withdrawal
+} else {
+  console.log(`Cannot withdraw: ${check.reason}`);
+}
+```
+
+### Monitor Limit Usage
+
+```javascript
+async function getLimitUsage(accountId) {
+  const limits = await getLimits(accountId);
+  
+  return limits.map(limit => ({
+    type: limit.limit_type,
+    total: parseFloat(limit.amount),
+    used: parseFloat(limit.used_amount),
+    remaining: parseFloat(limit.remaining_amount),
+    usagePercent: (parseFloat(limit.used_amount) / parseFloat(limit.amount)) * 100,
+    resetDate: limit.reset_date
+  }));
+}
+
+// Get usage summary
+const usage = await getLimitUsage(accountId);
+usage.forEach(u => {
+  console.log(`${u.type}: ${u.usagePercent.toFixed(2)}% used (${u.remaining} remaining)`);
+});
+```
+
+## Error Handling
+
+### Common Errors
+
+| Code | Description | Solution |
+|------|-------------|----------|
+| `VALIDATION_ERROR` | Invalid account ID | Verify the account ID format |
+| `UNAUTHORIZED` | Missing or invalid token | Check your authentication token |
+| `LIMIT_NOT_FOUND` | No limits configured | Contact support to set up limits |
+
+## Next Steps
+
+- <a href="/balance">Account Balance</a> - Check your account balance
+- <a href="/withdrawals/create">Create Withdrawal</a> - Create withdrawals within limits
+- <a href="/withdrawals/overview">Withdrawals Overview</a> - Learn about withdrawal limits

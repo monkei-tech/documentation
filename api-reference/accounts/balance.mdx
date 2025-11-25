@@ -1,0 +1,679 @@
+---
+title: "Account Balance"
+description: "Consulta de saldos e dados da conta"
+---
+
+# Account Balance
+
+A API de Account Balance permite consultar informações detalhadas da conta do usuário, incluindo saldos por tipo de ledger, status da conta e métodos de pagamento configurados.
+
+## Visão Geral
+
+<Note>
+  Os endpoints de balance estão disponíveis tanto para API pública quanto para dashboard interno. A versão API possui autenticação mais restrita enquanto a dashboard permite maior flexibilidade.
+</Note>
+
+## Características
+
+<CardGroup cols={2}>
+  <Card title="Múltiplos Ledgers" icon="book">
+    <ul>
+      <li>Saldo total por tipo de ledger</li>
+      <li>Saldo disponível para uso</li>
+      <li>Saldo bloqueado/hold</li>
+      <li>Diferentes moedas suportadas</li>
+    </ul>
+  </Card>
+  <Card title="Cache Inteligente" icon="timer">
+    <ul>
+      <li>Cache de 30 minutos por padrão</li>
+      <li>Forced refresh disponível</li>
+      <li>Cache por usuário e ledger</li>
+      <li>Otimização de performance</li>
+    </ul>
+  </Card>
+</CardGroup>
+
+## Endpoints
+
+### Consultar Saldo (API Pública)
+Consulta os saldos da conta através da API pública com autenticação de API Key.
+
+```http
+GET /api/v1/accounts/balance
+```
+
+#### Query Parameters
+
+| Parâmetro | Tipo | Obrigatório | Descrição | Valor |
+|-----------|------|-------------|-----------|-------|
+| `refresh` | boolean | ❌ | Forçar atualização do cache | `true`, `false` |
+
+<Info>
+  O parâmetro `refresh=true` força a busca de dados em tempo real, ignorando o cache de 30 minutos.
+</Info>
+
+#### Response
+
+<Response>
+  <Title>AccountBalanceResponse</Title>
+  ```json
+  {
+    "accountNumber": "1234567890",
+    "isActive": true,
+    "balances": {
+      "BRL_AVAILABLE": {
+        "total": "10000.50",
+        "available": "9500.00",
+        "hold": "500.50"
+      },
+      "USDT_AVAILABLE": {
+        "total": "5000.00",
+        "available": "4850.00",
+        "hold": "150.00"
+      },
+      "BTC_AVAILABLE": {
+        "total": "0.125",
+        "available": "0.120",
+        "hold": "0.005"
+      }
+    }
+  }
+  ```
+</Response>
+
+#### Campos de Resposta
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `accountNumber` | string | Número da conta |
+| `isActive` | boolean | Status da conta (ativa/inativa) |
+| `balances` | object | Saldos por tipo de ledger |
+| `balances[ledgerType].total` | decimal | Saldo total no ledger |
+| `balances[ledgerType].available` | decimal | Saldo disponível para uso |
+| `balances[ledgerType].hold` | decimal | Saldo bloqueado/pendente |
+
+#### Tipos de Ledger Suportados
+
+| Ledger Type | Descrição | Moeda |
+|-------------|-----------|-------|
+| `BRL_AVAILABLE` | Saldo em Real Brasileiro | BRL |
+| `USDT_AVAILABLE` | Saldo em Tether | USDT |
+| `BTC_AVAILABLE` | Saldo em Bitcoin | BTC |
+| `ETH_AVAILABLE` | Saldo em Ethereum | ETH |
+
+#### Status Codes
+
+| Código | Descrição |
+|--------|-----------|
+| `200` | Saldo consultado com sucesso |
+| `401` | Não autorizado (API Key inválida) |
+| `404` | Conta não encontrada |
+| `500` | Erro interno do servidor |
+
+---
+
+
+
+---
+
+## Exemplos de Código
+
+### cURL - Consultar Saldo API
+
+```bash
+# Consultar saldo com cache
+curl -H "Authorization: Bearer sk_live_1234567890abcdef" \
+  "https://api.monkei.com/api/v1/accounts/balance"
+
+# Forçar atualização do cache
+curl -H "Authorization: Bearer sk_live_1234567890abcdef" \
+  "https://api.monkei.com/api/v1/accounts/balance?refresh=true"
+```
+
+### JavaScript - Account Balance Service
+
+```javascript
+class AccountBalanceService {
+  constructor(apiKey) {
+    this.apiKey = apiKey;
+    this.baseURL = 'https://api.monkei.com/api/v1/accounts/balance';
+  }
+
+  async getBalance(forceRefresh = false) {
+    const url = new URL(this.baseURL);
+    if (forceRefresh) {
+      url.searchParams.set('refresh', 'true');
+    }
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  async getBalanceByCurrency(currency) {
+    const balance = await this.getBalance();
+    const ledgerType = `${currency}_AVAILABLE`;
+
+    if (!balance.balances[ledgerType]) {
+      throw new Error(`Balance not found for currency: ${currency}`);
+    }
+
+    return {
+      currency,
+      total: balance.balances[ledgerType].total,
+      available: balance.balances[ledgerType].available,
+      hold: balance.balances[ledgerType].hold,
+      availablePercentage: this.calculateAvailablePercentage(
+        balance.balances[ledgerType]
+      )
+    };
+  }
+
+  calculateAvailablePercentage(balance) {
+    const total = parseFloat(balance.total);
+    const available = parseFloat(balance.available);
+
+    if (total === 0) return 0;
+
+    return (available / total) * 100;
+  }
+
+  async getTotalBalanceInBRL(exchangeRates = {}) {
+    const balance = await this.getBalance();
+    const rates = {
+      BRL: 1,
+      USD: exchangeRates.USD || 5.5, // Default rate
+      USDT: exchangeRates.USDT || 5.5,
+      BTC: exchangeRates.BTC || 350000,
+      ETH: exchangeRates.ETH || 20000
+    };
+
+    let totalBRL = 0;
+
+    for (const [ledgerType, ledgerBalance] of Object.entries(balance.balances)) {
+      const currency = ledgerType.replace('_AVAILABLE', '');
+      const rate = rates[currency] || 1;
+      const amount = parseFloat(ledgerBalance.available);
+
+      if (currency === 'BRL') {
+        totalBRL += amount;
+      } else {
+        totalBRL += amount * rate;
+      }
+    }
+
+    return {
+      totalBRL: totalBRL.toFixed(2),
+      breakdown: Object.entries(balance.balances).map(([ledger, balance]) => ({
+        ledger,
+        currency: ledger.replace('_AVAILABLE', ''),
+        amount: balance.available,
+        valueInBRL: currency === 'BRL'
+          ? balance.available
+          : (parseFloat(balance.available) * rates[currency.replace('_AVAILABLE', '')]).toFixed(2)
+      }))
+    };
+  }
+
+  async monitorBalance(callback, interval = 60000) {
+    // Monitoramento contínuo de saldos
+    let previousBalance = null;
+
+    const checkBalance = async () => {
+      try {
+        const currentBalance = await this.getBalance();
+
+        if (previousBalance) {
+          const changes = this.detectBalanceChanges(previousBalance, currentBalance);
+
+          if (changes.length > 0) {
+            callback({
+              timestamp: new Date(),
+              changes,
+              currentBalance
+            });
+          }
+        }
+
+        previousBalance = currentBalance;
+      } catch (error) {
+        console.error('Error monitoring balance:', error);
+      }
+    };
+
+    // Verificação inicial
+    await checkBalance();
+
+    // Configurar intervalo
+    const intervalId = setInterval(checkBalance, interval);
+
+    // Retornar função para parar monitoramento
+    return () => clearInterval(intervalId);
+  }
+
+  detectBalanceChanges(previous, current) {
+    const changes = [];
+
+    for (const ledgerType of Object.keys(current.balances)) {
+      const prevLedger = previous.balances[ledgerType];
+      const currLedger = current.balances[ledgerType];
+
+      if (!prevLedger || !currLedger) continue;
+
+      ['total', 'available', 'hold'].forEach(field => {
+        const prevValue = parseFloat(prevLedger[field]);
+        const currValue = parseFloat(currLedger[field]);
+
+        if (Math.abs(currValue - prevValue) > 0.000001) {
+          changes.push({
+            ledgerType,
+            field,
+            previous: prevLedger[field],
+            current: currLedger[field],
+            change: currValue - prevValue,
+            percentageChange: prevValue === 0 ? 0 : ((currValue - prevValue) / prevValue) * 100
+          });
+        }
+      });
+    }
+
+    return changes;
+  }
+}
+
+// Uso
+const balanceService = new AccountBalanceService('sk_live_1234567890abcdef');
+
+async function demonstrateBalanceService() {
+  try {
+    // Consultar saldo geral
+    const balance = await balanceService.getBalance();
+    console.log('Saldo geral:', balance);
+
+    // Consultar saldo específico
+    const btcBalance = await balanceService.getBalanceByCurrency('BTC');
+    console.log('Saldo BTC:', btcBalance);
+
+    // Calcular total em BRL
+    const totalBRL = await balanceService.getTotalBalanceInBRL({
+      BTC: 350000,
+      USDT: 5.5
+    });
+    console.log('Total em BRL:', totalBRL);
+
+    // Monitorar mudanças de saldo
+    const stopMonitoring = await balanceService.monitorBalance((event) => {
+      console.log('Mudança de saldo detectada:', event);
+    });
+
+    // Parar monitoramento após 5 minutos
+    setTimeout(stopMonitoring, 300000);
+
+  } catch (error) {
+    console.error('Erro:', error);
+  }
+}
+
+demonstrateBalanceService();
+```
+
+### Python - Balance Manager
+
+```python
+import asyncio
+import aiohttp
+import json
+from decimal import Decimal
+from typing import Dict, Optional, List
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+
+@dataclass
+class BalanceInfo:
+    total: Decimal
+    available: Decimal
+    hold: Decimal
+    currency: str
+
+@dataclass
+class BalanceChange:
+    ledger_type: str
+    field: str
+    previous: Decimal
+    current: Decimal
+    change: Decimal
+    percentage_change: float
+    timestamp: datetime
+
+class BalanceManager:
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        self.base_url = "https://api.monkei.com/api/v1/accounts/balance"
+        self.session = None
+        self.last_balance = None
+
+    async def __aenter__(self):
+        self.session = aiohttp.ClientSession()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self.session:
+            await self.session.close()
+
+    async def get_balance(self, force_refresh: bool = False) -> Dict:
+        """Consulta saldo da conta com opção de forçar refresh do cache"""
+        if not self.session:
+            self.session = aiohttp.ClientSession()
+
+        params = {'refresh': 'true'} if force_refresh else {}
+
+        headers = {
+            'Authorization': f'Bearer {self.api_key}',
+            'Content-Type': 'application/json'
+        }
+
+        async with self.session.get(
+            self.base_url,
+            headers=headers,
+            params=params
+        ) as response:
+            if response.status == 200:
+                data = await response.json()
+                return self._parse_balance_response(data)
+            else:
+                error_text = await response.text()
+                raise Exception(f"HTTP {response.status}: {error_text}")
+
+    def _parse_balance_response(self, data: Dict) -> Dict:
+        """Converte response para formato mais amigável"""
+        parsed = {
+            'account_number': data['accountNumber'],
+            'is_active': data['isActive'],
+            'balances': {}
+        }
+
+        for ledger_type, balance_data in data['balances'].items():
+            currency = ledger_type.replace('_AVAILABLE', '')
+
+            parsed['balances'][currency] = BalanceInfo(
+                total=Decimal(balance_data['total']),
+                available=Decimal(balance_data['available']),
+                hold=Decimal(balance_data['hold']),
+                currency=currency
+            )
+
+        return parsed
+
+    async def get_balance_by_currency(self, currency: str) -> Optional[BalanceInfo]:
+        """Retorna saldo para uma moeda específica"""
+        balance = await self.get_balance()
+        return balance['balances'].get(currency.upper())
+
+    async def get_available_balance(self, currency: str) -> Decimal:
+        """Retorna apenas o saldo disponível"""
+        balance_info = await self.get_balance_by_currency(currency)
+        return balance_info.available if balance_info else Decimal('0')
+
+    def calculate_total_value(self, balance: Dict, exchange_rates: Dict[str, float]) -> Dict[str, Decimal]:
+        """Calcula valor total em BRL usando taxas de câmbio"""
+        total_brl = Decimal('0')
+        breakdown = []
+
+        rates = {
+            'BRL': Decimal('1'),
+            'USD': Decimal(str(exchange_rates.get('USD', 5.5))),
+            'USDT': Decimal(str(exchange_rates.get('USDT', 5.5))),
+            'BTC': Decimal(str(exchange_rates.get('BTC', 350000))),
+            'ETH': Decimal(str(exchange_rates.get('ETH', 20000)))
+        }
+
+        for currency, balance_info in balance['balances'].items():
+            if currency == 'BRL':
+                value_brl = balance_info.available
+            else:
+                rate = rates.get(currency, Decimal('1'))
+                value_brl = balance_info.available * rate
+
+            total_brl += value_brl
+            breakdown.append({
+                'currency': currency,
+                'amount': balance_info.available,
+                'value_brl': value_brl
+            })
+
+        return {
+            'total_brl': total_brl,
+            'breakdown': breakdown
+        }
+
+    def detect_changes(self, previous: Dict, current: Dict) -> List[BalanceChange]:
+        """Detecta mudanças entre dois saldos"""
+        changes = []
+
+        for currency in current['balances']:
+            if currency not in previous['balances']:
+                continue
+
+            prev_info = previous['balances'][currency]
+            curr_info = current['balances'][currency]
+
+            for field in ['total', 'available', 'hold']:
+                prev_val = getattr(prev_info, field)
+                curr_val = getattr(curr_info, field)
+
+                if abs(curr_val - prev_val) > Decimal('0.000001'):
+                    change_percent = (curr_val - prev_val) / prev_val * 100 if prev_val != 0 else 0
+
+                    changes.append(BalanceChange(
+                        ledger_type=f"{currency}_AVAILABLE",
+                        field=field,
+                        previous=prev_val,
+                        current=curr_val,
+                        change=curr_val - prev_val,
+                        percentage_change=float(change_percent),
+                        timestamp=datetime.now()
+                    ))
+
+        return changes
+
+    async def monitor_balance(self, callback, interval: int = 60, max_changes: int = None):
+        """Monitora mudanças de saldo continuamente"""
+        try:
+            current_balance = await self.get_balance()
+            callback({
+                'type': 'initial',
+                'balance': current_balance,
+                'timestamp': datetime.now()
+            })
+
+            change_count = 0
+
+            while True:
+                await asyncio.sleep(interval)
+
+                try:
+                    new_balance = await self.get_balance()
+
+                    if self.last_balance:
+                        changes = self.detect_changes(self.last_balance, new_balance)
+
+                        if changes:
+                            change_count += 1
+
+                            callback({
+                                'type': 'change',
+                                'changes': changes,
+                                'current_balance': new_balance,
+                                'previous_balance': self.last_balance,
+                                'timestamp': datetime.now()
+                            })
+
+                            if max_changes and change_count >= max_changes:
+                                break
+
+                    self.last_balance = new_balance
+
+                except Exception as e:
+                    callback({
+                        'type': 'error',
+                        'error': str(e),
+                        'timestamp': datetime.now()
+                    })
+
+        except Exception as e:
+            callback({
+                'type': 'fatal_error',
+                'error': str(e),
+                'timestamp': datetime.now()
+            })
+
+async def main():
+    """Exemplo de uso do BalanceManager"""
+
+    async with BalanceManager('sk_live_1234567890abcdef') as manager:
+        # Consultar saldo geral
+        balance = await manager.get_balance()
+        print(f"Conta {balance['account_number']} - Ativa: {balance['is_active']}")
+
+        # Mostrar saldos por moeda
+        for currency, info in balance['balances'].items():
+            print(f"{currency}: Total={info.total} | Disponível={info.available} | Bloqueado={info.hold}")
+
+        # Calcular valor total em BRL
+        exchange_rates = {
+            'BTC': 350000,
+            'USDT': 5.5,
+            'USD': 5.5
+        }
+
+        total_value = manager.calculate_total_value(balance, exchange_rates)
+        print(f"\nValor total em BRL: {total_value['total_brl']:.2f}")
+
+        # Monitorar mudanças por 2 minutos
+        def balance_callback(event):
+            if event['type'] == 'change':
+                print(f"\nMudança detectada: {len(event['changes'])} alterações")
+                for change in event['changes']:
+                    print(f"  {change.ledger_type}.{change.field}: {change.previous} → {change.current} ({change.change:+})")
+            elif event['type'] == 'error':
+                print(f"Erro no monitoramento: {event['error']}")
+
+        print("\nIniciando monitoramento de saldos por 2 minutos...")
+        await manager.monitor_balance(balance_callback, interval=30, max_changes=5)
+        print("Monitoramento concluído.")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+---
+
+## Rate Limiting
+
+| Endpoint | Limite | Período |
+|----------|--------|---------|
+| `GET /accounts/balance` | 300 requests | por minuto |
+
+Headers retornados:
+```http
+X-RateLimit-Limit: 300
+X-RateLimit-Remaining: 299
+X-RateLimit-Reset: 1640995200
+```
+
+---
+
+## Cache Strategy
+
+### Configuração de Cache
+
+- **Duração**: 30 minutos por padrão
+- **Chave**: `balance:{account_id}:{ledger_type}`
+- **Storage**: Redis/Cache distribuído
+- **Invalidation**: Manual via `refresh=true`
+
+### Cache Behavior
+
+```mermaid
+graph TD
+    A[Request Balance] --> B{Cache Hit?}
+    B -->|Yes| C[Return Cached Data]
+    B -->|No| D[Query Database]
+    D --> E[Store in Cache]
+    E --> F[Return Fresh Data]
+    G[Refresh Parameter] --> H[Force Cache Miss]
+    H --> D
+```
+
+### Best Practices
+
+1. **Use `refresh=false`** para consultas frequentes (performance)
+2. **Use `refresh=true`** apenas quando necessário (dados frescos)
+3. **Implemente cache client-side** para reduzir requests
+4. **Monitor cache hit rate** para otimização
+
+---
+
+## Tratamento de Erros
+
+### Estrutura de Erro
+
+```json
+{
+  "error": "ACCOUNT_NOT_FOUND",
+  "message": "Conta não encontrada para esta API Key",
+  "details": "account_id: 12345",
+  "code": 404,
+  "operation": "account.FindBalance"
+}
+```
+
+### Erros Comuns
+
+| Código | Descrição | Solução |
+|--------|-----------|---------|
+| `ACCOUNT_NOT_FOUND` | Conta não encontrada | Verifique API Key e conta associada |
+| `ACCOUNT_INACTIVE` | Conta inativa | Entre em contato com suporte |
+| `RATE_LIMIT_EXCEEDED` | Muitas requisições | Reduza frequência de consultas |
+| `CACHE_ERROR` | Erro no cache | Tente com `refresh=true` |
+| `LEDGER_NOT_FOUND` | Ledger não encontrado | Verifique tipos de ledger suportados |
+
+---
+
+## Webhooks
+
+<Info>
+  Configure webhooks para receber notificações sobre mudanças significativas de saldo.
+</Info>
+
+### Eventos de Saldo
+
+- `BALANCE_UPDATED` - Saldo atualizado significativamente
+- `BALANCE_LOW` - Saldo abaixo de threshold
+- `HOLD_RELEASED` - Saldo bloqueado liberado
+
+### Payload de Exemplo
+
+```json
+{
+  "event": "BALANCE_UPDATED",
+  "data": {
+    "account_id": "550e8400-e29b-41d4-a716-446655440000",
+    "currency": "BTC",
+    "previous_balance": "0.125",
+    "current_balance": "0.120",
+    "change": "-0.005",
+    "ledger_type": "BTC_AVAILABLE"
+  },
+  "timestamp": "2024-01-01T12:30:00Z"
+}
+```

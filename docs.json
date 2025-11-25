@@ -1,13 +1,13 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Monkei Gateway API v1",
+  "name": "Monkei",
   "colors": {
     "primary": "#7C3AED",
     "light": "#A855F7",
     "dark": "#5B21B6"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "/favicon.ico",
   "navigation": {
     "tabs": [
       {
@@ -18,16 +18,67 @@
             "pages": [
               "index",
               "quickstart",
-              "development"
+              "testing"
             ]
           },
           {
             "group": "API Concepts",
             "pages": [
               "essentials/authentication",
-              "essentials/rate-limits",
               "essentials/webhooks",
-              "essentials/errors"
+              "essentials/rate-limits"
+            ]
+          },
+          {
+            "group": "Billing",
+            "pages": [
+              "billing/overview",
+              "billing/create",
+              "billing/list",
+              "billing/find"
+            ]
+          },
+          {
+            "group": "Coupons",
+            "pages": [
+              "coupons/overview",
+              "coupons/create",
+              "coupons/list",
+              "coupons/find"
+            ]
+          },
+          {
+            "group": "Transactions",
+            "pages": [
+              "transactions/overview",
+              "transactions/pix",
+              "transactions/usdt",
+              "transactions/btc",
+              "transactions/check-status"
+            ]
+          },
+          {
+            "group": "Withdrawals",
+            "pages": [
+              "withdrawals/overview",
+              "withdrawals/create",
+              "withdrawals/list",
+              "withdrawals/find"
+            ]
+          },
+          {
+            "group": "Accounts",
+            "pages": [
+              "accounts/overview",
+              "balance",
+              "limits"
+            ]
+          },
+          {
+            "group": "Health",
+            "pages": [
+              "health/overview",
+              "health/health"
             ]
           }
         ]
@@ -45,10 +96,19 @@
             "group": "Transactions",
             "pages": [
               "api-reference/transactions/payments",
-              "api-reference/transactions/pix",
-              "api-reference/transactions/usdt",
-              "api-reference/transactions/remittances",
               "api-reference/transactions/withdrawals"
+            ]
+          },
+          {
+            "group": "Quotes",
+            "pages": [
+              "api-reference/quotes/latest"
+            ]
+          },
+          {
+            "group": "Accounts",
+            "pages": [
+              "api-reference/accounts/balance"
             ]
           },
           {
@@ -64,60 +124,60 @@
       "anchors": [
         {
           "anchor": "Status",
-          "href": "https://status.monkei.com",
+          "href": "https://stats.uptimerobot.com/nAsS6FyoB3",
           "icon": "chart-line"
         },
         {
           "anchor": "Support",
-          "href": "mailto:support@monkei.com",
+          "href": "mailto:support@monkei.co",
           "icon": "headset"
         },
         {
           "anchor": "GitHub",
-          "href": "https://github.com/monkei",
+          "href": "https://github.com/monkei-tech",
           "icon": "github"
         }
       ]
     }
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/logo/logo-verde.png",
+    "dark": "/logo/logo-branca.png"
   },
   "navbar": {
     "links": [
       {
         "label": "Dashboard",
-        "href": "https://dashboard.monkei.com"
+        "href": "https://app.monkei.co"
       },
       {
         "label": "Status",
-        "href": "https://status.monkei.com"
+        "href": "https://stats.uptimerobot.com/nAsS6FyoB3"
       }
     ],
     "primary": {
       "type": "button",
       "label": "Get API Key",
-      "href": "https://dashboard.monkei.com/api-keys"
+      "href": "https://app.monkei.co/api-keys"
     }
   },
   "contextual": {
     "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/monkei",
-      "github": "https://github.com/monkei",
-      "linkedin": "https://linkedin.com/company/monkei"
+      "x": "https://x.com/monkeioffcial",
+      "github": "https://github.com/monkei-tech",
+      "linkedin": "https://linkedin.com/company/monkeitech"
     }
   }
 }

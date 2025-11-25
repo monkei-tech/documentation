@@ -1,0 +1,299 @@
+---
+title: "Create Bill"
+description: "Create a new bill with products and payment methods"
+---
+
+# Create Bill
+
+Create a new bill with customer information, payment methods, and products. All required fields must be provided.
+
+## Endpoint
+
+```http
+POST /api/v1/bills
+```
+
+## Request
+
+<Request>
+  <Title>CreateBillingRequest</Title>
+  ```json
+  {
+    "frequency": "ONE_TIME",
+    "customer_data": {
+      "customer_id": "12345678901",
+      "customer_metadata": {
+        "name": "John Doe",
+        "phone": "+5511999999999",
+        "email": "john@example.com",
+        "tax_id": "12345678901"
+      }
+    },
+    "payment_methods": ["PIX", "BITCOIN"],
+    "metadata": {
+      "order_id": "ORD-12345",
+      "source": "mobile_app"
+    },
+    "products": [
+      {
+        "id": "prod_001",
+        "external_id": "SKU-001",
+        "price": 50.00,
+        "quantity": 2
+      },
+      {
+        "id": "prod_002",
+        "external_id": "SKU-002",
+        "price": 25.50,
+        "quantity": 1
+      }
+    ],
+    "return_url": "https://example.com/return",
+    "completion_url": "https://example.com/success",
+    "is_transparent": false,
+    "allow_coupon": true,
+    "coupons_allowed": ["DISCOUNT10", "WELCOME20"]
+  }
+  ```
+</Request>
+
+## Parameters
+
+| Field | Type | Required | Description | Values |
+|-------|------|----------|-------------|--------|
+| `frequency` | string | ✅ | Billing frequency | `"ONE_TIME"`, `"MULTIPLE_PAYMENTS"` |
+| `customer_data` | object | ✅ | Customer information | See below |
+| `payment_methods` | array | ✅ | Allowed payment methods | `["PIX"]`, `["BITCOIN"]`, `["USDT"]` |
+| `metadata` | object | ❌ | Additional metadata | `{}` |
+| `products` | array | ✅ | List of products | See below |
+| `return_url` | string | ✅ | Return URL (cancellation) | Valid URL |
+| `completion_url` | string | ✅ | Success URL (after payment) | Valid URL |
+| `is_transparent` | boolean | ❌ | Transparent checkout | `false` (default) |
+| `allow_coupon` | boolean | ❌ | Allow coupons | `false` (default) |
+| `coupons_allowed` | array | ❌ | Allowed coupon codes | `["CODE1"]` |
+
+### Customer Data
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `customer_id` | string | ❌ | Unique customer ID |
+| `customer_metadata` | object | ❌ | Customer metadata |
+
+### Customer Metadata
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | ❌ | Customer full name |
+| `phone` | string | ❌ | Phone with country code |
+| `email` | string | ❌ | Valid email address |
+| `tax_id` | string | ❌ | Customer CPF/CNPJ |
+
+### Products
+
+| Field | Type | Required | Validation | Description |
+|-------|------|----------|------------|-------------|
+| `id` | string | ✅ | - | Internal product ID |
+| `external_id` | string | ✅ | - | External product ID/SKU |
+| `price` | decimal | ✅ | `min=5.00` | Unit price (min: R$5.00) |
+| `quantity` | integer | ✅ | `min=1` | Product quantity |
+
+<Warning>
+  The minimum price per product is R$5.00 (500 cents). Values below will be rejected.
+</Warning>
+
+## Response
+
+<Response>
+  <Title>CreateBillingResponse</Title>
+  ```json
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "frequency": "ONE_TIME",
+    "status": "ACTIVE",
+    "url": "https://pay.monkei.co/bill/550e8400-e29b-41d4-a716-446655440000",
+    "amount": 125.50,
+    "allow_coupon": true,
+    "coupons_codes": ["DISCOUNT10", "WELCOME20"],
+    "payment_methods": ["PIX", "BITCOIN"],
+    "customer": {
+      "customer_id": "12345678901",
+      "customer_metadata": {
+        "name": "John Doe",
+        "phone": "+5511999999999",
+        "email": "john@example.com",
+        "tax_id": "12345678901"
+      }
+    },
+    "products": [
+      {
+        "id": "prod_001",
+        "external_id": "SKU-001",
+        "price": 50.00,
+        "quantity": 2
+      },
+      {
+        "id": "prod_002",
+        "external_id": "SKU-002",
+        "price": 25.50,
+        "quantity": 1
+      }
+    ],
+    "completion_url": "https://example.com/success",
+    "return_url": "https://example.com/return"
+  }
+  ```
+</Response>
+
+## Status Codes
+
+| Code | Description |
+|------|-------------|
+| `201` | Bill created successfully |
+| `400` | Bad request or validation error |
+| `401` | Unauthorized |
+| `500` | Internal server error |
+
+## Examples
+
+### cURL
+
+```bash
+curl -X POST https://api.monkei.com/api/v1/bills \
+  -H "Authorization: Bearer sk_live_1234567890abcdef" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "frequency": "ONE_TIME",
+    "customer_data": {
+      "customer_id": "12345678901",
+      "customer_metadata": {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "tax_id": "12345678901"
+      }
+    },
+    "payment_methods": ["PIX"],
+    "products": [
+      {
+        "id": "premium_plan",
+        "external_id": "PLAN-PREMIUM-001",
+        "price": 99.90,
+        "quantity": 1
+      }
+    ],
+    "return_url": "https://myapp.com/cancel",
+    "completion_url": "https://myapp.com/success",
+    "allow_coupon": true
+  }'
+```
+
+### JavaScript
+
+```javascript
+async function createBill() {
+  const response = await fetch('https://api.monkei.com/api/v1/bills', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer sk_live_1234567890abcdef',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      frequency: 'ONE_TIME',
+      customer_data: {
+        customer_id: '12345678901',
+        customer_metadata: {
+          name: 'John Doe',
+          email: 'john@example.com',
+          tax_id: '12345678901'
+        }
+      },
+      payment_methods: ['PIX'],
+      products: [
+        {
+          id: 'premium_plan',
+          external_id: 'PLAN-PREMIUM-001',
+          price: 99.90,
+          quantity: 1
+        }
+      ],
+      return_url: 'https://myapp.com/cancel',
+      completion_url: 'https://myapp.com/success',
+      allow_coupon: true
+    })
+  });
+
+  const bill = await response.json();
+  return bill;
+}
+```
+
+### Python
+
+```python
+import requests
+
+def create_bill():
+    headers = {
+        'Authorization': 'Bearer sk_live_1234567890abcdef',
+        'Content-Type': 'application/json'
+    }
+    
+    data = {
+        'frequency': 'ONE_TIME',
+        'customer_data': {
+            'customer_id': '12345678901',
+            'customer_metadata': {
+                'name': 'John Doe',
+                'email': 'john@example.com',
+                'tax_id': '12345678901'
+            }
+        },
+        'payment_methods': ['PIX'],
+        'products': [
+            {
+                'id': 'premium_plan',
+                'external_id': 'PLAN-PREMIUM-001',
+                'price': 99.90,
+                'quantity': 1
+            }
+        ],
+        'return_url': 'https://myapp.com/cancel',
+        'completion_url': 'https://myapp.com/success',
+        'allow_coupon': True
+    }
+    
+    response = requests.post(
+        'https://api.monkei.com/api/v1/bills',
+        headers=headers,
+        json=data
+    )
+    
+    return response.json()
+```
+
+## Error Handling
+
+### Common Errors
+
+| Code | Description | Solution |
+|------|-------------|----------|
+| `VALIDATION_ERROR` | Invalid field | Check the parameters sent |
+| `PRODUCT_PRICE_TOO_LOW` | Price below minimum | Adjust to R$5.00 or more |
+| `INVALID_PAYMENT_METHOD` | Invalid payment method | Use PIX, BITCOIN or USDT |
+
+### Error Response
+
+```json
+{
+  "error": "VALIDATION_ERROR",
+  "message": "Minimum price per product is R$5.00",
+  "details": "products[0].price must be greater than or equal to 500",
+  "code": 400,
+  "operation": "billing.Create"
+}
+```
+
+## Next Steps
+
+- <a href="/billing/list">List Bills</a> - Retrieve your bills
+- <a href="/billing/find">Find Bill</a> - Get bill details
+- <a href="/essentials/webhooks">Webhooks</a> - Listen to billing events

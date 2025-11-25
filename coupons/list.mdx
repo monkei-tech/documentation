@@ -1,0 +1,169 @@
+---
+title: "List Coupons"
+description: "Retrieve and filter your coupons with pagination"
+---
+
+# List Coupons
+
+Retrieve a paginated list of coupons with optional filtering by active status and discount kind.
+
+## Endpoint
+
+```http
+GET /api/dashboard/v1/coupons
+```
+
+## Query Parameters
+
+| Parameter | Type | Required | Description | Values |
+|-----------|------|----------|-------------|--------|
+| `isActive` | boolean | ❌ | Filter by active status | `true`, `false` |
+| `discountKind` | string | ❌ | Filter by discount kind | `"PERCENTAGE"`, `"FIXED"`, `"FREE_SHIPPING"` |
+| `page` | integer | ❌ | Page number | `1` (default) |
+| `limit` | integer | ❌ | Items per page | `10` (default, max: 100) |
+
+## Example Request
+
+```http
+GET /api/dashboard/v1/coupons?isActive=true&discountKind=PERCENTAGE&page=1&limit=20
+```
+
+## Response
+
+<Response>
+  <Title>ListCouponsResponse</Title>
+  ```json
+  {
+    "data": [
+      {
+        "code": "WELCOME10",
+        "description": "Welcome discount 10% off",
+        "discount_kind": "PERCENTAGE",
+        "discount_value": 10,
+        "max_redeems": 100,
+        "status": "ACTIVE",
+        "created_at": "2024-01-01T12:00:00Z",
+        "updated_at": "2024-01-01T12:00:00Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 45,
+      "total_pages": 3
+    }
+  }
+  ```
+</Response>
+
+## Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | Coupons retrieved successfully |
+| `400` | Bad request - invalid parameters |
+| `401` | Unauthorized |
+| `500` | Internal server error |
+
+## Examples
+
+### cURL
+
+```bash
+curl -X GET "https://api.monkei.com/api/dashboard/v1/coupons?isActive=true&page=1&limit=20" \
+  -H "Authorization: Bearer sk_live_1234567890abcdef"
+```
+
+### JavaScript
+
+```javascript
+async function listCoupons(isActive = true, page = 1) {
+  const params = new URLSearchParams({
+    isActive: isActive.toString(),
+    page: page.toString(),
+    limit: '20'
+  });
+
+  const response = await fetch(
+    `https://api.monkei.com/api/dashboard/v1/coupons?${params}`,
+    {
+      headers: {
+        'Authorization': 'Bearer sk_live_1234567890abcdef'
+      }
+    }
+  );
+
+  const { data, pagination } = await response.json();
+  return { coupons: data, pagination };
+}
+
+// List active coupons
+const { coupons, pagination } = await listCoupons(true);
+console.log(`Total coupons: ${pagination.total}`);
+```
+
+### Python
+
+```python
+import requests
+
+def list_coupons(is_active=True, page=1, limit=20):
+    headers = {
+        'Authorization': 'Bearer sk_live_1234567890abcdef'
+    }
+    
+    params = {
+        'isActive': str(is_active).lower(),
+        'page': page,
+        'limit': limit
+    }
+    
+    response = requests.get(
+        'https://api.monkei.com/api/dashboard/v1/coupons',
+        headers=headers,
+        params=params
+    )
+    
+    return response.json()
+
+# List active coupons
+result = list_coupons(is_active=True, page=1)
+print(f"Total coupons: {result['pagination']['total']}")
+```
+
+## Filtering
+
+### By Active Status
+
+Filter coupons by their active status:
+
+- `true` - Only active coupons
+- `false` - Only inactive coupons
+- Omitted - All coupons (active and inactive)
+
+### By Discount Kind
+
+Filter coupons by their discount type:
+
+- `PERCENTAGE` - Percentage discount coupons
+- `FIXED` - Fixed amount discount coupons
+- `FREE_SHIPPING` - Free shipping coupons
+
+## Pagination
+
+The response includes pagination information:
+
+- `page`: Current page number (starts at 1)
+- `limit`: Number of items per page (max: 100)
+- `total`: Total number of coupons matching the filters
+- `total_pages`: Total number of pages
+
+<Info>
+  The default page size is 10 items. You can increase it up to 100 items per page for better performance when dealing with large datasets.
+</Info>
+
+## Next Steps
+
+- <a href="/coupons/find">Find Coupon</a> - Get details of a specific coupon
+- <a href="/coupons/create">Create Coupon</a> - Create a new coupon
+- <a href="/coupons/overview">Coupons Overview</a> - Learn more about coupons

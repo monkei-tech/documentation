@@ -1,96 +1,96 @@
 ---
-title: 'Monkei Gateway API v1'
-description: 'API principal para integração com pagamentos e transações cripto'
+title: 'Monkei'
+description: 'Main API for payment integration and crypto transactions'
 ---
 
 <Note>
-  Esta é a documentação da API v1 do Monkei Gateway. Para começar, você precisará de uma chave de API válida.
+  This is the Monkei documentation. To get started, you will need a valid API Key.
 </Note>
 
-## Bem-vindo à API Monkei Gateway v1
+## Welcome to Monkei
 
-A API v1 do Monkei Gateway permite que você integre pagamentos PIX, transações USDT, remessas, saques e cobranças em sua aplicação. Nossa API é RESTful e retorna respostas em JSON.
+The Monkei allows you to integrate PIX payments, USDT transactions, remittances, withdrawals, and billing into your application. Our API is RESTful and returns JSON responses.
 
 <Card
   title="OpenAPI Specification"
   icon="code"
   href="https://github.com/monkei/gateway/blob/main/docs/openapi.json"
 >
-  Baixar especificação OpenAPI completa
+  Download full OpenAPI specification
 </Card>
 
-## Endpoints Disponíveis
+## Available Endpoints
 
-### 💳 Transações
+### 💳 Transactions
 
 <CardGroup cols={2}>
-  <Card title="Pagamentos" icon="credit-card">
-    - Criar pagamentos
-    - Consultar status
-    - Suporte a PIX e USDT
+  <Card title="Payments" icon="credit-card">
+    - Create payments
+    - Check status
+    - PIX and USDT support
   </Card>
-  <Card title="Remessas" icon="arrow-right-arrow-left">
-    - Enviar PIX
-    - Transferir USDT
-    - Consultar status
+  <Card title="Remittances" icon="arrow-right-arrow-left">
+    - Send PIX
+    - Transfer USDT
+    - Check status
   </Card>
-  <Card title="Saques" icon="arrow-up-from-bracket">
-    - Saques em BRL
-    - Saques em USDT
-    - Múltiplas redes
+  <Card title="Withdrawals" icon="arrow-up-from-bracket">
+    - BRL Withdrawals
+    - USDT Withdrawals
+    - Multiple networks
   </Card>
   <Card title="QR Codes" icon="qrcode">
     - PIX QR Code
     - USDT QR Code
-    - Expiração configurável
+    - Configurable expiration
   </Card>
 </CardGroup>
 
 ### 📋 Billing
 
 <CardGroup cols={2}>
-  <Card title="Cobranças" icon="receipt">
-    - Criar cobranças
-    - Listar cobranças
-    - Cancelar cobranças
+  <Card title="Bills" icon="receipt">
+    - Create bills
+    - List bills
+    - Cancel bills
   </Card>
-  <Card title="Produtos" icon="box">
-    - Múltiplos produtos
-    - Preços personalizados
-    - Quantidades variáveis
+  <Card title="Products" icon="box">
+    - Multiple products
+    - Custom prices
+    - Variable quantities
   </Card>
 </CardGroup>
 
-## Autenticação
+## Authentication
 
-Todos os endpoints da API v1 requerem autenticação via Bearer Token:
+All API v1 endpoints require authentication via Bearer Token:
 
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
      https://api.monkei.com/api/v1/transactions/payments
 ```
 
-### Obtendo uma API Key
+### Getting an API Key
 
 <Steps>
-  <Step title="Acesse o Dashboard">
-    Faça login em [dashboard.monkei.com](https://dashboard.monkei.com)
+  <Step title="Access the Dashboard">
+    Log in to [app.monkei.co](https://app.monkei.co)
   </Step>
-  <Step title="Vá para API Keys">
-    Navegue para **Configurações > API Keys**
+  <Step title="Go to API Keys">
+    Navigate to **Integrations > API Keys**
   </Step>
-  <Step title="Crie uma nova chave">
-    Clique em **"Nova API Key"** e escolha o ambiente
+  <Step title="Create a new key">
+    Click on **"New API Key"** and choose the environment
   </Step>
-  <Step title="Copie a chave">
-    **Importante**: A chave só é exibida uma vez!
+  <Step title="Copy the key">
+    **Important**: The key is shown only once!
   </Step>
 </Steps>
 
 ## Base URLs
 
 <CardGroup cols={2}>
-  <Card title="Produção" icon="server">
+  <Card title="Production" icon="server">
     `https://api.monkei.com`
   </Card>
   <Card title="Staging" icon="flask">
@@ -100,13 +100,13 @@ curl -H "Authorization: Bearer YOUR_API_KEY" \
 
 ## Rate Limits
 
-Nossa API implementa rate limiting para garantir estabilidade:
+Our API implements rate limiting to ensure stability:
 
-- **API v1**: 1000 requests/minuto
-- **Transações**: 100 requests/minuto
-- **Billing**: 200 requests/minuto
+- **API v1**: 1000 requests/minute
+- **Transactions**: 100 requests/minute
+- **Billing**: 200 requests/minute
 
-Headers de rate limit são incluídos em todas as respostas:
+Rate limit headers are included in all responses:
 
 ```http
 X-RateLimit-Limit: 1000
@@ -114,15 +114,15 @@ X-RateLimit-Remaining: 999
 X-RateLimit-Reset: 1640995200
 ```
 
-## Códigos de Status HTTP
+## HTTP Status Codes
 
 <CardGroup cols={2}>
-  <Card title="2xx - Sucesso">
+  <Card title="2xx - Success">
     - `200` - OK
     - `201` - Created
     - `204` - No Content
   </Card>
-  <Card title="4xx - Erro do Cliente">
+  <Card title="4xx - Client Error">
     - `400` - Bad Request
     - `401` - Unauthorized
     - `403` - Forbidden
@@ -131,9 +131,9 @@ X-RateLimit-Reset: 1640995200
   </Card>
 </CardGroup>
 
-## Exemplo Rápido
+## Quick Example
 
-### Criar um Pagamento PIX
+### Create a PIX Payment
 
 ```bash
 curl -X POST https://api.monkei.com/api/v1/transactions/payments/pix \
@@ -141,12 +141,12 @@ curl -X POST https://api.monkei.com/api/v1/transactions/payments/pix \
   -H "Content-Type: application/json" \
   -d '{
     "amount_in_brl": 10050,
-    "description": "Pagamento de produto XYZ",
+    "description": "Payment for product XYZ",
     "idempotency_key": "pix_123456789"
   }'
 ```
 
-### Resposta
+### Response
 
 ```json
 {
@@ -159,21 +159,21 @@ curl -X POST https://api.monkei.com/api/v1/transactions/payments/pix \
 }
 ```
 
-## Próximos Passos
+## Next Steps
 
 <CardGroup cols={2}>
   <Card
-    title="Guia de Início Rápido"
+    title="Quickstart Guide"
     icon="rocket"
     href="/quickstart"
   >
-    Comece a integrar em minutos
+    Start integrating in minutes
   </Card>
   <Card
-    title="Autenticação"
+    title="Authentication"
     icon="key"
     href="/essentials/authentication"
   >
-    Configure sua API Key
+    Configure your API Key
   </Card>
 </CardGroup>

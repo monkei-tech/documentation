@@ -1,0 +1,247 @@
+---
+title: "PIX Payments"
+description: "Create PIX payments and generate QR codes"
+---
+
+# PIX Payments
+
+Create PIX (Brazilian Instant Payment) transactions and generate QR codes that customers can scan to complete payments instantly.
+
+## Endpoint
+
+```http
+POST /api/v1/transactions/payments/pix
+```
+
+## Overview
+
+PIX is Brazil's instant payment system that allows real-time transfers 24/7. It's the most popular payment method in Brazil and supports payments in Brazilian Real (BRL).
+
+<CardGroup cols={2}>
+  <Card title="Currency" icon="dollar-sign">
+    <Badge text="BRL" color="blue"/>
+    <p>Brazilian Real</p>
+  </Card>
+  <Card title="Minimum Amount" icon="arrow-down">
+    <p>R$ 7.00</p>
+  </Card>
+  <Card title="Precision" icon="calculator">
+    <p>2 decimals</p>
+  </Card>
+  <Card title="QR Code Format" icon="qrcode">
+    <p>EMVCo standard</p>
+  </Card>
+</CardGroup>
+
+## Request
+
+<Request>
+  <Title>CreatePixPaymentRequest</Title>
+  ```json
+  {
+    "amount_in_brl": 100.50,
+    "expires_in": 3600,
+    "description": "Payment for product XYZ",
+    "idempotency_key": "pix_123456789",
+    "customer": {
+      "customer_id": "12345678901",
+      "metadata": {
+        "name": "John Doe",
+        "phone": "+5511999999999",
+        "email": "john@example.com",
+        "tax_id": "12345678901"
+      }
+    }
+  }
+  ```
+</Request>
+
+## Parameters
+
+| Field | Type | Required | Validation | Description |
+|-------|------|----------|------------|-------------|
+| `amount_in_brl` | decimal | ✅ | `min=7.00` | Amount in Brazilian Real (min: R$7.00) |
+| `expires_in` | integer | ✅ | `min=120` | Expiration in seconds (min: 2 minutes) |
+| `description` | string | ❌ | - | Payment description |
+| `idempotency_key` | string | ✅ | - | Idempotency key to prevent duplicates |
+| `customer` | object | ❌ | - | Customer information |
+
+<Info>
+  If `customer` is provided, all fields in `metadata` become required.
+</Info>
+
+## Response
+
+<Response>
+  <Title>CreatePixPaymentResponse</Title>
+  ```json
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "amount_in_brl": 100.50,
+    "status": "PENDING",
+    "expires_in": 3600,
+    "qr_code": "00020126580014br.gov.bcb.pix0136123e4567-e89b-12d3-a456-4266141740005204000053039865405100.005802BR5913Test integration6008Brasilia62070503***6304E2CA",
+    "qr_code_url": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+  }
+  ```
+</Response>
+
+## Status Codes
+
+| Code | Description |
+|------|-------------|
+| `201` | Payment created successfully |
+| `400` | Bad request - validation error |
+| `401` | Unauthorized |
+| `500` | Internal server error |
+
+## Examples
+
+### cURL
+
+```bash
+curl -X POST https://api.monkei.com/api/v1/transactions/payments/pix \
+  -H "Authorization: Bearer sk_live_1234567890abcdef" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount_in_brl": 100.50,
+    "expires_in": 3600,
+    "description": "Payment for product XYZ",
+    "idempotency_key": "pix_123456789",
+    "customer": {
+      "customer_id": "12345678901",
+      "metadata": {
+        "name": "John Doe",
+        "phone": "+5511999999999",
+        "email": "john@example.com",
+        "tax_id": "12345678901"
+      }
+    }
+  }'
+```
+
+### JavaScript
+
+```javascript
+async function createPixPayment() {
+  const response = await fetch('https://api.monkei.com/api/v1/transactions/payments/pix', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer sk_live_1234567890abcdef',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      amount_in_brl: 100.50,
+      expires_in: 3600,
+      description: 'Payment for product XYZ',
+      idempotency_key: `pix_${Date.now()}`,
+      customer: {
+        customer_id: '12345678901',
+        metadata: {
+          name: 'John Doe',
+          phone: '+5511999999999',
+          email: 'john@example.com',
+          tax_id: '12345678901'
+        }
+      }
+    })
+  });
+
+  const payment = await response.json();
+  console.log('QR Code:', payment.qr_code);
+  return payment;
+}
+```
+
+### Python
+
+```python
+import requests
+import time
+
+def create_pix_payment():
+    headers = {
+        'Authorization': 'Bearer sk_live_1234567890abcdef',
+        'Content-Type': 'application/json'
+    }
+    
+    data = {
+        'amount_in_brl': 100.50,
+        'expires_in': 3600,
+        'description': 'Payment for product XYZ',
+        'idempotency_key': f'pix_{int(time.time())}',
+        'customer': {
+            'customer_id': '12345678901',
+            'metadata': {
+                'name': 'John Doe',
+                'phone': '+5511999999999',
+                'email': 'john@example.com',
+                'tax_id': '12345678901'
+            }
+        }
+    }
+    
+    response = requests.post(
+        'https://api.monkei.com/api/v1/transactions/payments/pix',
+        headers=headers,
+        json=data
+    )
+    
+    return response.json()
+```
+
+## QR Code Usage
+
+The response includes two QR code formats:
+
+1. **`qr_code`**: EMVCo standard QR code string that can be displayed as text or converted to an image
+2. **`qr_code_url`**: Base64-encoded image URL that can be directly embedded in HTML
+
+### Displaying QR Code
+
+```html
+<img src="data:image/png;base64,{qr_code_url}" alt="PIX QR Code" />
+```
+
+## Payment Flow
+
+<Steps>
+  <Step title="Create Payment">
+    Create a PIX payment using the API endpoint.
+  </Step>
+  <Step title="Display QR Code">
+    Show the QR code to your customer (on screen or printed).
+  </Step>
+  <Step title="Customer Scans">
+    Customer scans the QR code with their banking app.
+  </Step>
+  <Step title="Payment Confirmed">
+    Payment is confirmed instantly and you receive a webhook notification.
+  </Step>
+</Steps>
+
+## Important Notes
+
+<Warning>
+  The minimum payment amount is R$7.00. Amounts below this will be rejected.
+</Warning>
+
+<Info>
+  PIX payments are processed instantly. Once the customer scans and confirms, the payment is settled immediately.
+</Info>
+
+## Error Handling
+
+### Common Errors
+
+| Code | Description | Solution |
+|------|-------------|----------|
+| `VALIDATION_ERROR` | Invalid field | Check the parameters sent |
+| `AMOUNT_TOO_LOW` | Amount below minimum | Increase to at least R$7.00 |
+| `INVALID_EXPIRATION` | Expiration too short | Set at least 120 seconds |
+
+## Next Steps
+
+- <a href="/transactions/check-status">Check Status</a> - Monitor payment status
+- <a href="/essentials/webhooks">Webhooks</a> - Receive payment notifications
+- <a href="/transactions/overview">Transactions Overview</a> - Learn about other payment methods

@@ -1,0 +1,110 @@
+---
+title: "Coupons Overview"
+description: "Learn how to create and manage discount coupons with Monkei"
+---
+
+# Coupons Overview
+
+The Coupons API allows you to create, manage, and validate discount coupons for your bills. Coupons can offer percentage discounts, fixed amount discounts, or free shipping.
+
+## What are Coupons?
+
+Coupons are discount codes that customers can apply to bills during checkout. They help you attract customers, reward loyalty, and run promotional campaigns.
+
+<Note>
+  Coupons can be used with bills that have `allow_coupon` set to `true`. You can also restrict which coupon codes are allowed per bill.
+</Note>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Discount Types" icon="percent">
+    <ul>
+      <li>Percentage discounts (0-100%)</li>
+      <li>Fixed amount discounts (in cents)</li>
+      <li>Free shipping option</li>
+    </ul>
+  </Card>
+  <Card title="Usage Control" icon="lock">
+    <ul>
+      <li>Maximum redemption limit</li>
+      <li>Automatic status tracking</li>
+      <li>Active/Inactive management</li>
+    </ul>
+  </Card>
+  <Card title="Validation" icon="check-circle">
+    <ul>
+      <li>Real-time validation</li>
+      <li>Automatic expiration</li>
+      <li>Usage tracking</li>
+    </ul>
+  </Card>
+  <Card title="Integration" icon="plug">
+    <ul>
+      <li>Easy API integration</li>
+      <li>Webhook support</li>
+      <li>Dashboard management</li>
+    </ul>
+  </Card>
+</CardGroup>
+
+## Discount Types
+
+### Percentage Discount
+
+Apply a percentage discount to the bill total. The discount value must be between 0 and 100.
+
+**Example**: A 10% discount means `discount_value: 10`
+
+### Fixed Discount
+
+Apply a fixed amount discount in cents. The discount value must be between 0 and 1,000,000 cents (R$10,000.00).
+
+**Example**: A R$5.00 discount means `discount_value: 500`
+
+### Free Shipping
+
+Offer free shipping. The discount value must be 0.
+
+**Example**: `discount_kind: "FREE_SHIPPING"` with `discount_value: 0`
+
+## Coupon Statuses
+
+| Status | Description |
+|--------|-------------|
+| `ACTIVE` | Coupon is active and can be used |
+| `INACTIVE` | Coupon is inactive and cannot be used |
+| `MAX_REDEEMS_REACHED` | Coupon has reached its maximum redemption limit |
+
+## Use Cases
+
+- **Promotional Campaigns**: Create limited-time discount codes
+- **Customer Retention**: Reward loyal customers with special codes
+- **Seasonal Sales**: Run holiday or seasonal promotions
+- **Referral Programs**: Offer discounts for referrals
+
+## Getting Started
+
+<Steps>
+  <Step title="Create a Coupon">
+    Use the <a href="/coupons/create">Create Coupon</a> endpoint to generate a new discount code.
+  </Step>
+  <Step title="Configure Bills">
+    Enable coupon usage in your bills by setting `allow_coupon: true` and optionally specifying `coupons_allowed`.
+  </Step>
+  <Step title="Validate Coupons">
+    Use the validation endpoint to check if a coupon is valid before applying it.
+  </Step>
+</Steps>
+
+## Next Steps
+
+- <a href="/coupons/create">Create Coupon</a> - Learn how to create your first coupon
+- <a href="/coupons/list">List Coupons</a> - Retrieve and filter your coupons
+- <a href="/coupons/find">Find Coupon</a> - Get details of a specific coupon
+- <a href="/billing/create">Create Bill</a> - Learn how to use coupons with bills
+
+## Related Resources
+
+- <a href="/billing/overview">Billing Overview</a> - Understand how coupons work with bills
+- <a href="/essentials/webhooks">Webhooks Guide</a> - Learn about coupon webhook events

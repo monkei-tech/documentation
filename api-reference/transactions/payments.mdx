@@ -1,0 +1,385 @@
+---
+title: "Payments"
+description: "Processamento de pagamentos via PIX, USDT e BTC"
+---
+
+# Payments
+
+A API de Payments permite criar e gerenciar pagamentos usando múltiplos métodos: PIX (Real Brasileiro), USDT (Tether) e BTC (Bitcoin). Todos os métodos suportam idempotência para evitar duplicações e retornam QR Codes para processamento.
+
+## Visão Geral
+
+<Note>
+  Todos os endpoints de pagamentos requerem autenticação via Bearer Token e implementam idempotência através do campo `idempotency_key`.
+</Note>
+
+## Métodos Suportados
+
+<CardGroup cols={3}>
+  <Card title="PIX" icon="money-check">
+    <Badge text="BRL" color="blue"/>
+    <ul>
+      <li>Moeda: Real Brasileiro (BRL)</li>
+      <li>Min: R$ 7,00</li>
+      <li>Precisão: 2 decimais</li>
+      <li>QR Code EMVCo</li>
+    </ul>
+  </Card>
+  <Card title="USDT" icon="coins">
+    <Badge text="USD" color="green"/>
+    <ul>
+      <li>Moeda: Tether (USDT)</li>
+      <li>Redes: Polygon</li>
+      <li>Precisão: 6 decimais</li>
+      <li>Token ERC-20</li>
+    </ul>
+  </Card>
+  <Card title="BTC" icon="bitcoinsign">
+    <Badge text="USD" color="orange"/>
+    <ul>
+      <li>Moeda: Bitcoin (BTC)</li>
+      <li>Redes: Bitcoin</li>
+      <li>Precisão: 8 decimais</li>
+      <li>On-chain</li>
+    </ul>
+  </Card>
+</CardGroup>
+
+## Endpoints
+
+
+
+---
+
+### Criar Pagamento PIX
+Endpoint específico para gerar QR Codes PIX.
+
+```http
+POST /api/v1/transactions/payments/pix
+```
+
+#### Request
+
+<Request>
+  <Title>CreatePixQRCodeRequest</Title>
+  ```json
+  {
+    "amount_in_brl": 100.50,
+    "expires_in": 3600,
+    "description": "Pagamento de produto XYZ",
+    "idempotency_key": "pix_123456789",
+    "customer": {
+      "customer_id": "12345678901",
+      "metadata": {
+        "name": "João Silva",
+        "phone": "+5511999999999",
+        "email": "joao@example.com",
+        "tax_id": "12345678901"
+      }
+    }
+  }
+  ```
+</Request>
+
+#### Parâmetros
+
+| Campo | Tipo | Obrigatório | Validação | Descrição |
+|-------|------|-------------|-----------|-----------|
+| `amount_in_brl` | decimal | ✅ | `min=7.00` | Valor em reais (mín: R$7,00) |
+| `expires_in` | integer | ✅ | `min=120` | Expiração em segundos (mín: 2min) |
+| `description` | string | ❌ | - | Descrição do pagamento |
+| `idempotency_key` | string | ✅ | - | Chave de idempotência |
+| `customer` | object | ❌ | - | Dados do cliente |
+
+<Info>
+  Se `customer` for informado, todos os campos de `metadata` se tornam obrigatórios.
+</Info>
+
+#### Response
+
+<Response>
+  <Title>CreatePixQRCodeResponse</Title>
+  ```json
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "amount_in_brl": 100.50,
+    "status": "PENDING",
+    "expires_in": 3600,
+    "qr_code": "00020126580014br.gov.bcb.pix0136123e4567-e89b-12d3-a456-4266141740005204000053039865405100.005802BR5913Test integration6008Brasilia62070503***6304E2CA",
+    "qr_code_url": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+  }
+  ```
+</Response>
+
+---
+
+### Criar Pagamento USDT
+Endpoint para gerar QR Codes USDT na rede Polygon.
+
+```http
+POST /api/v1/transactions/payments/usdt
+```
+
+#### Request
+
+<Request>
+  <Title>CreateUSDTTransactionRequest</Title>
+  ```json
+  {
+    "amount_in_brl": 100.50,
+    "expires_in": 3600,
+    "description": "Pagamento em criptomoeda",
+    "idempotency_key": "usdt_123456789",
+    "network": "polygon"
+  }
+  ```
+</Request>
+
+#### Parâmetros
+
+| Campo | Tipo | Obrigatório | Valores | Descrição |
+|-------|------|-------------|---------|-----------|
+| `amount_in_brl` | decimal | ✅ | `min=7.00` | Valor em reais |
+| `expires_in` | integer | ✅ | `min=120` | Expiração em segundos |
+| `description` | string | ❌ | - | Descrição do pagamento |
+| `idempotency_key` | string | ✅ | - | Chave de idempotência |
+| `network` | string | ✅ | `"polygon"` | Rede blockchain |
+
+#### Response
+
+<Response>
+  <Title>CreateUSDTTransactionResponse</Title>
+  ```json
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "amount_in_brl": 100.50,
+    "amount_in_crypto": 18.012345,
+    "platform_fee": 0.10,
+    "status": "PENDING",
+    "expires_in": 3600,
+    "qr_code": "polygon:0x1234567890123456789012345678901234567890?value=18012345",
+    "qr_code_url": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+  }
+  ```
+</Response>
+
+---
+
+### Criar Pagamento BTC
+Endpoint para gerar endereços Bitcoin para pagamento.
+
+```http
+POST /api/v1/transactions/payments/btc
+```
+
+#### Request
+
+<Request>
+  <Title>CreateBTCTransactionRequest</Title>
+  ```json
+  {
+    "amount_in_brl": 100.50,
+    "expires_in": 3600,
+    "description": "Pagamento em Bitcoin",
+    "idempotency_key": "btc_123456789",
+    "network": "bitcoin"
+  }
+  ```
+</Request>
+
+#### Parâmetros
+
+| Campo | Tipo | Obrigatório | Valores | Descrição |
+|-------|------|-------------|---------|-----------|
+| `amount_in_brl` | decimal | ✅ | `min=7.00` | Valor em reais |
+| `expires_in` | integer | ✅ | `min=120` | Expiração em segundos |
+| `description` | string | ❌ | - | Descrição do pagamento |
+| `idempotency_key` | string | ✅ | - | Chave de idempotência |
+| `network` | string | ✅ | `"bitcoin"` | Rede blockchain |
+
+#### Response
+
+<Response>
+  <Title>CreateBTCTransactionResponse</Title>
+  ```json
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "amount_in_brl": 100.50,
+    "amount_in_crypto": 0.00123456,
+    "platform_fee": 0.00001,
+    "status": "PENDING",
+    "expires_in": 3600,
+    "qr_code": "bitcoin:bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh?amount=0.00123456",
+    "qr_code_url": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+  }
+  ```
+</Response>
+
+---
+
+
+
+---
+
+## Exemplos de Código
+
+### cURL - Pagamento PIX
+
+```bash
+curl -X POST https://api.monkei.com/api/v1/transactions/payments/pix \
+  -H "Authorization: Bearer sk_live_1234567890abcdef" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount_in_brl": 100.50,
+    "expires_in": 3600,
+    "description": "Pagamento de produto XYZ",
+    "idempotency_key": "pix_' $(date +%s) '",
+    "customer": {
+      "customer_id": "12345678901",
+      "metadata": {
+        "name": "João Silva",
+        "phone": "+5511999999999",
+        "email": "joao@example.com",
+        "tax_id": "12345678901"
+      }
+    }
+  }'
+```
+
+### JavaScript - Pagamento USDT
+
+```javascript
+const response = await fetch('https://api.monkei.com/api/v1/transactions/payments/usdt', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer sk_live_1234567890abcdef',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    amount_in_brl: 100.50,
+    expires_in: 3600,
+    description: 'Pagamento em USDT',
+    idempotency_key: `usdt_${Date.now()}`,
+    network: 'polygon'
+  })
+});
+
+const payment = await response.json();
+console.log('QR Code USDT:', payment.qr_code);
+console.log('Amount in crypto:', payment.amount_in_crypto);
+```
+
+### Python - Pagamento Genérico
+
+```python
+import requests
+import uuid
+
+def create_payment(method: str, amount_brl: float):
+    headers = {
+        'Authorization': 'Bearer sk_live_1234567890abcdef',
+        'Content-Type': 'application/json'
+    }
+
+    payload = {
+        'idempotency_key': f'payment_{uuid.uuid4()}',
+        'currency': 'BRL',
+        'method': method,
+        'billing_id': '550e8400-e29b-41d4-a716-446655440000',
+        'customer_metadata': {
+            'name': 'João Silva',
+            'email': 'joao@example.com'
+        }
+    }
+
+    response = requests.post(
+        'https://api.monkei.com/api/v1/transactions/payments',
+        headers=headers,
+        json=payload
+    )
+
+    return response.json()
+
+# Criar pagamento PIX
+payment_pix = create_payment('PIX', 100.50)
+print("PIX QR Code:", payment_pix['payment_data']['qr_code'])
+```
+
+---
+
+## Rate Limiting
+
+<Info>
+  Os endpoints de pagamentos possuem limites específicos de rate limiting para garantir estabilidade:
+</Info>
+
+| Endpoint | Limite | Período |
+|----------|--------|---------|
+| `/payments` | 100 requests | por minuto |
+| `/payments/pix` | 60 requests | por minuto |
+| `/payments/usdt` | 60 requests | por minuto |
+| `/payments/btc` | 60 requests | por minuto |
+
+Headers retornados:
+```http
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 99
+X-RateLimit-Reset: 1640995200
+```
+
+---
+
+## Tratamento de Erros
+
+### Estrutura de Erro
+
+```json
+{
+  "error": "VALIDATION_ERROR",
+  "message": "O valor mínimo é R$ 7,00",
+  "details": "amount_in_brl must be greater than or equal to 7.00",
+  "code": 400,
+  "operation": "payment.CreatePixQRCode"
+}
+```
+
+### Erros Comuns
+
+| Código | Descrição | Solução |
+|--------|-----------|---------|
+| `VALIDATION_ERROR` | Campo inválido | Verifique os parâmetros enviados |
+| `TRANSACTION_EXPIRED` | Transação expirou | Crie nova transação |
+| `INSUFFICIENT_FUNDS` | Saldo insuficiente | Verifique saldo da conta |
+| `BLOCKCHAIN_ERROR` | Erro na rede blockchain | Tente novamente mais tarde |
+
+---
+
+## Webhooks
+
+<Info>
+  Configure webhooks para receber notificações em tempo real sobre atualizações de pagamento.
+</Info>
+
+### Eventos de Pagamento
+
+- `PAYMENT_CREATED` - Pagamento criado
+- `PAYMENT_PENDING` - Pagamento pendente
+- `PAYMENT_COMPLETED` - Pagamento confirmado
+- `PAYMENT_EXPIRED` - Pagamento expirou
+- `PAYMENT_FAILED` - Pagamento falhou
+
+### Payload de Exemplo
+
+```json
+{
+  "event": "PAYMENT_COMPLETED",
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "COMPLETED",
+    "amount": 100.50,
+    "method": "PIX",
+    "completed_at": "2024-01-01T12:00:00Z"
+  },
+  "timestamp": "2024-01-01T12:00:00Z"
+}
+```

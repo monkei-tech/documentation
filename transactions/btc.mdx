@@ -1,0 +1,235 @@
+---
+title: "BTC Payments"
+description: "Create Bitcoin payments on Bitcoin network"
+---
+
+# BTC Payments
+
+Create Bitcoin (BTC) payments on the Bitcoin network. Bitcoin is the original cryptocurrency and remains one of the most widely accepted digital currencies.
+
+## Endpoint
+
+```http
+POST /api/v1/transactions/payments/btc
+```
+
+## Overview
+
+Bitcoin payments are processed on the Bitcoin blockchain, providing a decentralized payment option for your customers.
+
+<CardGroup cols={2}>
+  <Card title="Currency" icon="bitcoinsign">
+    <Badge text="USD" color="orange"/>
+    <p>Bitcoin (BTC)</p>
+  </Card>
+  <Card title="Network" icon="network-wired">
+    <p>Lightning Network</p>
+  </Card>
+  <Card title="Precision" icon="calculator">
+    <p>8 decimals</p>
+  </Card>
+  <Card title="Type" icon="coins">
+    <p>Lightning Network</p>
+  </Card>
+</CardGroup>
+
+## Request
+
+<Request>
+  <Title>CreateBTCPaymentRequest</Title>
+  ```json
+  {
+    "amount_in_brl": 100.50,
+    "expires_in": 3600,
+    "description": "Payment in Bitcoin",
+    "idempotency_key": "btc_123456789",
+    "network": "bitcoin"
+  }
+  ```
+</Request>
+
+## Parameters
+
+| Field | Type | Required | Values | Description |
+|-------|------|----------|--------|-------------|
+| `amount_in_brl` | decimal | ✅ | `min=7.00` | Amount in Brazilian Real |
+| `expires_in` | integer | ✅ | `min=120` | Expiration in seconds |
+| `description` | string | ❌ | - | Payment description |
+| `idempotency_key` | string | ✅ | - | Idempotency key |
+| `network` | string | ✅ | `"lightning"` | Blockchain network (Lightning Network for payments) |
+
+## Response
+
+<Response>
+  <Title>CreateBTCPaymentResponse</Title>
+  ```json
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "amount_in_brl": 100.50,
+    "amount_in_crypto": 0.00123456,
+    "platform_fee": 0.00001,
+    "status": "PENDING",
+    "expires_in": 3600,
+    "qr_code": "lightning:lnbc1234567890abcdef...",
+    "qr_code_url": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+    "address": null
+  }
+  ```
+</Response>
+
+## Status Codes
+
+| Code | Description |
+|------|-------------|
+| `201` | Payment created successfully |
+| `400` | Bad request - validation error |
+| `401` | Unauthorized |
+| `500` | Internal server error |
+
+## Examples
+
+### cURL
+
+```bash
+curl -X POST https://api.monkei.com/api/v1/transactions/payments/btc \
+  -H "Authorization: Bearer sk_live_1234567890abcdef" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount_in_brl": 100.50,
+    "expires_in": 3600,
+    "description": "Payment in Bitcoin",
+    "idempotency_key": "btc_123456789",
+    "network": "lightning"
+  }'
+```
+
+### JavaScript
+
+```javascript
+async function createBTCPayment() {
+  const response = await fetch('https://api.monkei.com/api/v1/transactions/payments/btc', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer sk_live_1234567890abcdef',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      amount_in_brl: 100.50,
+      expires_in: 3600,
+      description: 'Payment in Bitcoin',
+      idempotency_key: `btc_${Date.now()}`,
+      network: 'lightning'
+    })
+  });
+
+  const payment = await response.json();
+  console.log('BTC Amount:', payment.amount_in_crypto);
+  console.log('Lightning Invoice:', payment.qr_code);
+  return payment;
+}
+```
+
+### Python
+
+```python
+import requests
+import time
+
+def create_btc_payment():
+    headers = {
+        'Authorization': 'Bearer sk_live_1234567890abcdef',
+        'Content-Type': 'application/json'
+    }
+    
+    data = {
+        'amount_in_brl': 100.50,
+        'expires_in': 3600,
+        'description': 'Payment in Bitcoin',
+        'idempotency_key': f'btc_{int(time.time())}',
+        'network': 'lightning'
+    }
+    
+    response = requests.post(
+        'https://api.monkei.com/api/v1/transactions/payments/btc',
+        headers=headers,
+        json=data
+    )
+    
+    return response.json()
+```
+
+## Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Transaction ID |
+| `amount_in_brl` | decimal | Original amount in BRL |
+| `amount_in_crypto` | decimal | Amount in BTC (8 decimals) |
+| `platform_fee` | decimal | Platform fee deducted |
+| `status` | string | Transaction status |
+| `expires_in` | integer | Expiration time in seconds |
+| `qr_code` | string | QR code with payment address |
+| `qr_code_url` | string | QR code image URL |
+| `address` | string | Lightning invoice (for Lightning Network payments) |
+
+## Payment Flow
+
+<Steps>
+  <Step title="Create Payment">
+    Create a Bitcoin payment specifying the amount in BRL.
+  </Step>
+  <Step title="Get Lightning Invoice">
+    Receive a Lightning Network invoice and QR code.
+  </Step>
+  <Step title="Customer Pays">
+    Customer pays using a Lightning Network compatible wallet.
+  </Step>
+  <Step title="Confirmation">
+    Payment is confirmed instantly on the Lightning Network (no blockchain confirmations needed).
+  </Step>
+</Steps>
+
+## Important Notes
+
+<Info>
+  The amount is automatically converted from BRL to BTC based on current exchange rates. The `amount_in_crypto` field shows the exact BTC amount to receive.
+</Info>
+
+<Warning>
+  Lightning Network invoices are single-use and time-limited. Each payment requires a new invoice. Expired invoices cannot be used.
+</Warning>
+
+## Network Information
+
+- **Network**: Lightning Network (for payments)
+- **Address Format**: Lightning invoice
+- **Confirmation Time**: Instant (Lightning Network)
+- **Transaction Fees**: Paid by the customer (very low on Lightning Network)
+
+## Confirmation Requirements
+
+Bitcoin payments on the Lightning Network are confirmed instantly:
+
+- **Instant Settlement**: Payments are confirmed immediately on the Lightning Network
+- **No Block Confirmations**: Lightning Network uses off-chain channels for instant transactions
+- **Low Fees**: Transaction fees are minimal compared to on-chain Bitcoin transactions
+
+<Note>
+  Lightning Network payments are instant and do not require waiting for blockchain confirmations. This makes Bitcoin payments as fast as traditional payment methods.
+</Note>
+
+## Error Handling
+
+### Common Errors
+
+| Code | Description | Solution |
+|------|-------------|----------|
+| `VALIDATION_ERROR` | Invalid field | Check the parameters sent |
+| `INVALID_NETWORK` | Invalid network | Use "lightning" |
+| `AMOUNT_TOO_LOW` | Amount below minimum | Increase to at least R$7.00 |
+
+## Next Steps
+
+- <a href="/transactions/check-status">Check Status</a> - Monitor payment status
+- <a href="/essentials/webhooks">Webhooks</a> - Receive payment notifications
+- <a href="/transactions/pix">PIX Payments</a> - Learn about PIX payments
