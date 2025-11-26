@@ -1,179 +1,538 @@
 ---
-title: 'Monkei'
-description: 'Main API for payment integration and crypto transactions'
+title: 'API Reference'
+description: 'Technical reference for Monkei API v1 - REST endpoints, authentication, and integration details'
 ---
 
-<Note>
-  This is the Monkei documentation. To get started, you will need a valid API Key.
-</Note>
+# API Reference
 
-## Welcome to Monkei
-
-The Monkei allows you to integrate PIX payments, USDT transactions, remittances, withdrawals, and billing into your application. Our API is RESTful and returns JSON responses.
+Complete technical reference for the Monkei API v1. This section covers all endpoints, request/response formats, authentication mechanisms, and technical specifications.
 
 <Card
   title="OpenAPI Specification"
   icon="code"
-  href="https://github.com/monkei/gateway/blob/main/docs/openapi.json"
+  href="/api-reference/openapi.json"
 >
-  Download full OpenAPI specification
+  Download or view the complete OpenAPI 3.1.0 specification
 </Card>
 
-## Available Endpoints
+## API Overview
 
-### 💳 Transactions
+### Architecture
 
-<CardGroup cols={2}>
-  <Card title="Payments" icon="credit-card">
-    - Create payments
-    - Check status
-    - PIX and USDT support
-  </Card>
-  <Card title="Remittances" icon="arrow-right-arrow-left">
-    - Send PIX
-    - Transfer USDT
-    - Check status
-  </Card>
-  <Card title="Withdrawals" icon="arrow-up-from-bracket">
-    - BRL Withdrawals
-    - USDT Withdrawals
-    - Multiple networks
-  </Card>
-  <Card title="QR Codes" icon="qrcode">
-    - PIX QR Code
-    - USDT QR Code
-    - Configurable expiration
-  </Card>
-</CardGroup>
+- **Protocol**: REST over HTTPS
+- **Data Format**: JSON (Content-Type: `application/json`)
+- **API Version**: v1
+- **Base Path**: `/api/v1`
+- **Character Encoding**: UTF-8
 
-### 📋 Billing
+### API Versioning
 
-<CardGroup cols={2}>
-  <Card title="Bills" icon="receipt">
-    - Create bills
-    - List bills
-    - Cancel bills
-  </Card>
-  <Card title="Products" icon="box">
-    - Multiple products
-    - Custom prices
-    - Variable quantities
-  </Card>
-</CardGroup>
+The API uses URL-based versioning. The current version is `v1`:
 
-## Authentication
-
-All API v1 endpoints require authentication via Bearer Token:
-
-```bash
-curl -H "Authorization: Bearer YOUR_API_KEY" \
-     https://api.monkei.com/api/v1/transactions/payments
+```
+https://api.monkei.com/api/v1/{resource}
 ```
 
-### Getting an API Key
-
-<Steps>
-  <Step title="Access the Dashboard">
-    Log in to [app.monkei.co](https://app.monkei.co)
-  </Step>
-  <Step title="Go to API Keys">
-    Navigate to **Integrations > API Keys**
-  </Step>
-  <Step title="Create a new key">
-    Click on **"New API Key"** and choose the environment
-  </Step>
-  <Step title="Copy the key">
-    **Important**: The key is shown only once!
-  </Step>
-</Steps>
+Future versions will be released as `v2`, `v3`, etc., maintaining backward compatibility for at least 12 months.
 
 ## Base URLs
 
-<CardGroup cols={2}>
-  <Card title="Production" icon="server">
-    `https://api.monkei.com`
-  </Card>
-  <Card title="Staging" icon="flask">
-    `https://staging-api.monkei.com`
-  </Card>
-</CardGroup>
+| Environment | Base URL | Description |
+|-------------|----------|-------------|
+| **Production** | `https://api.monkei.com` | Live environment for production use |
+| **Staging** | `https://staging-api.monkei.com` | Testing environment with test data |
 
-## Rate Limits
+<Warning>
+  Always use Production URLs for live transactions. Staging environment is for testing only.
+</Warning>
 
-Our API implements rate limiting to ensure stability:
+## Authentication
 
-- **API v1**: 1000 requests/minute
-- **Transactions**: 100 requests/minute
-- **Billing**: 200 requests/minute
-
-Rate limit headers are included in all responses:
+All API requests require authentication using the `X-API-Key` header:
 
 ```http
-X-RateLimit-Limit: 1000
-X-RateLimit-Remaining: 999
+X-API-Key: sk_live_1234567890abcdef
+```
+
+### API Key Format
+
+- **Test Keys**: Start with `sk_test_`
+- **Live Keys**: Start with `sk_live_`
+
+<Note>
+  API keys are scoped to your account and environment. Test keys only work in staging, live keys only work in production.
+</Note>
+
+## Request Format
+
+### HTTP Methods
+
+| Method | Usage |
+|--------|-------|
+| `GET` | Retrieve resources |
+| `POST` | Create resources |
+
+### Request Headers
+
+Required headers for all requests:
+
+```http
+X-API-Key: YOUR_API_KEY
+Content-Type: application/json
+```
+
+Optional headers:
+
+```http
+X-Idempotency-Key: unique-key-123
+X-Request-ID: request-uuid-456
+User-Agent: YourApp/1.0
+```
+
+### Request Body
+
+All POST requests must send JSON in the request body:
+
+```json
+{
+  "field": "value",
+  "nested": {
+    "property": "data"
+  }
+}
+```
+
+## Response Format
+
+### Success Response Structure
+
+All successful responses follow a consistent structure:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "PENDING",
+    ...
+  },
+  "message": "Operation completed successfully"
+}
+```
+
+**Response Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | Always `true` for successful responses |
+| `data` | object/array | The actual response data (omitted for 204 responses) |
+| `message` | string | Human-readable success message (optional) |
+
+**Default Success Messages:**
+
+| Status Code | Default Message |
+|-------------|----------------|
+| `200 OK` | "Operation completed successfully" |
+| `201 Created` | "Resource created successfully" |
+| `202 Accepted` | "Request accepted for processing" |
+| `204 No Content` | (no body returned) |
+
+### Error Response Structure
+
+All error responses follow a consistent structure:
+
+```json
+{
+  "success": false,
+  "error": "INVALID_INPUT",
+  "code": "VALIDATION_ERROR",
+  "message": "Invalid request parameters",
+  "details": {
+    "field": "amount",
+    "reason": "Must be greater than 0",
+    "user": "user_id",
+    "account": "account_id",
+    "operation": "CreatePayment"
+  },
+  "trace": "CreatePayment -> ValidateAmount -> CheckBalance"
+}
+```
+
+**Response Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | Always `false` for error responses |
+| `error` | string | Error type/category (e.g., "INVALID_INPUT", "NOT_FOUND") |
+| `code` | string | Specific error code for programmatic handling |
+| `message` | string | Human-readable error message |
+| `details` | object | Additional error context (optional) |
+| `trace` | string | Error trace/stack (only in non-production environments) |
+
+**Details Object Fields:**
+
+The `details` object may include:
+- `user`: User ID associated with the error
+- `account`: Account ID associated with the error
+- `operation`: Operation that failed
+- `error_detail`: Original error message
+- Custom context fields specific to the error
+
+<Note>
+  The `trace` field is only included in non-production environments to aid debugging. It's omitted in production for security.
+</Note>
+
+### Response Headers
+
+All responses include standard headers:
+
+**Rate Limiting Headers:**
+```http
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
 X-RateLimit-Reset: 1640995200
+```
+
+**Idempotency Headers (when applicable):**
+```http
+Idempotency-Key: payment_20240101_001
+X-Idempotent: false
+```
+
+The `X-Idempotent` header indicates:
+- `true`: Response is from a previously processed request (replay)
+- `false`: Response is from a newly processed request
+
+**Content Type:**
+```http
+Content-Type: application/json
 ```
 
 ## HTTP Status Codes
 
-<CardGroup cols={2}>
-  <Card title="2xx - Success">
-    - `200` - OK
-    - `201` - Created
-    - `204` - No Content
-  </Card>
-  <Card title="4xx - Client Error">
-    - `400` - Bad Request
-    - `401` - Unauthorized
-    - `403` - Forbidden
-    - `404` - Not Found
-    - `429` - Too Many Requests
-  </Card>
-</CardGroup>
+### Success Codes
 
-## Quick Example
+| Code | Description | Usage |
+|------|-------------|-------|
+| `200 OK` | Request successful | GET operations |
+| `201 Created` | Resource created | POST operations |
+| `202 Accepted` | Request accepted for processing | Async POST operations |
 
-### Create a PIX Payment
+### Client Error Codes
 
-```bash
-curl -X POST https://api.monkei.com/api/v1/transactions/payments/pix \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "amount_in_brl": 10050,
-    "description": "Payment for product XYZ",
-    "idempotency_key": "pix_123456789"
-  }'
-```
+| Code | Description | Common Causes |
+|------|-------------|---------------|
+| `400 Bad Request` | Invalid request format | Missing required fields, invalid data types |
+| `401 Unauthorized` | Authentication failed | Missing/invalid API key |
+| `403 Forbidden` | Access denied | Insufficient permissions |
+| `404 Not Found` | Resource not found | Invalid ID or endpoint |
+| `409 Conflict` | Resource conflict | Duplicate idempotency key |
+| `422 Unprocessable Entity` | Validation error | Business rule violation |
+| `429 Too Many Requests` | Rate limit exceeded | Too many requests in time window |
 
-### Response
+### Server Error Codes
+
+| Code | Description |
+|------|-------------|
+| `500 Internal Server Error` | Unexpected server error |
+| `502 Bad Gateway` | Upstream service error |
+| `503 Service Unavailable` | Service temporarily unavailable |
+
+## Idempotency
+
+All POST operations support idempotency to prevent duplicate operations.
+
+### Using Idempotency Keys
+
+Include an `idempotency_key` in your request:
 
 ```json
 {
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "amount_in_brl": 10050,
-  "status": "PENDING",
-  "expires_in": 3600,
-  "qr_code": "00020126580014br.gov.bcb.pix...",
-  "qr_code_url": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB..."
+  "idempotency_key": "payment_20240101_001",
+    "amount_in_brl": 10050,
+  "description": "Payment"
 }
 ```
 
-## Next Steps
+<Info>
+  Idempotency keys are valid for 24 hours. Requests with the same key within this period return the same response.
+</Info>
+
+## Pagination
+
+List endpoints support pagination using query parameters:
+
+```
+GET /api/v1/bills?page=1&limit=20
+```
+
+### Pagination Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | integer | `1` | Page number (1-indexed) |
+| `limit` | integer | `20` | Items per page (max 100) |
+
+### Pagination Response Structure
+
+Paginated responses wrap the data in a standard structure:
+
+```json
+{
+  "success": true,
+  "data": {
+    "data": [
+      { "id": "...", ... },
+      { "id": "...", ... }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 150,
+      "total_pages": 8
+    }
+  },
+  "message": "Operation completed successfully"
+}
+```
+
+**Pagination Object Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `page` | integer | Current page number (1-indexed) |
+| `limit` | integer | Number of items per page |
+| `total` | integer | Total number of items across all pages |
+| `total_pages` | integer | Total number of pages |
+
+## Filtering and Sorting
+
+Many list endpoints support filtering and sorting:
+
+### Filtering
+
+```
+GET /api/v1/bills?status=ACTIVE&created_from=2024-01-01
+```
+
+### Sorting
+
+```
+GET /api/v1/bills?sort_by=created_at&sort_order=desc
+```
+
+## Webhooks
+
+Webhooks deliver real-time events to your application. Configure webhook endpoints in the dashboard.
+
+### Webhook Headers
+
+```http
+X-Monkei-Signature: sha256=abc123...
+X-Monkei-Event: PAYMENT_RECEIVED
+X-Monkei-Delivery-ID: delivery-uuid
+Content-Type: application/json
+```
+
+### Webhook Payload
+
+```json
+{
+  "event": "PAYMENT_RECEIVED",
+  "timestamp": "2024-01-01T12:00:00Z",
+  "data": {
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "COMPLETED"
+  }
+}
+```
+
+<Card
+  title="Webhooks Guide"
+  icon="webhook"
+  href="/essentials/webhooks"
+>
+  Learn how to verify and process webhook events
+</Card>
+
+## Rate Limiting
+
+The API implements rate limiting to ensure fair usage:
+
+- **Global Limit**: 1000 requests per minute (all endpoints)
+- **Per API Key**: 100 requests per second
+- **Per IP (no auth)**: 30 requests per second
+
+Rate limit information is included in response headers:
+
+```http
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1640995200
+```
+
+When rate limits are exceeded, the API returns `429 Too Many Requests`.
+
+<Card
+  title="Rate Limits Guide"
+  icon="gauge"
+  href="/essentials/rate-limits"
+>
+  Detailed information about rate limiting and best practices
+</Card>
+
+## Error Handling
+
+### Error Response Structure
+
+All errors follow the standard error response format (see [Response Format](#response-format) above):
+
+```json
+{
+  "success": false,
+  "error": "INVALID_INPUT",
+  "code": "VALIDATION_ERROR",
+  "message": "Invalid request parameters",
+  "details": {
+    "field": "amount",
+    "reason": "Must be greater than 0"
+  }
+}
+```
+
+### Common Error Codes
+
+| Error Code | Description | HTTP Status |
+|------------|-------------|-------------|
+| `INVALID_INPUT` | Request validation failed | 400 |
+| `UNAUTHORIZED` | Authentication required | 401 |
+| `FORBIDDEN` | Access denied | 403 |
+| `NOT_FOUND` | Resource not found | 404 |
+| `CONFLICT` | Resource conflict (e.g., duplicate idempotency key) | 409 |
+| `RATE_LIMIT_EXCEEDED` | Too many requests | 429 |
+| `INTERNAL_ERROR` | Server error | 500 |
+
+### Error Details
+
+The `details` object provides additional context about the error:
+
+- **Validation errors**: Include `field` and `reason` or `error_detail`
+- **Resource errors**: Include `resource`, `user`, or `account` when applicable
+- **Operation errors**: Include `operation` to identify the failed operation
+- **Custom context**: Additional fields specific to the error type
+
+### Best Practices
+
+1. **Always check HTTP status codes** before processing response body
+2. **Implement retry logic** for `429` and `5xx` errors
+3. **Log error details** for debugging
+4. **Handle idempotency** to prevent duplicate operations
+5. **Validate responses** before processing
+
+## Data Types
+
+### Common Field Types
+
+| Type | Format | Example |
+|------|--------|---------|
+| `string` | UTF-8 text | `"Hello World"` |
+| `integer` | 64-bit signed | `10050` |
+| `decimal` | String representation | `"100.50"` |
+| `uuid` | UUID v4 | `"550e8400-e29b-41d4-a716-446655440000"` |
+| `datetime` | ISO 8601 | `"2024-01-01T12:00:00Z"` |
+| `boolean` | true/false | `true` |
+| `array` | JSON array | `[1, 2, 3]` |
+| `object` | JSON object | `{"key": "value"}` |
+
+### Amounts
+
+All monetary amounts are represented in **cents** (smallest currency unit):
+
+- `10050` = R$ 100.50 (BRL)
+- `100` = $1.00 (USD)
+- `1000000` = 1.000000 USDT
+
+### Dates and Times
+
+All timestamps use ISO 8601 format in UTC:
+
+```
+2024-01-01T12:00:00Z
+```
+
+## Testing
+
+Use test API keys (`sk_test_...`) for development and testing. Test mode:
+
+- Uses simulated data
+- Doesn't process real payments
+- Supports magic amounts for testing scenarios
+- Includes `test: true` flag in responses
+
+<Card
+  title="Testing Guide"
+  icon="flask"
+  href="/testing"
+>
+  Learn about testing your integration
+</Card>
+
+## SDKs and Libraries
+
+While we provide a REST API, community SDKs may be available:
+
+- **JavaScript/TypeScript**: Use `fetch` or `axios`
+- **Python**: Use `requests` library
+- **Go**: Use `net/http` package
+- **cURL**: Direct HTTP requests
+
+<Note>
+  Official SDKs may be available. Check our GitHub repository for updates.
+</Note>
+
+## OpenAPI Specification
+
+The complete API specification is available in OpenAPI 3.1.0 format:
+
+- **Location**: `/api-reference/openapi.json`
+- **Format**: JSON
+- **Interactive**: Use the "Try it" feature on each endpoint page
+
+The OpenAPI spec includes:
+- All endpoints with request/response schemas
+- Authentication requirements
+- Error responses
+- Example requests and responses
+
+## Support and Resources
 
 <CardGroup cols={2}>
   <Card
-    title="Quickstart Guide"
+    title="Quickstart"
     icon="rocket"
     href="/quickstart"
   >
-    Start integrating in minutes
+    Get started in 5 minutes
   </Card>
   <Card
     title="Authentication"
     icon="key"
     href="/essentials/authentication"
   >
-    Configure your API Key
+    Detailed authentication guide
+  </Card>
+  <Card
+    title="Status Page"
+    icon="chart-line"
+    href="https://stats.uptimerobot.com/nAsS6FyoB3"
+  >
+    Check API status
+  </Card>
+  <Card
+    title="Support"
+    icon="headset"
+    href="mailto:support@monkei.co"
+  >
+    Contact support
   </Card>
 </CardGroup>

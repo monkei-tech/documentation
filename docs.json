@@ -3,9 +3,9 @@
   "theme": "mint",
   "name": "Monkei",
   "colors": {
-    "primary": "#7C3AED",
-    "light": "#A855F7",
-    "dark": "#5B21B6"
+    "primary": "#223825",
+    "light": "#354D3A",
+    "dark": "#000000"
   },
   "favicon": "/favicon.ico",
   "navigation": {
@@ -15,6 +15,7 @@
         "groups": [
           {
             "group": "Getting started",
+            "icon": "rocket",
             "pages": [
               "index",
               "quickstart",
@@ -23,6 +24,7 @@
           },
           {
             "group": "API Concepts",
+            "icon": "book",
             "pages": [
               "essentials/authentication",
               "essentials/webhooks",
@@ -31,6 +33,7 @@
           },
           {
             "group": "Billing",
+            "icon": "receipt",
             "pages": [
               "billing/overview",
               "billing/create",
@@ -40,6 +43,7 @@
           },
           {
             "group": "Coupons",
+            "icon": "tag",
             "pages": [
               "coupons/overview",
               "coupons/create",
@@ -49,6 +53,7 @@
           },
           {
             "group": "Transactions",
+            "icon": "credit-card",
             "pages": [
               "transactions/overview",
               "transactions/pix",
@@ -59,6 +64,7 @@
           },
           {
             "group": "Withdrawals",
+            "icon": "arrow-up-from-bracket",
             "pages": [
               "withdrawals/overview",
               "withdrawals/create",
@@ -68,6 +74,7 @@
           },
           {
             "group": "Accounts",
+            "icon": "wallet",
             "pages": [
               "accounts/overview",
               "balance",
@@ -76,6 +83,7 @@
           },
           {
             "group": "Health",
+            "icon": "heart-pulse",
             "pages": [
               "health/overview",
               "health/health"
@@ -87,34 +95,21 @@
         "tab": "API Reference",
         "groups": [
           {
-            "group": "Overview",
+            "group": "API Reference",
+            "icon": "book",
             "pages": [
-              "api-reference/introduction"
-            ]
-          },
-          {
-            "group": "Transactions",
-            "pages": [
-              "api-reference/transactions/payments",
-              "api-reference/transactions/withdrawals"
-            ]
-          },
-          {
-            "group": "Quotes",
-            "pages": [
-              "api-reference/quotes/latest"
-            ]
-          },
-          {
-            "group": "Accounts",
-            "pages": [
+              "api-reference/introduction",
+              "api-reference/billing/create",
+              "api-reference/billing/list",
+              "api-reference/billing/find",
+              "api-reference/coupons",
+              "api-reference/transactions/withdrawals",
+              "api-reference/transactions/payments/pix",
+              "api-reference/transactions/payments/usdt",
+              "api-reference/transactions/payments/btc",
+              "api-reference/transactions/payments/check",
+              "api-reference/quotes/latest",
               "api-reference/accounts/balance"
-            ]
-          },
-          {
-            "group": "Billing",
-            "pages": [
-              "api-reference/billing/bills"
             ]
           }
         ]
@@ -154,12 +149,7 @@
         "label": "Status",
         "href": "https://stats.uptimerobot.com/nAsS6FyoB3"
       }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Get API Key",
-      "href": "https://app.monkei.co/api-keys"
-    }
+    ]
   },
   "contextual": {
     "options": [
@@ -178,6 +168,21 @@
       "x": "https://x.com/monkeioffcial",
       "github": "https://github.com/monkei-tech",
       "linkedin": "https://linkedin.com/company/monkeitech"
+    }
+  },
+  "api": {
+    "playground": {
+      "display": "interactive",
+      "proxy": true
+    },
+    "examples": {
+      "languages": [
+        "curl",
+        "javascript",
+        "python"
+      ],
+      "defaults": "all",
+      "prefill": true
     }
   }
 }

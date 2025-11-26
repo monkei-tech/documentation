@@ -1,0 +1,204 @@
+---
+title: "Create Billing"
+openapi: "POST /api/v1/bills"
+description: "Create a new billing charge for a customer."
+---
+
+<ParamField body="frequency" type="string" required>
+  The frequency of the billing.
+  Allowed values: `ONE_TIME`, `MULTIPLE_PAYMENTS`.
+</ParamField>
+
+<ParamField body="customer_data" type="object" required>
+  The customer information.
+  
+  <Note>
+    When `frequency` is `MULTIPLE_PAYMENTS`, this field is **not required** and can be omitted.
+  </Note>
+  
+  <Expandable title="properties">
+    <ParamField body="customer_id" type="string">
+      Existing customer ID (optional).
+    </ParamField>
+    <ParamField body="customer_metadata" type="object">
+      Customer metadata for creating a new customer.
+      <Expandable title="properties">
+        <ParamField body="name" type="string">Customer name.</ParamField>
+        <ParamField body="phone" type="string">Customer phone.</ParamField>
+        <ParamField body="email" type="string">Customer email.</ParamField>
+        <ParamField body="tax_id" type="string">Customer tax ID (CPF/CNPJ).</ParamField>
+      </Expandable>
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="payment_methods" type="array" required>
+  List of allowed payment methods.
+  Allowed values: `PIX`, `BITCOIN`, `USDT`.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Additional metadata for the billing. This metadata will be included in webhook events sent to your application.
+</ParamField>
+
+<ParamField body="products" type="array" required>
+  List of products or services. Product information will be included in webhook events sent to your application.
+  <Expandable title="properties">
+    <ParamField body="external_id" type="string" required>
+      External product ID from your company's system. This ID also serves for idempotency - using the same `external_id` will return the same product.
+    </ParamField>
+    <ParamField body="name" type="string" required>Product name.</ParamField>
+    <ParamField body="description" type="string">Product description.</ParamField>
+    <ParamField body="price" type="integer" required>Price in cents.</ParamField>
+    <ParamField body="quantity" type="integer" required>Quantity.</ParamField>
+    <ParamField body="category" type="string">Product category.</ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="return_url" type="string" required>
+  URL to redirect when the user clicks the back button or cancels the payment.
+</ParamField>
+
+<ParamField body="completion_url" type="string" required>
+  URL to redirect after payment completion.
+</ParamField>
+
+<ParamField body="allow_coupon" type="boolean">
+  Whether to allow coupons.
+</ParamField>
+
+<ParamField body="coupons_allowed" type="array">
+  List of allowed coupon codes.
+</ParamField>
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://api.monkei.co/api/v1/bills \
+  --header 'Content-Type: application/json' \
+  --header 'X-API-Key: YOUR_API_KEY' \
+  --data '{
+  "frequency": "ONE_TIME",
+  "customer_data": {
+    "customer_id": "12345678901",
+    "customer_metadata": {
+      "name": "John Doe",
+      "phone": "5511999999999",
+      "email": "customer@example.com",
+      "tax_id": "12345678901"
+    }
+  },
+  "payment_methods": [
+    "PIX",
+    "BITCOIN",
+    "USDT"
+  ],
+  "metadata": {
+    "order_id": "123",
+    "customer_id": "456",
+    "source": "ecommerce"
+  },
+  "products": [
+    {
+      "external_id": "prod_test_001",
+      "name": "Test Product",
+      "description": "Detailed product description",
+      "price": 10050,
+      "quantity": 1,
+      "category": "electronics"
+    }
+  ],
+  "return_url": "https://example.com/return",
+  "completion_url": "https://example.com/completion",
+  "allow_coupon": false,
+  "coupons_allowed": []
+}'
+```
+
+```javascript JavaScript
+const options = {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    frequency: 'ONE_TIME',
+    customer_data: {
+      customer_id: '12345678901',
+      customer_metadata: {
+        name: 'John Doe',
+        phone: '5511999999999',
+        email: 'customer@example.com',
+        tax_id: '12345678901'
+      }
+    },
+    payment_methods: ['PIX', 'BITCOIN', 'USDT'],
+    metadata: {order_id: '123', customer_id: '456', source: 'ecommerce'},
+    products: [
+      {
+        external_id: 'prod_test_001',
+        name: 'Test Product',
+        description: 'Detailed product description',
+        price: 10050,
+        quantity: 1,
+        category: 'electronics'
+      }
+    ],
+    return_url: 'https://example.com/return',
+    completion_url: 'https://example.com/completion',
+    allow_coupon: false,
+    coupons_allowed: []
+  })
+};
+
+fetch('https://api.monkei.co/api/v1/bills', options)
+  .then(response => response.json())
+  .then(response => console.log(response))
+  .catch(err => console.error(err));
+```
+
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+    "success": true,
+    "data": {
+        "id": "019abcb5-3ea5-7e64-afd1-7412ae23def0",
+        "frequency": "ONE_TIME",
+        "status": "ACTIVE",
+        "url": "https://pay.monkei.co/mon_test_abc123xyz",
+        "amount": "100.5",
+        "allow_coupon": false,
+        "coupons_codes": [],
+        "payment_methods": [
+            "PIX",
+            "BITCOIN",
+            "USDT"
+        ],
+        "customer": {
+            "customer_id": "019a9354-7093-7ea8-b139-d5a9f687b693",
+            "customer_metadata": {
+                "name": "John Doe",
+                "phone": "5511999999999",
+                "email": "customer@example.com",
+                "tax_id": "12345678901"
+            }
+        },
+        "products": [
+            {
+                "id": "019abcb4-8721-78aa-9679-ac9ae66275d0",
+                "external_id": "prod_test_001",
+                "price": "100.5",
+                "quantity": 1
+            }
+        ],
+        "completion_url": "https://example.com/completion",
+        "return_url": "https://example.com/return"
+    },
+    "message": "Operation completed successfully"
+}
+```
+</ResponseExample>

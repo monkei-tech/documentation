@@ -1,0 +1,139 @@
+---
+title: "USDT Payment"
+openapi: "POST /api/v1/transactions/payments/usdt"
+description: "Create a USDT QR code for payment"
+---
+
+<ParamField body="amount_in_brl" type="string" required>
+  Payment amount in Brazilian Reais (BRL).
+</ParamField>
+
+<ParamField body="expires_in" type="integer" required>
+  Expiration time in seconds. Minimum: 120 seconds (2 minutes), Maximum: 1800 seconds (30 minutes).
+</ParamField>
+
+<ParamField body="description" type="string">
+  Payment description (optional, max 255 characters).
+</ParamField>
+
+<ParamField body="idempotency_key" type="string" required>
+  Unique key to prevent duplicate payments. This key also serves for idempotency - using the same `idempotency_key` will return the same payment.
+</ParamField>
+
+<ParamField body="network" type="string" required>
+  Blockchain network to use for the payment.
+  Allowed values: `polygon`.
+</ParamField>
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://api.monkei.co/api/v1/transactions/payments/usdt \
+  --header 'Content-Type: application/json' \
+  --header 'X-API-Key: YOUR_API_KEY' \
+  --data '{
+  "amount_in_brl": "100.50",
+  "expires_in": 1800,
+  "description": "Payment for services",
+  "idempotency_key": "usdt_test_001",
+  "network": "polygon"
+}'
+```
+
+```javascript JavaScript
+const options = {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    amount_in_brl: '100.50',
+    expires_in: 1800,
+    description: 'Payment for services',
+    idempotency_key: 'usdt_test_001',
+    network: 'polygon'
+  })
+};
+
+fetch('https://api.monkei.co/api/v1/transactions/payments/usdt', options)
+  .then(response => response.json())
+  .then(response => console.log(response))
+  .catch(err => console.error(err));
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json
+{
+    "success": true,
+    "data": {
+        "id": "019abce1-2d38-7627-b656-fd559aef7370",
+        "amount_in_brl": "100.50",
+        "amount_in_crypto": "18.75",
+        "platform_fee": "0.05",
+        "status": "PENDING",
+        "expires_in": 1800,
+        "qr_code": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+        "qr_code_url": "0x1c1C895b0D0BE6736438c7F26Fe4ab688E65D5C6"
+    },
+    "message": "Resource created successfully"
+}
+```
+
+</ResponseExample>
+
+## Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string (UUID) | Unique payment transaction identifier |
+| `amount_in_brl` | string | Payment amount in Brazilian Reais |
+| `amount_in_crypto` | string | Payment amount in USDT (crypto) |
+| `platform_fee` | string | Platform fee charged for the transaction (optional) |
+| `status` | string | Payment status: `PENDING`, `PROCESSING`, `COMPLETED`, `FAILED`, `CANCELED` |
+| `expires_in` | integer | Expiration time in seconds |
+| `qr_code` | string | QR code image in base64 format (for display) |
+| `qr_code_url` | string | USDT QR code string (for payment apps) |
+
+<Note>
+  The `qr_code` field contains a base64-encoded image that can be directly displayed in your application. The `qr_code_url` field contains the USDT QR code string that can be used by payment applications to process the payment.
+</Note>
+
+<Warning>
+  The `qr_code_url` address (e.g., `0x1c1C895b0D0BE6736438c7F26Fe4ab688E65D5C6`) was created specifically for this payment transaction and should **not be reused** for other payments. Each payment must use its own unique address.
+</Warning>
+
+<Note>
+  The `amount_in_crypto` field shows the equivalent amount in USDT based on the exchange rate at the time of transaction creation. This value is locked and remains fixed until the payment expires or is completed, regardless of cryptocurrency price fluctuations.
+</Note>
+
+<Note>
+  Currently, only the `polygon` network is supported for USDT payments. More networks may be added in the future.
+</Note>
+
+## Status Codes
+
+| Code | Description |
+|------|-------------|
+| `201` | USDT QR code created successfully |
+| `400` | Bad request - invalid parameters or validation error |
+| `401` | Unauthorized - invalid or missing API key |
+| `500` | Internal server error |
+
+
+
+<Warning>
+  The `expires_in` value must be between 120 seconds (2 minutes) and 1800 seconds (30 minutes). Values outside this range will result in a validation error. The maximum is limited to 30 minutes due to cryptocurrency volatility.
+</Warning>
+
+<Warning>
+  Currently, only the `polygon` network is supported. Using any other network value (e.g., `ethereum`, `bsc`, `tron`) will result in an error.
+</Warning>
+
+<Note>
+  The `amount_in_crypto` value is locked at the time of transaction creation based on the current exchange rate. This value remains fixed until the payment expires or is completed, regardless of cryptocurrency price fluctuations.
+</Note>

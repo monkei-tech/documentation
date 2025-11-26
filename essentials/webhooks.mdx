@@ -3,8 +3,6 @@ title: 'Webhooks'
 description: 'Listen to real-time events from Monkei'
 ---
 
-# Webhooks
-
 Webhooks allow your application to receive real-time notifications about events happening in your Monkei account, such as when a payment is confirmed.
 
 ## Configuring Webhooks
@@ -29,15 +27,58 @@ Webhooks allow your application to receive real-time notifications about events 
 
 ## Supported Events
 
+Monkei supports the following webhook events:
+
 | Event | Description |
 |-------|-------------|
-| `PAYMENT_RECEIVED` | Triggered when a payment (PIX or Crypto) is successfully received. |
-| `PAYMENT_FAILED` | Triggered when a payment fails or expires. |
-| `WITHDRAWAL_COMPLETED` | Triggered when a withdrawal is successfully processed. |
+| `payment.completed` | Triggered when a payment (PIX or Crypto) is successfully received and confirmed. |
+| `payment.pending` | Triggered when a payment is created and waiting for confirmation. |
+| `payment.failed` | Triggered when a payment fails. |
+| `payment.expired` | Triggered when a payment expires without being completed. |
+| `withdrawal.completed` | Triggered when a withdrawal is successfully processed. |
+| `withdrawal.pending` | Triggered when a withdrawal is created and waiting for processing. |
+| `withdrawal.failed` | Triggered when a withdrawal fails. |
+
+## Webhook Delivery & Retry System
+
+Monkei implements a robust retry mechanism to ensure your webhooks are delivered successfully.
+
+### Delivery Attempts
+
+Each webhook delivery has a maximum of **5 retry attempts**. If a webhook fails to be delivered, Monkei will automatically retry with the following schedule:
+
+| Attempt | Delay | Total Time Since First Attempt |
+|---------|-------|--------------------------------|
+| 1st retry | 30 seconds | 30 seconds |
+| 2nd retry | 60 seconds | 1.5 minutes |
+| 3rd retry | 5 minutes | 6.5 minutes |
+| 4th retry | 30 minutes | 36.5 minutes |
+| 5th retry | 1 hour | 1 hour 36.5 minutes |
+
+After 5 failed attempts, the webhook delivery will be marked as `FAILED` and no further retries will be attempted.
+
+### Delivery Status
+
+Webhook deliveries can have the following statuses:
+
+- **PENDING**: Initial state, waiting to be sent
+- **RETRYING**: Delivery failed and is scheduled for retry
+- **DELIVERED**: Successfully delivered to your endpoint
+- **FAILED**: All retry attempts exhausted, delivery failed
+
+### Best Practices
+
+1. **Respond quickly**: Your endpoint should respond within 10 seconds to avoid timeouts
+2. **Return 2xx status codes**: Return `200 OK` or `201 Created` to indicate successful processing
+3. **Idempotency**: Implement idempotency checks using the event ID to handle duplicate deliveries
+4. **Logging**: Log all webhook deliveries for debugging and auditing purposes
+5. **Monitor failures**: Set up alerts for failed webhook deliveries to ensure you don't miss important events
 
 ## Verifying Signatures
 
 To ensure the webhook request comes from Monkei, verify the signature header `X-Monkei-Signature`.
+
+The signature is generated using HMAC-SHA256 with your webhook secret. Always verify the signature before processing the webhook payload.
 
 ```javascript
 const crypto = require('crypto');
@@ -50,4 +91,137 @@ function verifySignature(payload, signature, secret) {
     
   return hash === signature;
 }
+
+// Usage example
+app.post('/webhooks/monkei', express.raw({ type: 'application/json' }), (req, res) => {
+  const signature = req.headers['x-monkei-signature'];
+  const payload = req.body;
+  
+  if (!verifySignature(payload, signature, process.env.WEBHOOK_SECRET)) {
+    return res.status(401).send('Invalid signature');
+  }
+  
+  const event = JSON.parse(payload);
+  // Process the event...
+  
+  res.status(200).send('OK');
+});
 ```
+
+## Webhook Payload Structure
+
+All webhook payloads follow a consistent structure:
+
+```json
+{
+    "id": "019ac174-3bc8-7e3d-855f-4f9864c71250",
+    "event": "payment.completed",
+    "data": {
+        "transaction": {
+            "id": "019ac174-3bc8-7e3d-855f-4f9864c71250",
+            "fee": "0.00000006",
+            "hash": "6c447cfb90bfa71e3829fa78092a743f4d55ae6725687a0bebf588f31156d4e2",
+            "type": "PAYMENT",
+            "amount": "0.00002072",
+            "method": "BTC",
+            "status": "COMPLETED",
+            "currency": "USD",
+            "status_paid": "FULL_PAID",
+            "remaining_amount": "0"
+        }
+    },
+    "devMode": false
+}
+```
+
+**Note:** When a payment is associated with a billing, the payload will also include a `billing` object in the `data` field:
+
+```json
+{
+    "id": "019ac176-878a-71d8-9f37-4c72e2cd4ec4",
+    "event": "withdrawal.completed",
+    "data": {
+        "transaction": {
+            "id": "019ac176-878a-71d8-9f37-4c72e2cd4ec4",
+            "fee": "0.00000006",
+            "hash": "75535e60c5f33eae80b43085b7f49ffbab54de4158d2fae56ddb3cfff15325df",
+            "type": "WITHDRAWAL",
+            "amount": "0.00002066",
+            "method": "BTC",
+            "status": "COMPLETED",
+            "currency": "USD",
+            "status_paid": null,
+            "remaining_amount": "0"
+        }
+    },
+    "devMode": false
+}
+```
+
+**Note:** When a payment is associated with a billing, the payload will also include a `billing` object in the `data` field:
+
+```json
+{
+    "id": "019ac174-3bc8-7e3d-855f-4f9864c71250",
+    "event": "payment.completed",
+    "data": {
+        "transaction": {
+            "id": "019ac174-3bc8-7e3d-855f-4f9864c71250",
+            "fee": "0.00000006",
+            "hash": "6c447cfb90bfa71e3829fa78092a743f4d55ae6725687a0bebf588f31156d4e2",
+            "type": "PAYMENT",
+            "amount": "0.00002072",
+            "method": "BTC",
+            "status": "COMPLETED",
+            "currency": "USD",
+            "status_paid": "FULL_PAID",
+            "remaining_amount": "0"
+        },
+        "billing": {
+            "id": "019ac175-1234-5678-9abc-def012345678",
+            "status": "ACTIVE",
+            "frequency": "ONE_TIME",
+            "kind": ["BTC", "PIX"],
+            "customer": {
+                "id": "019ac175-1234-5678-9abc-def012345679",
+                "customer_id": "cust_123",
+                "metadata": {
+                    "name": "John Doe",
+                    "email": "john@example.com"
+                }
+            },
+            "products": [
+                {
+                    "id": "019ac175-1234-5678-9abc-def01234567a",
+                    "external_id": "prod_123",
+                    "quantity": 1
+                }
+            ],
+            "coupons_used": ["COUPON10"]
+        }
+    },
+    "devMode": false
+}
+```
+
+### Payload Fields
+
+- **id**: Unique identifier for the event (transaction ID or billing ID)
+- **event**: Event type in the format `{type}.{status}` (e.g., `payment.completed`, `withdrawal.failed`)
+- **data**: Event-specific data object containing the relevant information (transaction or billing data)
+- **devMode**: (Optional) Boolean flag indicating if the webhook was sent in development mode
+
+## Monitoring Webhook Deliveries
+
+You can monitor the status of your webhook deliveries through the Monkei dashboard:
+
+1. Navigate to **Integrations > Webhooks**
+2. Click on a webhook to view its details
+3. Check the **Deliveries** tab to see all delivery attempts, including:
+   - Delivery status
+   - HTTP response codes
+   - Response times
+   - Error messages (if any)
+   - Retry schedules
+
+This allows you to debug issues and ensure your webhooks are being delivered successfully.

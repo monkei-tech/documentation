@@ -1,0 +1,101 @@
+---
+title: "Create Coupon"
+openapi: "POST /api/v1/coupons"
+description: "Create a new discount coupon."
+---
+
+<ParamField body="code" type="string" required>
+  The unique coupon code. This code will be used by customers to redeem the discount.
+</ParamField>
+
+<ParamField body="description" type="string">
+  A description of the coupon and its discount offer.
+</ParamField>
+
+<ParamField body="discount_kind" type="string" required>
+  The type of discount applied by this coupon.
+  Allowed values: `PERCENTAGE`.
+</ParamField>
+
+<ParamField body="discount_value" type="integer" required>
+  The discount value. The meaning depends on `discount_kind`:
+  
+  - For `PERCENTAGE`: Discount percentage (1-100)
+</ParamField>
+
+<ParamField body="max_redeems" type="integer" required>
+  Maximum number of times this coupon can be redeemed. Must be at least 1.
+</ParamField>
+
+<ParamField body="expires_at" type="string">
+  Expiration date and time for the coupon in ISO 8601 format (e.g., "2024-12-31T23:59:59Z"). If not provided, the coupon does not expire.
+</ParamField>
+
+<ParamField body="is_active" type="boolean">
+  Whether the coupon is currently active and can be used. Defaults to `true` if not provided.
+</ParamField>
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://api.monkei.co/api/v1/coupons \
+  --header 'Content-Type: application/json' \
+  --header 'X-API-Key: YOUR_API_KEY' \
+  --data '{
+  "code": "WELCOME12",
+  "description": "Welcome discount 10% off",
+  "discount_kind": "PERCENTAGE",
+  "discount_value": 12,
+  "max_redeems": 2,
+  "expires_at": "2024-12-31T23:59:59Z",
+  "is_active": true
+}'
+```
+
+```javascript JavaScript
+const options = {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    code: 'WELCOME12',
+    description: 'Welcome discount 10% off',
+    discount_kind: 'PERCENTAGE',
+    discount_value: 12,
+    max_redeems: 2,
+    expires_at: '2024-12-31T23:59:59Z',
+    is_active: true
+  })
+};
+
+fetch('https://api.monkei.co/api/v1/coupons', options)
+  .then(response => response.json())
+  .then(response => console.log(response))
+  .catch(err => console.error(err));
+```
+
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+    "success": true,
+    "data": {
+        "coupon": {
+            "code": "WELCOME12",
+            "description": "Welcome discount 10% off",
+            "discount_kind": "PERCENTAGE",
+            "discount_value": 12,
+            "max_redeems": 2,
+            "status": "ACTIVE",
+            "created_at": "0001-01-01T00:00:00Z",
+            "updated_at": "0001-01-01T00:00:00Z"
+        }
+    },
+    "message": "Resource created successfully"
+}
+```
+</ResponseExample>

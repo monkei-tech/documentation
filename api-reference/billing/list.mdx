@@ -1,0 +1,398 @@
+---
+title: "List Billings"
+openapi: "GET /api/v1/bills"
+description: "Retrieve a paginated list of billings with optional filtering"
+---
+
+Retrieve a paginated list of all billings for your account with optional filtering by status and frequency.
+
+## Endpoint
+
+```http
+GET /api/v1/bills
+```
+
+## Query Parameters
+
+<ParamField query="page" type="integer" default="1">
+  Page number for pagination. Minimum value: 1.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="10">
+  Number of items per page. Minimum value: 1, Maximum value: 100.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filter billings by status.
+  Allowed values: `PAID`, `ACTIVE`, `FAILED`, `CANCELED`.
+</ParamField>
+
+<ParamField query="frequency" type="string">
+  Filter billings by frequency.
+  Allowed values: `ONE_TIME`, `MULTIPLE_PAYMENTS`.
+</ParamField>
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://api.monkei.co/api/v1/bills?page=1&limit=10' \
+  --header 'X-API-Key: YOUR_API_KEY'
+```
+
+```javascript JavaScript
+const options = {
+  method: 'GET',
+  headers: {
+    'X-API-Key': 'YOUR_API_KEY'
+  }
+};
+
+fetch('https://api.monkei.co/api/v1/bills?page=1&limit=10', options)
+  .then(response => response.json())
+  .then(response => console.log(response))
+  .catch(err => console.error(err));
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json
+{
+    "success": true,
+    "data": {
+        "data": [
+            {
+                "id": "019a8ed2-320d-7afb-bb4d-a65c231e44b7",
+                "frequency": "ONE_TIME",
+                "status": "ACTIVE",
+                "amount": "3344.44",
+                "allow_coupon": false,
+                "coupons_codes": [],
+                "payment_methods": [
+                    "PIX",
+                    "USDT",
+                    "BTC"
+                ],
+                "customer": {
+                    "customer_id": "019a2150-b15b-78b7-b36f-ed2efc8e5fba",
+                    "customer_metadata": {
+                        "name": "John Doe",
+                        "phone": "5511999999999",
+                        "email": "customer@example.com",
+                        "tax_id": "12345678901"
+                    }
+                },
+                "products": [
+                    {
+                        "id": "019a8ed2-320d-7b9a-a644-5b19174b6654",
+                        "external_id": "prod_test_001",
+                        "price": "3344.44",
+                        "quantity": 1
+                    }
+                ],
+                "completion_url": "https://example.com/completion",
+                "return_url": "https://example.com/return"
+            },
+            {
+                "id": "019a8ed1-f0c3-75e8-8280-fe2e840044ab",
+                "frequency": "ONE_TIME",
+                "status": "ACTIVE",
+                "amount": "3344.44",
+                "allow_coupon": false,
+                "coupons_codes": [],
+                "payment_methods": [
+                    "PIX",
+                    "USDT",
+                    "BTC"
+                ],
+                "customer": {
+                    "customer_id": "019a2150-b15b-78b7-b36f-ed2efc8e5fba",
+                    "customer_metadata": {
+                        "name": "Jane Smith",
+                        "phone": "5511888888888",
+                        "email": "user@example.com",
+                        "tax_id": "98765432100"
+                    }
+                },
+                "products": [
+                    {
+                        "id": "019a8ed1-f0c4-7633-b16f-0477f8100e4d",
+                        "external_id": "prod_test_002",
+                        "price": "3344.44",
+                        "quantity": 1
+                    }
+                ],
+                "completion_url": "https://example.com/completion",
+                "return_url": "https://example.com/return"
+            }
+        ],
+        "pagination": {
+            "page": 1,
+            "limit": 10,
+            "total": 50,
+            "total_pages": 5
+        }
+    },
+    "message": "Operation completed successfully"
+}
+```
+
+</ResponseExample>
+
+## Response Structure
+
+The response follows the standard pagination format:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | Indicates if the request was successful |
+| `data` | object | Contains the billings array and pagination info |
+| `data.data` | array | Array of billing objects |
+| `data.pagination` | object | Pagination metadata |
+| `message` | string | Success message |
+
+### Pagination Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `page` | integer | Current page number |
+| `limit` | integer | Number of items per page |
+| `total` | integer | Total number of billings |
+| `total_pages` | integer | Total number of pages |
+
+### Billing Object
+
+Each billing in the array contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string (UUID) | Unique billing identifier |
+| `frequency` | string | Billing frequency: `ONE_TIME` or `MULTIPLE_PAYMENTS` |
+| `status` | string | Current billing status |
+| `url` | string | Payment URL (only for `MULTIPLE_PAYMENTS` or when available) |
+| `amount` | string | Total billing amount |
+| `allow_coupon` | boolean | Whether coupons are allowed |
+| `coupons_codes` | array | List of applied coupon codes |
+| `payment_methods` | array | Available payment methods |
+| `customer` | object \| null | Customer information (if provided) |
+| `products` | array | List of products in the billing |
+| `completion_url` | string | URL to redirect after payment completion |
+| `return_url` | string | URL to redirect when user clicks back |
+
+<Note>
+  The `customer` field will be `null` or omitted if the billing was created with `frequency: MULTIPLE_PAYMENTS` and no customer data was provided.
+</Note>
+
+<Note>
+  The `url` field is only present for billings with `frequency: MULTIPLE_PAYMENTS` or when a payment URL has been generated.
+</Note>
+
+## Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | Billings retrieved successfully |
+| `400` | Bad request - invalid query parameters |
+| `401` | Unauthorized - invalid or missing API key |
+| `500` | Internal server error |
+
+## Examples
+
+### Basic Request
+
+```javascript
+async function listBillings(apiKey) {
+  const response = await fetch(
+    'https://api.monkei.co/api/v1/bills?page=1&limit=10',
+    {
+      method: 'GET',
+      headers: {
+        'X-API-Key': apiKey
+      }
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to list billings');
+  }
+
+  const data = await response.json();
+  return data.data;
+}
+
+// Usage
+const result = await listBillings('YOUR_API_KEY');
+console.log('Billings:', result.data);
+console.log('Total:', result.pagination.total);
+```
+
+### Filter by Status
+
+```javascript
+async function getActiveBillings(apiKey) {
+  const response = await fetch(
+    'https://api.monkei.co/api/v1/bills?status=ACTIVE&page=1&limit=20',
+    {
+      method: 'GET',
+      headers: {
+        'X-API-Key': apiKey
+      }
+    }
+  );
+
+  const data = await response.json();
+  return data.data.data; // Array of billings
+}
+
+// Usage
+const activeBillings = await getActiveBillings('YOUR_API_KEY');
+console.log(`Found ${activeBillings.length} active billings`);
+```
+
+### Filter by Frequency
+
+```javascript
+async function getOneTimeBillings(apiKey) {
+  const response = await fetch(
+    'https://api.monkei.co/api/v1/bills?frequency=ONE_TIME&page=1&limit=50',
+    {
+      method: 'GET',
+      headers: {
+        'X-API-Key': apiKey
+      }
+    }
+  );
+
+  const data = await response.json();
+  return data.data;
+}
+
+// Usage
+const result = await getOneTimeBillings('YOUR_API_KEY');
+console.log('One-time billings:', result.data);
+console.log('Total pages:', result.pagination.total_pages);
+```
+
+### Python Example
+
+```python
+import requests
+
+def list_billings(api_key, page=1, limit=10, status=None, frequency=None):
+    url = "https://api.monkei.co/api/v1/bills"
+    headers = {
+        'X-API-Key': api_key
+    }
+    params = {
+        'page': page,
+        'limit': limit
+    }
+    
+    if status:
+        params['status'] = status
+    if frequency:
+        params['frequency'] = frequency
+    
+    response = requests.get(url, headers=headers, params=params)
+    response.raise_for_status()
+    
+    data = response.json()
+    return data['data']
+
+# Usage
+result = list_billings('YOUR_API_KEY', page=1, limit=10, status='ACTIVE')
+print(f"Found {len(result['data'])} billings")
+print(f"Total: {result['pagination']['total']}")
+```
+
+## Use Cases
+
+### Paginate Through All Billings
+
+```javascript
+async function getAllBillings(apiKey) {
+  let allBillings = [];
+  let page = 1;
+  let hasMore = true;
+
+  while (hasMore) {
+    const response = await fetch(
+      `https://api.monkei.co/api/v1/bills?page=${page}&limit=100`,
+      {
+        method: 'GET',
+        headers: {
+          'X-API-Key': apiKey
+        }
+      }
+    );
+
+    const data = await response.json();
+    const result = data.data;
+
+    allBillings = allBillings.concat(result.data);
+
+    hasMore = page < result.pagination.total_pages;
+    page++;
+  }
+
+  return allBillings;
+}
+```
+
+### Get Billings Summary
+
+```javascript
+async function getBillingsSummary(apiKey) {
+  const response = await fetch(
+    'https://api.monkei.co/api/v1/bills?page=1&limit=1',
+    {
+      method: 'GET',
+      headers: {
+        'X-API-Key': apiKey
+      }
+    }
+  );
+
+  const data = await response.json();
+  const pagination = data.data.pagination;
+
+  return {
+    total: pagination.total,
+    totalPages: pagination.total_pages,
+    pageSize: pagination.limit
+  };
+}
+```
+
+## Error Handling
+
+### Invalid Query Parameters (400)
+
+```json
+{
+  "success": false,
+  "error": "INVALID_INPUT",
+  "code": "INVALID_QUERY_PARAMETER",
+  "message": "Invalid query parameter value"
+}
+```
+
+### Unauthorized (401)
+
+```json
+{
+  "success": false,
+  "error": "UNAUTHORIZED",
+  "code": "UNAUTHORIZED",
+  "message": "Invalid or missing API key"
+}
+```
+
+<Warning>
+  The maximum `limit` value is 100. Requests with a limit greater than 100 will be automatically capped at 100.
+</Warning>

@@ -1,0 +1,124 @@
+---
+title: "Find Billing"
+openapi: "GET /api/v1/bills/{billingId}"
+description: "Retrieve a specific billing by its ID"
+---
+
+Retrieve detailed information about a specific billing by its unique identifier.
+
+## Endpoint
+
+```http
+GET /api/v1/bills/{billingId}
+```
+
+## Path Parameters
+
+<ParamField path="billingId" type="string" required>
+  The unique identifier (UUID) of the billing to retrieve.
+</ParamField>
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url https://api.monkei.co/api/v1/bills/019abcd2-240d-7dde-a2c9-0e2ca7144f56 \
+  --header 'X-API-Key: YOUR_API_KEY'
+```
+
+```javascript JavaScript
+const options = {
+  method: 'GET',
+  headers: {
+    'X-API-Key': 'YOUR_API_KEY'
+  }
+};
+
+fetch('https://api.monkei.co/api/v1/bills/019abcd2-240d-7dde-a2c9-0e2ca7144f56', options)
+  .then(response => response.json())
+  .then(response => console.log(response))
+  .catch(err => console.error(err));
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json
+{
+    "success": true,
+    "data": {
+        "id": "019abcd2-240d-7dde-a2c9-0e2ca7144f56",
+        "frequency": "ONE_TIME",
+        "status": "ACTIVE",
+        "url": "https://pay.monkei.co/mon_test_abc123xyz",
+        "amount": "100.5",
+        "allow_coupon": false,
+        "coupons_codes": [],
+        "payment_methods": [
+            "PIX",
+            "BITCOIN",
+            "USDT"
+        ],
+        "customer": {
+            "customer_id": "019a9354-7093-7ea8-b139-d5a9f687b693",
+            "customer_metadata": {
+                "name": "John Doe",
+                "phone": "5511999999999",
+                "email": "customer@example.com",
+                "tax_id": "12345678901"
+            }
+        },
+        "products": [
+            {
+                "id": "019abcb4-8721-78aa-9679-ac9ae66275d0",
+                "external_id": "prod_test_001",
+                "price": "100.5",
+                "quantity": 1
+            }
+        ],
+        "completion_url": "https://example.com/completion",
+        "return_url": "https://example.com/return"
+    },
+    "message": "Operation completed successfully"
+}
+```
+
+</ResponseExample>
+
+## Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string (UUID) | Unique billing identifier |
+| `frequency` | string | Billing frequency: `ONE_TIME` or `MULTIPLE_PAYMENTS` |
+| `status` | string | Current billing status |
+| `url` | string | Payment URL for the customer |
+| `amount` | string | Total billing amount |
+| `allow_coupon` | boolean | Whether coupons are allowed |
+| `coupons_codes` | array | List of applied coupon codes |
+| `payment_methods` | array | Available payment methods |
+| `customer` | object | Customer information (if provided) |
+| `products` | array | List of products in the billing |
+| `completion_url` | string | URL to redirect after payment completion |
+| `return_url` | string | URL to redirect when user clicks back |
+
+### Customer Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `customer_id` | string | Customer ID (if existing customer) |
+| `customer_metadata` | object | Customer details (name, phone, email, tax_id) |
+
+### Products Array
+
+Each product object contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string (UUID) | Product identifier |
+| `external_id` | string | External product ID from your system |
+| `price` | string | Product price |
+| `quantity` | integer | Product quantity |

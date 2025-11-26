@@ -1,730 +1,212 @@
 ---
 title: "Withdrawals"
-description: "Saques de criptomoedas e moedas fiduciárias"
+openapi: "POST /api/v1/transactions/withdrawals"
+description: "Initialize a new withdrawal transaction"
 ---
 
-# Withdrawals
-
-A API de Withdrawals permite realizar saques de criptomoedas e moedas fiduciárias da conta do usuário para endereços externos ou contas bancárias. Suporta múltiplos métodos de saque com validações específicas para cada tipo.
-
-## Visão Geral
-
-<Note>
-  Saques estão disponíveis apenas através do endpoint `/api/dashboard/v1` e requerem autenticação de usuário. Para saques API, utilize os endpoints específicos de cada método.
-</Note>
-
-## Métodos de Saque Suportados
-
-<CardGroup cols={2}>
-  <Card title="PIX" icon="money-check">
-    <Badge text="BRL" color="blue"/>
-    <ul>
-      <li>Saque para conta bancária</li>
-      <li>Chave PIX obrigatória</li>
-      <li>Tipos: EMAIL, PHONE, CPF, CNPJ, RANDOM</li>
-      <li>Processamento: imediato</li>
-    </ul>
-  </Card>
-  <Card title="Criptomoedas" icon="coins">
-    <Badge text="USD" color="green"/>
-    <ul>
-      <li>BTC, ETH, USDT suportados</li>
-      <li>Endereço de destino obrigatório</li>
-      <li>Rede específica por moeda</li>
-      <li>Validação de endereço automática</li>
-    </ul>
-  </Card>
-</CardGroup>
+Initialize a new withdrawal transaction to transfer funds from your account to an external destination (bank account via PIX, or cryptocurrency wallet).
 
 ## Endpoint
-
-### Inicializar Saque
-Cria uma nova transação de saque para a moeda e método especificados.
 
 ```http
 POST /api/v1/transactions/withdrawals
 ```
 
-#### Request
-
-<Request>
-  <Title>InitWithdrawRequest</Title>
-  ```json
-  {
-    "idempotency_key": "withdraw_123456789",
-    "currency": "BRL",
-    "method": "PIX",
-    "amount_in_brl": 1000.50,
-    "amount_in_crypto": null,
-    "description": "Saque para conta pessoal",
-    "network": null,
-    "to_address": null,
-    "pix_key": "user@example.com",
-    "pix_key_type": "EMAIL"
-  }
-  ```
-</Request>
-
-#### Parâmetros
-
-| Campo | Tipo | Obrigatório | Validação | Descrição |
-|-------|------|-------------|-----------|-----------|
-| `idempotency_key` | string | ✅ | - | Chave de idempotência |
-| `currency` | string | ✅ | Enum | Moeda do saque |
-| `method` | string | ✅ | Enum | Método de saque |
-| `amount_in_brl` | decimal | ⚠️¹ | `min=7.00` | Valor em reais (se moeda=BRL) |
-| `amount_in_crypto` | decimal | ⚠️¹ | `min=0.00001` | Quantidade em crypto (se crypto) |
-| `description` | string | ❌ | - | Descrição do saque |
-| `network` | string | ⚠️² | Enum | Rede blockchain (crypto apenas) |
-| `to_address` | string | ⚠️² | - | Endereço destino (crypto apenas) |
-| `pix_key` | string | ⚠️³ | - | Chave PIX (PIX apenas) |
-| `pix_key_type` | string | ⚠️³ | Enum | Tipo da chave PIX |
-
-¹ **Um dos dois campos de amount é obrigatório**
-² **Obrigatório para criptomoedas**
-³ **Obrigatório para PIX**
-
-#### Valores Permitidos
-
-| Campo | Valores |
-|-------|---------|
-| `currency` | `"BRL"`, `"USD"` |
-| `method` | `"PIX"`, `"BTC"`, `"ETH"`, `"USDT"` |
-| `network` | `"POLYGON"`, `"LIGHTNING"` (USDT: POLYGON, BTC: LIGHTNING) |
-| `pix_key_type` | `"EMAIL"`, `"PHONE"`, `"CPF"`, `"CNPJ"`, `"RANDOM"` |
-
-#### Exemplos de Request
-
-**Saque PIX:**
-```json
-{
-  "idempotency_key": "pix_withdraw_123",
-  "currency": "BRL",
-  "method": "PIX",
-  "amount_in_brl": 1000.00,
-  "amount_in_crypto": null,
-  "description": "Saque mensal",
-  "pix_key": "joao.silva@example.com",
-  "pix_key_type": "EMAIL"
-}
-```
-
-**Saque USDT:**
-```json
-{
-  "idempotency_key": "usdt_withdraw_456",
-  "currency": "USD",
-  "method": "USDT",
-  "amount_in_brl": null,
-  "amount_in_crypto": 100.5,
-  "description": "Transferência para carteira externa",
-  "network": "polygon",
-  "to_address": "0x1234567890123456789012345678901234567890"
-}
-```
-
-**Saque BTC:**
-```json
-{
-  "idempotency_key": "btc_withdraw_789",
-  "currency": "USD",
-  "method": "BTC",
-  "amount_in_brl": null,
-  "amount_in_crypto": 0.001,
-  "description": "Saque Bitcoin",
-  "network": "lightning",
-  "to_address": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
-}
-```
-
-#### Response
-
-<Response>
-  <Title>InitWithdrawResponse</Title>
-  ```json
-  {
-    "transaction": {
-      "id": "550e8400-e29b-41d4-a716-446655440000",
-      "method": "PIX",
-      "status": "PENDING",
-      "expires_in": 3600
-    },
-    "next_step": "PROCESSING_WITHDRAWAL"
-  }
-  ```
-</Response>
-
-#### Campos de Resposta
-
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| `transaction.id` | string | UUID da transação de saque |
-| `transaction.method` | string | Método do saque |
-| `transaction.status` | string | Status inicial (geralmente PENDING) |
-| `transaction.expires_in` | integer | Tempo de expiração em segundos |
-| `next_step` | string | Próximo passo no processamento |
-
-#### Status Codes
-
-| Código | Descrição |
-|--------|-----------|
-| `201` | Saque inicializado com sucesso |
-| `200` | Saque existente retornado (idempotência) |
-| `400` | Requisição inválida ou erro de validação |
-| `401` | Não autorizado |
-| `404` | Conta não encontrada |
-| `500` | Erro interno do servidor |
-
----
-
-## Validações por Método
-
-### PIX (Saque em Reais)
-
-<AccordionGroup>
-  <Accordion title="Validações PIX">
-    <ul>
-      <li><strong>Pix Key obrigatória</strong>: Email, phone, CPF, CNPJ ou chave aleatória</li>
-      <li><strong>Valores mínimos</strong>: R$ 7,00</li>
-      <li><strong>Validação de formato</strong>: CPF, CNPJ, email, phone</li>
-      <li><strong>Limite diário</strong>: Configurado por conta</li>
-      <li><strong>Horário de processamento</strong>: 24/7 (imediato)</li>
-    </ul>
-  </Accordion>
-</AccordionGroup>
-
-### Criptomoedas (Saque em USD)
-
-<AccordionGroup>
-  <Accordion title="Validações BTC">
-    <ul>
-      <li><strong>Rede suportada</strong>: Bitcoin, Lightning Network</li>
-      <li><strong>Endereço válido</strong>: Formato Bitcoin ou Lightning</li>
-      <li><strong>Valor mínimo</strong>: 0.00001 BTC</li>
-      <li><strong>Confirmations</strong>: 6 confirmações necessárias</li>
-      <li><strong>Fee</strong>: Taxa de rede variável</li>
-    </ul>
-  </Accordion>
-  <Accordion title="Validações USDT">
-    <ul>
-      <li><strong>Rede suportada</strong>: Polygon (ERC-20)</li>
-      <li><strong>Endereço válido</strong>: Formato Ethereum/Polygon</li>
-      <li><strong>Valor mínimo</strong>: 1 USDT</li>
-      <li><strong>Gas fee</strong>: Calculado automaticamente</li>
-      <li><strong>Contract</strong>: Endereço do contrato USDT</li>
-    </ul>
-  </Accordion>
-  <Accordion title="Validações ETH">
-    <ul>
-      <li><strong>Rede suportada</strong>: Ethereum</li>
-      <li><strong>Endereço válido</strong>: Formato Ethereum</li>
-      <li><strong>Valor mínimo</strong>: 0.001 ETH</li>
-      <li><strong>Gas estimation</strong>: Automática</li>
-      <li><strong>Layer 2</strong>: Futuramente suportará L2s</li>
-    </ul>
-  </Accordion>
-</AccordionGroup>
-
----
-
-## Exemplos de Código
-
-### JavaScript - Withdrawal Service
-
-```javascript
-class WithdrawalService {
-  constructor(apiKey) {
-    this.apiKey = apiKey;
-    this.baseURL = 'https://api.monkei.com/api/dashboard/v1/transactions/withdrawals';
-  }
-
-  async createWithdrawal(withdrawalData) {
-    const response = await fetch(this.baseURL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(withdrawalData)
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || `HTTP error! status: ${response.status}`);
-    }
-
-    return response.json();
-  }
-
-  async createPixWithdrawal(amount, pixKey, pixKeyType, description) {
-    return this.createWithdrawal({
-      idempotency_key: `pix_withdraw_${Date.now()}`,
-      currency: 'BRL',
-      method: 'PIX',
-      amount_in_brl: amount,
-      amount_in_crypto: null,
-      description,
-      pix_key: pixKey,
-      pix_key_type: pixKeyType
-    });
-  }
-
-  async createCryptoWithdrawal(method, amount, network, toAddress, description) {
-    return this.createWithdrawal({
-      idempotency_key: `${method.toLowerCase()}_withdraw_${Date.now()}`,
-      currency: 'USD',
-      method: method.toUpperCase(),
-      amount_in_brl: null,
-      amount_in_crypto: amount,
-      description,
-      network,
-      to_address: toAddress
-    });
-  }
-
-  validatePixKey(key, type) {
-    const validators = {
-      'EMAIL': (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
-      'PHONE': (phone) => /^\+?[1-9]\d{1,14}$/.test(phone),
-      'CPF': (cpf) => /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(cpf) || /^\d{11}$/.test(cpf),
-      'CNPJ': (cnpj) => /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(cnpj) || /^\d{14}$/.test(cnpj),
-      'RANDOM': (key) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(key)
-    };
-
-    return validators[type]?.(key) || false;
-  }
-
-  validateCryptoAddress(address, network) {
-    const validators = {
-      'bitcoin': (addr) => /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/.test(addr) || /^bc1[a-z0-9]{8,87}$/.test(addr),
-      'lightning': (addr) => /^lnbc[0-9]{1}[a-z0-9]{78,}$/.test(addr),
-      'polygon': (addr) => /^0x[a-fA-F0-9]{40}$/.test(addr),
-      'ethereum': (addr) => /^0x[a-fA-F0-9]{40}$/.test(addr)
-    };
-
-    return validators[network]?.(address) || false;
-  }
-
-  async withdrawWithValidation(method, amount, destination, metadata = {}) {
-    // Validações específicas por método
-    if (method === 'PIX') {
-      const { pixKey, pixKeyType } = destination;
-
-      if (!this.validatePixKey(pixKey, pixKeyType)) {
-        throw new Error(`Chave PIX ${pixKeyType} inválida: ${pixKey}`);
-      }
-
-      if (amount < 7.00) {
-        throw new Error('Valor mínimo para saque PIX é R$ 7,00');
-      }
-
-      return this.createPixWithdrawal(
-        amount,
-        pixKey,
-        pixKeyType,
-        metadata.description
-      );
-
-    } else if (['BTC', 'ETH', 'USDT'].includes(method)) {
-      const { network, toAddress } = destination;
-
-      if (!this.validateCryptoAddress(toAddress, network)) {
-        throw new Error(`Endereço ${network} inválido: ${toAddress}`);
-      }
-
-      const minAmounts = {
-        'BTC': 0.00001,
-        'ETH': 0.001,
-        'USDT': 1.0
-      };
-
-      if (amount < minAmounts[method]) {
-        throw new Error(`Valor mínimo para ${method} é ${minAmounts[method]} ${method}`);
-      }
-
-      return this.createCryptoWithdrawal(
-        method,
-        amount,
-        network,
-        toAddress,
-        metadata.description
-      );
-
-    } else {
-      throw new Error(`Método de saque não suportado: ${method}`);
-    }
-  }
-}
-
-// Uso
-const withdrawalService = new WithdrawalService('sk_live_1234567890abcdef');
-
-async function performWithdrawals() {
-  try {
-    // Saque PIX
-    const pixWithdrawal = await withdrawalService.withdrawWithValidation('PIX', 100.00, {
-      pixKey: 'joao@example.com',
-      pixKeyType: 'EMAIL'
-    }, {
-      description: 'Saque mensal'
-    });
-
-    console.log('Saque PIX criado:', pixWithdrawal.transaction.id);
-
-    // Saque USDT
-    const usdtWithdrawal = await withdrawalService.withdrawWithValidation('USDT', 100.5, {
-      network: 'polygon',
-      toAddress: '0x1234567890123456789012345678901234567890'
-    }, {
-      description: 'Transferência USDT'
-    });
-
-    console.log('Saque USDT criado:', usdtWithdrawal.transaction.id);
-
-    // Saque BTC
-    const btcWithdrawal = await withdrawalService.withdrawWithValidation('BTC', 0.001, {
-      network: 'bitcoin',
-      toAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'
-    }, {
-      description: 'Saque Bitcoin'
-    });
-
-    console.log('Saque BTC criado:', btcWithdrawal.transaction.id);
-
-  } catch (error) {
-    console.error('Erro no saque:', error.message);
-  }
-}
-
-performWithdrawals();
-```
-
-### Python - Withdrawal Manager
-
-```python
-import re
-import requests
-from decimal import Decimal
-from typing import Dict, Optional
-from dataclasses import dataclass
-
-@dataclass
-class WithdrawalRequest:
-    currency: str
-    method: str
-    amount: Decimal
-    description: str = ""
-    network: Optional[str] = None
-    to_address: Optional[str] = None
-    pix_key: Optional[str] = None
-    pix_key_type: Optional[str] = None
-
-@dataclass
-class WithdrawalResponse:
-    transaction_id: str
-    method: str
-    status: str
-    next_step: str
-
-class WithdrawalManager:
-    def __init__(self, api_key: str):
-        self.api_key = api_key
-        self.base_url = "https://api.monkei.com/api/dashboard/v1/transactions/withdrawals"
-        self.headers = {
-            'Authorization': f'Bearer {api_key}',
-            'Content-Type': 'application/json'
-        }
-
-    def validate_pix_key(self, key: str, key_type: str) -> bool:
-        """Valida chave PIX conforme o tipo"""
-        validators = {
-            'EMAIL': r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-            'PHONE': r'^\+?[1-9]\d{1,14}$',
-            'CPF': r'^\d{3}\.\d{3}\.\d{3}-\d{2}$|^\d{11}$',
-            'CNPJ': r'^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$|^\d{14}$',
-            'RANDOM': r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
-        }
-
-        pattern = validators.get(key_type.upper())
-        return bool(re.match(pattern, key)) if pattern else False
-
-    def validate_crypto_address(self, address: str, network: str) -> bool:
-        """Valida endereço de criptomoeda"""
-        validators = {
-            'bitcoin': [
-                r'^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$',  # Legacy
-                r'^bc1[a-z0-9]{8,87}$'                # Bech32
-            ],
-            'lightning': [
-                r'^lnbc[0-9]{1}[a-z0-9]{78,}$'
-            ],
-            'polygon': [
-                r'^0x[a-fA-F0-9]{40}$'
-            ],
-            'ethereum': [
-                r'^0x[a-fA-F0-9]{40}$'
-            ]
-        }
-
-        patterns = validators.get(network.lower(), [])
-        return any(re.match(pattern, address) for pattern in patterns)
-
-    def validate_withdrawal_request(self, request: WithdrawalRequest) -> list[str]:
-        """Valida request de saque e retorna lista de erros"""
-        errors = []
-
-        # Validações comuns
-        if request.amount <= 0:
-            errors.append("Valor deve ser positivo")
-
-        # Validações específicas por método
-        if request.method == 'PIX':
-            if not request.pix_key or not request.pix_key_type:
-                errors.append("Chave PIX e tipo são obrigatórios para saque PIX")
-            elif not self.validate_pix_key(request.pix_key, request.pix_key_type):
-                errors.append(f"Chave PIX {request.pix_key_type} inválida")
-
-            if request.amount < Decimal('7.00'):
-                errors.append("Valor mínimo para saque PIX é R$ 7,00")
-
-        elif request.method in ['BTC', 'ETH', 'USDT']:
-            if not request.network or not request.to_address:
-                errors.append("Rede e endereço são obrigatórios para saque de criptomoeda")
-            elif not self.validate_crypto_address(request.to_address, request.network):
-                errors.append(f"Endereço {request.network} inválido")
-
-            min_amounts = {
-                'BTC': Decimal('0.00001'),
-                'ETH': Decimal('0.001'),
-                'USDT': Decimal('1.0')
-            }
-
-            if request.amount < min_amounts.get(request.method, Decimal('0')):
-                errors.append(f"Valor mínimo para {request.method} é {min_amounts[request.method]} {request.method}")
-
-        return errors
-
-    def create_withdrawal(self, request: WithdrawalRequest) -> WithdrawalResponse:
-        """Cria saque após validação"""
-        # Validar request
-        errors = self.validate_withdrawal_request(request)
-        if errors:
-            raise ValueError(f"Erros de validação: {', '.join(errors)}")
-
-        # Preparar payload
-        payload = {
-            'idempotency_key': f'{request.method.lower()}_withdraw_{int(time.time())}',
-            'currency': request.currency,
-            'method': request.method.upper(),
-            'description': request.description
-        }
-
-        # Adicionar campos específicos
-        if request.method == 'PIX':
-            payload.update({
-                'amount_in_brl': float(request.amount),
-                'amount_in_crypto': None,
-                'pix_key': request.pix_key,
-                'pix_key_type': request.pix_key_type
-            })
-        else:
-            payload.update({
-                'amount_in_brl': None,
-                'amount_in_crypto': float(request.amount),
-                'network': request.network.lower(),
-                'to_address': request.to_address
-            })
-
-        # Fazer request
-        response = requests.post(
-            self.base_url,
-            headers=self.headers,
-            json=payload
-        )
-
-        if response.status_code != 201:
-            error_data = response.json() if response.content else {}
-            raise Exception(f"Erro ao criar saque: {error_data.get('message', response.status_code)}")
-
-        data = response.json()
-
-        return WithdrawalResponse(
-            transaction_id=data['transaction']['id'],
-            method=data['transaction']['method'],
-            status=data['transaction']['status'],
-            next_step=data['next_step']
-        )
-
-    def batch_withdrawals(self, requests: list[WithdrawalRequest]) -> list[WithdrawalResponse]:
-        """Processa múltiplos saques em lote"""
-        results = []
-        errors = []
-
-        for i, request in enumerate(requests):
-            try:
-                result = self.create_withdrawal(request)
-                results.append(result)
-                print(f"Saque {i+1}/{len(requests)} criado: {result.transaction_id}")
-            except Exception as e:
-                errors.append(f"Saque {i+1} falhou: {str(e)}")
-                print(f"Erro no saque {i+1}: {e}")
-
-        if errors:
-            print(f"\nErros encontrados: {len(errors)}")
-            for error in errors:
-                print(f"  - {error}")
-
-        return results
-
-# Uso
-manager = WithdrawalManager('sk_live_1234567890abcdef')
-
-# Criar múltiplos saques
-withdrawal_requests = [
-    WithdrawalRequest(
-        currency='BRL',
-        method='PIX',
-        amount=Decimal('100.00'),
-        description='Saque mensal 1',
-        pix_key='joao@example.com',
-        pix_key_type='EMAIL'
-    ),
-    WithdrawalRequest(
-        currency='USD',
-        method='USDT',
-        amount=Decimal('100.5'),
-        description='Transferência USDT',
-        network='polygon',
-        to_address='0x1234567890123456789012345678901234567890'
-    ),
-    WithdrawalRequest(
-        currency='USD',
-        method='BTC',
-        amount=Decimal('0.001'),
-        description='Saque Bitcoin',
-        network='bitcoin',
-        to_address='bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'
-    )
-]
-
-# Processar em lote
-try:
-    results = manager.batch_withdrawals(withdrawal_requests)
-    print(f"\n{len(results)} saques criados com sucesso!")
-except Exception as e:
-    print(f"Erro no processamento: {e}")
-```
-
----
-
-## Rate Limiting
-
-| Endpoint | Limite | Período |
-|----------|--------|---------|
-| `POST /transactions/withdrawals` | 40 requests | por minuto |
-
-Headers retornados:
-```http
-X-RateLimit-Limit: 40
-X-RateLimit-Remaining: 39
-X-RateLimit-Reset: 1640995200
-```
-
----
-
-## Tratamento de Erros
-
-### Estrutura de Erro
-
-```json
-{
-  "error": "INVALID_PIX_KEY",
-  "message": "Chave PIX inválida para o tipo informado",
-  "details": "Email 'invalid-email' não é um endereço de email válido",
-  "code": 400,
-  "operation": "withdrawal.InitWithdraw"
-}
-```
-
-### Erros Comuns
-
-| Código | Descrição | Solução |
-|--------|-----------|---------|
-| `INVALID_PIX_KEY` | Chave PIX inválida | Verifique formato da chave |
-| `INVALID_CRYPTO_ADDRESS` | Endereço inválido | Confirme endereço e rede |
-| `INSUFFICIENT_BALANCE` | Saldo insuficiente | Verifique saldo da conta |
-| `WITHDRAWAL_LIMIT_EXCEEDED` | Limite diário excedido | Aguarde ou aumente limite |
-| `NETWORK_UNAVAILABLE` | Rede indisponível | Tente outra rede |
-| `ACCOUNT_NOT_FOUND` | Conta não encontrada | Verifique autenticação |
-
----
-
-## Webhooks
-
-<Info>
-  Configure webhooks para receber notificações sobre eventos de saques.
-</Info>
-
-### Eventos de Withdrawal
-
-- `WITHDRAWAL_CREATED` - Saque criado
-- `WITHDRAWAL_STARTED` - Saque iniciado
-- `WITHDRAWAL_COMPLETED` - Saque concluído
-- `WITHDRAWAL_BLOCKED` - Saque bloqueado (fraude)
-- `WITHDRAWAL_EXPIRED` - Saque expirou
-- `WITHDRAWAL_FAILED` - Falha no processamento
-
-### Payload de Exemplo
-
-```json
-{
-  "event": "WITHDRAWAL_COMPLETED",
-  "data": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "method": "PIX",
-    "amount": 1000.00,
-    "destination": "user@example.com",
-    "completed_at": "2024-01-01T12:30:00Z",
-    "transaction_hash": null
-  },
-  "timestamp": "2024-01-01T12:30:00Z"
-}
-```
-
----
-
-## Segurança e Compliance
+## Request Body
+
+<ParamField body="idempotency_key" type="string" required>
+  Unique key to prevent duplicate withdrawals. This key also serves for idempotency - using the same `idempotency_key` will return the same withdrawal transaction.
+</ParamField>
+
+<ParamField body="currency" type="string" required>
+  Currency code for the withdrawal. Allowed values: `BRL`, `USD`.
+</ParamField>
+
+<ParamField body="method" type="string" required>
+  Withdrawal method to use. Allowed values: `PIX`, `BTC`, `USDT`.
+</ParamField>
+
+<ParamField body="amount_in_brl" type="string">
+  Amount to withdraw in Brazilian Reais (BRL). Required for BRL withdrawals.
+</ParamField>
+
+<ParamField body="amount_in_crypto" type="string">
+  Amount in cryptocurrency to withdraw. Required for cryptocurrency withdrawals (BTC, USDT).
+</ParamField>
+
+<ParamField body="description" type="string">
+  Description for the withdrawal (optional, max 255 characters).
+</ParamField>
+
+<ParamField body="network" type="string">
+  Blockchain network to use for cryptocurrency withdrawals. Required for `BTC` and `USDT` methods.
+  
+  Allowed values:
+  - `POLYGON` - For USDT withdrawals
+  - `LIGHTNING` - For BTC withdrawals
+</ParamField>
+
+<ParamField body="to_address" type="string">
+  Destination address for cryptocurrency withdrawals. Required for `BTC` and `USDT` methods.
+  
+  <Note>
+    For BTC Lightning Network withdrawals, this can be a Lightning invoice (BOLT11) or an email address (e.g., for Wallet of Satoshi). For USDT, this should be a Polygon wallet address (starting with `0x`).
+  </Note>
+</ParamField>
+
+<ParamField body="pix_key" type="string">
+  PIX key for PIX withdrawals. Required for `PIX` method.
+  
+  <Note>
+    The PIX key can be an email, phone number, CPF, CNPJ, or random key depending on the `pix_key_type`.
+  </Note>
+</ParamField>
+
+<ParamField body="pix_key_type" type="string">
+  Type of PIX key. Required for `PIX` method.
+  
+  Allowed values: `EMAIL`, `PHONE`, `CPF`, `CNPJ`, `RANDOM`.
+</ParamField>
 
 <Warning>
-  **Importante**: Saques estão sujeitos a validações adicionais de KYC e anti-fraude.
+  The required fields vary based on the withdrawal method:
+  - **PIX**: `pix_key` and `pix_key_type` are required
+  - **BTC**: `network` (must be `LIGHTNING`) and `to_address` are required
+  - **USDT**: `network` (must be `POLYGON`) and `to_address` are required
 </Warning>
 
-### Validações de Segurança
+<Warning>
+  **Important**: USDT and BTC withdrawals are **irreversible**. Once the transaction is completed, it cannot be undone. For your first withdrawal, consider making a small test transfer to verify the destination address is correct. The minimum withdrawal amount is $10 USD. Always double-check the destination address before confirming the withdrawal.
+</Warning>
 
-1. **KYC Verification**: Usuário deve ter verificação completa
-2. **Limit Configurations**: Limites diários/semanais por método
-3. **Fraud Detection**: Análise de padrões suspeitos
-4. **Blacklist Check**: Verificação contra listas de sanctions
-5. **Network Analysis**: Validação de endereços suspeitos
+<RequestExample>
 
-### Tempos de Processamento
+```bash cURL
+curl --request POST \
+  --url https://api.monkei.co/api/v1/transactions/withdrawals \
+  --header 'Content-Type: application/json' \
+  --header 'X-API-Key: YOUR_API_KEY' \
+  --data '{
+  "idempotency_key": "withdraw_test_001",
+  "currency": "BRL",
+  "method": "PIX",
+  "amount_in_brl": "100.50",
+  "description": "Withdrawal to bank account",
+  "pix_key": "user@example.com",
+  "pix_key_type": "EMAIL"
+}'
+```
 
-| Método | Tempo Estimado | Observações |
-|--------|----------------|------------|
-| PIX | Imediato | 24/7 disponível |
-| USDT | 5-15 minutos | Dependendo da rede Polygon |
-| BTC | 10-60 minutos | 6 confirmações necessárias |
-| ETH | 5-15 minutos | Dependendo do congestionamento |
+```javascript JavaScript
+const options = {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    idempotency_key: 'withdraw_test_001',
+    currency: 'BRL',
+    method: 'PIX',
+    amount_in_brl: '100.50',
+    description: 'Withdrawal to bank account',
+    pix_key: 'user@example.com',
+    pix_key_type: 'EMAIL'
+  })
+};
 
-### Taxas
+fetch('https://api.monkei.co/api/v1/transactions/withdrawals', options)
+  .then(response => response.json())
+  .then(response => console.log(response))
+  .catch(err => console.error(err));
+```
 
-| Método | Taxa Fixa | Taxa Variável |
-|--------|-----------|---------------|
-| PIX | R$ 2,50 | 0.99% do valor |
-| USDT | $1.00 | 1.5% do valor |
-| BTC | $2.00 | 1.0% do valor |
-| ETH | $3.00 | 1.2% do valor |
+**Example: BTC Lightning Withdrawal**
 
-<Info>
-  Taxas podem variar baseado no volume e VIP status da conta.
-</Info>
+```bash cURL
+curl --request POST \
+  --url https://api.monkei.co/api/v1/transactions/withdrawals \
+  --header 'Content-Type: application/json' \
+  --header 'X-API-Key: YOUR_API_KEY' \
+  --data '{
+  "idempotency_key": "withdraw_test_001",
+  "currency": "USD",
+  "method": "BTC",
+  "amount_in_crypto": "0.00049342",
+  "description": "BTC Lightning withdrawal",
+  "to_address": "monkei@walletofsatoshi.com",
+  "network": "LIGHTNING"
+}'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json
+{
+    "success": true,
+    "data": {
+        "transaction": {
+            "id": "019abd45-84f8-768c-bcdd-dee69003c1de",
+            "method": "BTC",
+            "status": "PENDING",
+            "expires_in": 0
+        },
+        "next_step": "PROCESSING"
+    },
+    "message": "Operation completed successfully"
+}
+```
+
+</ResponseExample>
+
+## Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `transaction` | object | Created withdrawal transaction information |
+| `next_step` | string | Next step in the withdrawal process (typically `PROCESSING`) |
+
+### Transaction Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string (UUID) | Unique transaction identifier |
+| `method` | string | Withdrawal method used: `PIX`, `BTC`, `USDT` |
+| `status` | string | Transaction status: `PENDING`, `PROCESSING`, `COMPLETED`, `FAILED`, `CANCELED` |
+| `expires_in` | integer | Expiration time in seconds (may be `0` for withdrawals) |
+
+<Note>
+  The `idempotency_key` ensures that duplicate requests with the same key will return the same transaction. If a transaction with the same `idempotency_key` already exists, the API will return status `200 OK` instead of `201 Created`.
+</Note>
+
+<Note>
+  For withdrawals, the `expires_in` field is typically `0` as withdrawals do not have an expiration time like payment transactions.
+</Note>
+
+## Status Codes
+
+| Code | Description |
+|------|-------------|
+| `201` | Withdrawal initialized successfully |
+| `200` | Withdrawal already exists (idempotency) |
+| `400` | Bad request - validation error or invalid data |
+| `401` | Unauthorized - invalid or missing API key |
+| `404` | Not found - account not found |
+| `500` | Internal server error |
+
+
+<Warning>
+  For cryptocurrency withdrawals, ensure that the destination address (`to_address`) is correct and belongs to the specified network. Sending funds to an incorrect address may result in permanent loss of funds. Remember: cryptocurrency withdrawals cannot be reversed.
+</Warning>
+
+<Note>
+  Withdrawal limits may apply based on your account tier and verification status. The minimum withdrawal amount for cryptocurrency (USDT/BTC) is $10 USD. Check your account limits before initiating large withdrawals.
+</Note>
+
+<Note>
+  PIX withdrawals are typically processed within minutes during business hours. Cryptocurrency withdrawals may take longer depending on network congestion.
+</Note>

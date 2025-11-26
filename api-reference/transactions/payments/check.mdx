@@ -1,0 +1,97 @@
+---
+title: "Check Payment Status"
+openapi: "GET /api/v1/transactions/payments/{id}/status"
+description: "Retrieve the current status and expiration time of a payment transaction"
+---
+
+Retrieve the current status, expiration time, and payment state of a payment transaction by its unique identifier.
+
+## Endpoint
+
+```http
+GET /api/v1/transactions/payments/{id}/status
+```
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier (UUID) of the payment transaction to check.
+</ParamField>
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url https://api.monkei.co/api/v1/transactions/payments/019abcf6-b62a-736d-a9fa-e47c56c1c8cd/status \
+  --header 'X-API-Key: YOUR_API_KEY'
+```
+
+```javascript JavaScript
+const options = {
+  method: 'GET',
+  headers: {
+    'X-API-Key': 'YOUR_API_KEY'
+  }
+};
+
+fetch('https://api.monkei.co/api/v1/transactions/payments/019abcf6-b62a-736d-a9fa-e47c56c1c8cd/status', options)
+  .then(response => response.json())
+  .then(response => console.log(response))
+  .catch(err => console.error(err));
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json
+{
+    "success": true,
+    "data": {
+        "status": "PENDING",
+        "expired_at": "2025-11-25T22:55:37.985305Z",
+        "onchain_remaining_amount": "0"
+    },
+    "message": "Operation completed successfully"
+}
+```
+
+</ResponseExample>
+
+## Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | string | Current payment status. Possible values: `PENDING`, `PROCESSING`, `COMPLETED`, `FAILED`, `CANCELED` |
+| `expired_at` | string (ISO 8601) | Timestamp indicating when the payment will expire |
+| `onchain_remaining_amount` | string | Remaining amount for on-chain payments (optional). A positive value indicates how much is missing, `0` indicates fully paid, and a negative value indicates overpayment |
+| `onchain_payment_state` | string | On-chain payment state (optional). Possible values: `FULL_PAID`, `PARTIAL_PAID`, `OVERPAID_PAID` |
+
+<Note>
+  The `onchain_remaining_amount` and `onchain_payment_state` fields are only present for cryptocurrency payments (BTC, USDT) that use on-chain transactions. For Lightning Network payments or PIX payments, these fields will not be included in the response.
+</Note>
+
+<Note>
+  The `expired_at` timestamp is in ISO 8601 format (UTC). You can use this to calculate the remaining time until expiration or to check if a payment has already expired.
+</Note>
+
+## Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | Payment status retrieved successfully |
+| `400` | Bad request - invalid transaction ID format |
+| `401` | Unauthorized - invalid or missing API key |
+| `404` | Not found - transaction not found or does not belong to your account |
+| `500` | Internal server error |
+
+
+<Note>
+  The transaction ID must be a valid UUID format. If you provide an invalid format, you will receive a 400 Bad Request error.
+</Note>
+
+<Note>
+  You can only check the status of transactions that belong to your account. Attempting to check a transaction from another account will result in a 404 Not Found error.
+</Note>

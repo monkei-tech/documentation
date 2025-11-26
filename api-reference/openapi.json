@@ -34,7 +34,9 @@
   "paths": {
     "/api/v1/transactions/payments": {
       "post": {
-        "tags": ["Transactions"],
+        "tags": [
+          "Transactions"
+        ],
         "summary": "Initialize Payment",
         "description": "Creates and initializes a new payment transaction based on the provided billing and payment method",
         "requestBody": {
@@ -103,7 +105,9 @@
     },
     "/api/v1/transactions/payments/{id}/status": {
       "get": {
-        "tags": ["Transactions"],
+        "tags": [
+          "Transactions"
+        ],
         "summary": "Check Payment Status",
         "description": "Retrieves the current status of a payment transaction",
         "parameters": [
@@ -144,7 +148,10 @@
     },
     "/api/v1/transactions/payments/pix": {
       "post": {
-        "tags": ["Transactions", "PIX"],
+        "tags": [
+          "Transactions",
+          "PIX"
+        ],
         "summary": "Create PIX QR Code",
         "description": "Create a new PIX QR code for payment",
         "requestBody": {
@@ -173,7 +180,10 @@
     },
     "/api/v1/transactions/payments/usdt": {
       "post": {
-        "tags": ["Transactions", "USDT"],
+        "tags": [
+          "Transactions",
+          "USDT"
+        ],
         "summary": "Create USDT Transaction",
         "description": "Create a new USDT transaction",
         "requestBody": {
@@ -200,9 +210,44 @@
         }
       }
     },
+    "/api/v1/transactions/payments/btc": {
+      "post": {
+        "tags": [
+          "Transactions",
+          "BTC"
+        ],
+        "summary": "Create BTC Transaction",
+        "description": "Create a new BTC transaction",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBTCTransactionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "BTC transaction created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateBTCTransactionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/transactions/remittances/pix": {
       "post": {
-        "tags": ["Transactions", "Remittances"],
+        "tags": [
+          "Transactions",
+          "Remittances"
+        ],
         "summary": "Create PIX Remittance",
         "description": "Create a new PIX remittance",
         "requestBody": {
@@ -231,7 +276,10 @@
     },
     "/api/v1/transactions/remittances/usdt": {
       "post": {
-        "tags": ["Transactions", "Remittances"],
+        "tags": [
+          "Transactions",
+          "Remittances"
+        ],
         "summary": "Create USDT Remittance",
         "description": "Create a new USDT remittance",
         "requestBody": {
@@ -260,7 +308,10 @@
     },
     "/api/v1/transactions/withdrawals": {
       "post": {
-        "tags": ["Transactions", "Withdrawals"],
+        "tags": [
+          "Transactions",
+          "Withdrawals"
+        ],
         "summary": "Create Withdrawal",
         "description": "Create a new withdrawal transaction",
         "requestBody": {
@@ -289,7 +340,9 @@
     },
     "/api/v1/bills": {
       "post": {
-        "tags": ["Billing"],
+        "tags": [
+          "Billing"
+        ],
         "summary": "Create Billing",
         "description": "Creates a new billing with customer information, payment methods, and products",
         "requestBody": {
@@ -346,7 +399,9 @@
         }
       },
       "get": {
-        "tags": ["Billing"],
+        "tags": [
+          "Billing"
+        ],
         "summary": "List Billings",
         "description": "Retrieves a paginated list of billings for the authenticated account",
         "parameters": [
@@ -388,7 +443,9 @@
     },
     "/api/v1/bills/{billingId}": {
       "get": {
-        "tags": ["Billing"],
+        "tags": [
+          "Billing"
+        ],
         "summary": "Get Billing",
         "description": "Retrieves billing information by its unique identifier",
         "parameters": [
@@ -427,7 +484,9 @@
         }
       },
       "put": {
-        "tags": ["Billing"],
+        "tags": [
+          "Billing"
+        ],
         "summary": "Cancel Billing",
         "description": "Cancels a billing by updating its status",
         "parameters": [
@@ -455,13 +514,102 @@
           }
         }
       }
+    },
+    "/api/v1/quotes/latest": {
+      "get": {
+        "tags": [
+          "Quotes"
+        ],
+        "summary": "Get Latest Quotes",
+        "description": "Retrieves the latest exchange rates for supported cryptocurrencies",
+        "responses": {
+          "200": {
+            "description": "Latest quotes retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounts/balance": {
+      "get": {
+        "tags": [
+          "Accounts"
+        ],
+        "summary": "Get Account Balance",
+        "description": "Retrieves the current balance of the authenticated account",
+        "responses": {
+          "200": {
+            "description": "Balance retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BalanceResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/coupons": {
+      "get": {
+        "tags": [
+          "Coupons"
+        ],
+        "summary": "List Coupons",
+        "description": "List all coupons",
+        "responses": {
+          "200": {
+            "description": "Coupons retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CouponsListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Coupons"
+        ],
+        "summary": "Create Coupon",
+        "description": "Create a new coupon",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCouponRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Coupon created successfully"
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
       "InitPaymentRequest": {
         "type": "object",
-        "required": ["idempotency_key", "currency", "method", "billing_id"],
+        "required": [
+          "idempotency_key",
+          "currency",
+          "method",
+          "billing_id"
+        ],
         "properties": {
           "idempotency_key": {
             "type": "string",
@@ -475,7 +623,12 @@
           },
           "method": {
             "type": "string",
-            "enum": ["PIX", "BITCOIN", "USDC", "CARD"],
+            "enum": [
+              "PIX",
+              "BITCOIN",
+              "USDC",
+              "CARD"
+            ],
             "description": "Payment method to use",
             "example": "PIX"
           },
@@ -585,7 +738,10 @@
       },
       "CreatePixQRCodeRequest": {
         "type": "object",
-        "required": ["amount_in_brl", "idempotency_key"],
+        "required": [
+          "amount_in_brl",
+          "idempotency_key"
+        ],
         "properties": {
           "amount_in_brl": {
             "type": "integer",
@@ -678,7 +834,11 @@
       },
       "CreateUSDTTransactionRequest": {
         "type": "object",
-        "required": ["amount_in_brl", "idempotency_key", "network"],
+        "required": [
+          "amount_in_brl",
+          "idempotency_key",
+          "network"
+        ],
         "properties": {
           "amount_in_brl": {
             "type": "integer",
@@ -750,7 +910,11 @@
       },
       "CreatePixRemittanceRequest": {
         "type": "object",
-        "required": ["amount", "pix_key", "description"],
+        "required": [
+          "amount",
+          "pix_key",
+          "description"
+        ],
         "properties": {
           "amount": {
             "type": "integer",
@@ -769,7 +933,11 @@
       },
       "CreateUSDTRemittanceRequest": {
         "type": "object",
-        "required": ["amount", "wallet_address", "description"],
+        "required": [
+          "amount",
+          "wallet_address",
+          "description"
+        ],
         "properties": {
           "amount": {
             "type": "integer",
@@ -817,7 +985,11 @@
       },
       "CreateWithdrawalRequest": {
         "type": "object",
-        "required": ["amount", "currency", "destination"],
+        "required": [
+          "amount",
+          "currency",
+          "destination"
+        ],
         "properties": {
           "amount": {
             "type": "integer",
@@ -826,7 +998,10 @@
           },
           "currency": {
             "type": "string",
-            "enum": ["BRL", "USDT"],
+            "enum": [
+              "BRL",
+              "USDT"
+            ],
             "description": "Withdrawal currency"
           },
           "destination": {
@@ -879,32 +1054,53 @@
       },
       "CreateBillingRequest": {
         "type": "object",
-        "required": ["frequency", "customer_data", "payment_methods", "products", "return_url", "completion_url"],
+        "required": [
+          "frequency",
+          "customer_data",
+          "payment_methods",
+          "products",
+          "return_url",
+          "completion_url"
+        ],
         "properties": {
           "frequency": {
             "type": "string",
-            "enum": ["ONE_TIME", "RECURRING"],
+            "enum": [
+              "ONE_TIME",
+              "RECURRING"
+            ],
             "description": "Billing frequency",
             "example": "ONE_TIME"
           },
           "customer_data": {
-            "$ref": "#/components/schemas/BillingCustomer"
+            "$ref": "#/components/schemas/BillingCustomer",
+            "description": "Dados do cliente para a cobrança"
           },
           "payment_methods": {
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["PIX", "BITCOIN", "USDC"]
+              "enum": [
+                "PIX",
+                "BITCOIN",
+                "USDC",
+                "USDT"
+              ]
             },
             "description": "Available payment methods",
-            "example": ["PIX", "BITCOIN", "USDC"]
+            "example": [
+              "PIX",
+              "BITCOIN",
+              "USDT"
+            ]
           },
           "metadata": {
             "type": "object",
             "description": "Additional metadata for the billing",
             "example": {
               "order_id": "123",
-              "customer_id": "456"
+              "customer_id": "456",
+              "source": "ecommerce"
             }
           },
           "products": {
@@ -942,13 +1138,15 @@
               "type": "string"
             },
             "description": "Coupons allowed",
-            "example": ["COUPON1", "COUPON2"]
+            "example": []
           }
         }
       },
       "BillingCustomer": {
         "type": "object",
-        "required": ["customer_metadata"],
+        "required": [
+          "customer_metadata"
+        ],
         "properties": {
           "customer_id": {
             "type": "string",
@@ -982,96 +1180,132 @@
           "tax_id": {
             "type": "string",
             "description": "Customer tax ID (CPF/CNPJ)",
-            "example": "12345678901"
+            "example": "05352745139"
           }
         }
       },
       "BillingProduct": {
         "type": "object",
-        "required": ["external_id", "price", "quantity"],
+        "required": [
+          "external_id",
+          "price",
+          "quantity",
+          "name"
+        ],
         "properties": {
           "id": {
             "type": "string",
-            "description": "Product ID"
+            "description": "ID do produto"
           },
           "external_id": {
             "type": "string",
-            "description": "Product external ID"
+            "description": "ID externo do produto",
+            "example": "prod_001"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nome do produto",
+            "example": "Produto Teste"
+          },
+          "description": {
+            "type": "string",
+            "description": "Descrição do produto",
+            "example": "Descrição detalhada do produto"
           },
           "price": {
-            "type": "number",
-            "format": "decimal",
-            "description": "Product price"
+            "type": "integer",
+            "format": "int64",
+            "description": "Preço do produto em centavos",
+            "example": 10050
           },
           "quantity": {
             "type": "integer",
-            "description": "Product quantity"
+            "description": "Quantidade do produto",
+            "example": 1
+          },
+          "category": {
+            "type": "string",
+            "description": "Categoria do produto",
+            "example": "electronics"
+          },
+          "shipping_price": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Preço do frete em centavos",
+            "example": 1500
           }
         }
       },
       "BillingResponse": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Unique identifier for the billing"
-          },
-          "frequency": {
-            "type": "string",
-            "description": "Billing frequency"
-          },
-          "status": {
-            "type": "string",
-            "description": "Billing status"
-          },
-          "url": {
-            "type": "string",
-            "format": "uri",
-            "description": "Payment URL"
-          },
-          "amount": {
-            "type": "number",
-            "format": "decimal",
-            "description": "Billing amount"
-          },
-          "allow_coupon": {
+          "success": {
             "type": "boolean",
-            "description": "Whether coupons are allowed"
+            "example": true
           },
-          "coupons_codes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Applied coupon codes"
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Unique identifier for the billing"
+              },
+              "frequency": {
+                "type": "string",
+                "description": "Billing frequency"
+              },
+              "status": {
+                "type": "string",
+                "description": "Billing status"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri",
+                "description": "Payment URL"
+              },
+              "amount": {
+                "type": "string",
+                "description": "Billing amount"
+              },
+              "allow_coupon": {
+                "type": "boolean",
+                "description": "Whether coupons are allowed"
+              },
+              "coupons_codes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "payment_methods": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "customer": {
+                "$ref": "#/components/schemas/BillingCustomer"
+              },
+              "products": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/BillingProduct"
+                }
+              },
+              "completion_url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "return_url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
           },
-          "payment_methods": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Available payment methods"
-          },
-          "customer": {
-            "$ref": "#/components/schemas/BillingCustomer"
-          },
-          "products": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BillingProduct"
-            },
-            "description": "Products"
-          },
-          "completion_url": {
+          "message": {
             "type": "string",
-            "format": "uri",
-            "description": "Completion URL"
-          },
-          "return_url": {
-            "type": "string",
-            "format": "uri",
-            "description": "Return URL"
+            "example": "Resource created successfully"
           }
         }
       },
@@ -1112,7 +1346,10 @@
       },
       "ErrorResponse": {
         "type": "object",
-        "required": ["error", "message"],
+        "required": [
+          "error",
+          "message"
+        ],
         "properties": {
           "error": {
             "type": "string",
@@ -1127,6 +1364,68 @@
             "description": "Additional error details"
           }
         }
+      },
+      "QuotesResponse": {
+        "type": "object",
+        "properties": {
+          "USDT": {
+            "type": "number",
+            "example": 5.05
+          },
+          "BTC": {
+            "type": "number",
+            "example": 350000.00
+          }
+        }
+      },
+      "BalanceResponse": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "number",
+            "example": 1500.50
+          },
+          "pending": {
+            "type": "number",
+            "example": 200.00
+          },
+          "currency": {
+            "type": "string",
+            "example": "BRL"
+          }
+        }
+      },
+      "CouponsListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "example": "WELCOME10"
+                },
+                "discount": {
+                  "type": "number",
+                  "example": 10
+                }
+              }
+            }
+          }
+        }
+      },
+      "CreateCouponRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "discount": {
+            "type": "number"
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -1135,6 +1434,72 @@
         "scheme": "bearer",
         "bearerFormat": "JWT",
         "description": "JWT token for API authentication"
+      },
+      "CreateBTCTransactionRequest": {
+        "type": "object",
+        "required": [
+          "amount_in_brl",
+          "idempotency_key"
+        ],
+        "properties": {
+          "amount_in_brl": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 100,
+            "description": "Payment amount in BRL cents",
+            "example": 10050
+          },
+          "expires_in": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 120,
+            "description": "Expiration time in seconds (minimum 120)",
+            "example": 3600
+          },
+          "description": {
+            "type": "string",
+            "description": "Payment description",
+            "example": "Payment for services"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "description": "Unique key to prevent duplicate payments",
+            "example": "btc_123456789"
+          }
+        }
+      },
+      "CreateBTCTransactionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique transaction ID"
+          },
+          "amount_in_brl": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Payment amount in BRL cents"
+          },
+          "amount_in_btc": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Payment amount in BTC"
+          },
+          "status": {
+            "type": "string",
+            "description": "Transaction status"
+          },
+          "wallet_address": {
+            "type": "string",
+            "description": "Wallet address for payment"
+          },
+          "expires_in": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Expiration time in seconds"
+          }
+        }
       }
     }
   }
