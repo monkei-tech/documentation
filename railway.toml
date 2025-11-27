@@ -1,0 +1,7 @@
+[build]
+builder = "NIXPACKS"
+buildCommand = "npm install -g mint && mint build"
+
+[deploy]
+startCommand = ""
+outputDirectory = ".mintlify"

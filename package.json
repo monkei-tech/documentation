@@ -1,0 +1,11 @@
+{
+  "name": "monkei-documentation",
+  "version": "1.0.0",
+  "description": "Monkei API Documentation",
+  "scripts": {
+    "build": "npm install -g mint && mint build"
+  },
+  "engines": {
+    "node": ">=19.0.0"
+  }
+}
