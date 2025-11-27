@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:24-alpine
 
 # Instala o mint globalmente
 RUN npm install -g mint
