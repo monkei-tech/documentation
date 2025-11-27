@@ -3,7 +3,6 @@ title: "Transactions Overview"
 description: "Learn how to process payments with PIX, USDT, and BTC"
 ---
 
-# Transactions Overview
 
 The Transactions API allows you to create and manage payments using multiple methods: PIX (Brazilian Real), USDT (Tether), and BTC (Bitcoin). All methods support idempotency to prevent duplicates and return QR Codes for processing.
 
@@ -12,7 +11,7 @@ The Transactions API allows you to create and manage payments using multiple met
 Transactions represent payment operations in the Monkei system. Each transaction can be a payment (incoming money) or a withdrawal (outgoing money). Payments generate QR codes that customers can scan to complete the transaction.
 
 <Note>
-  All payment endpoints require Bearer Token authentication and implement idempotency through the `idempotency_key` field.
+  All payment endpoints require API Key authentication (via `X-API-Key` header) and implement idempotency through the `idempotency_key` field.
 </Note>
 
 ## Supported Payment Methods
@@ -69,10 +68,11 @@ Transactions represent payment operations in the Monkei system. Each transaction
 | Status | Description |
 |--------|-------------|
 | `PENDING` | Transaction created, awaiting payment |
-| `PROCESSING` | Payment detected, being processed |
 | `COMPLETED` | Payment confirmed and completed |
-| `FAILED` | Payment failed or expired |
+| `FAILED` | Payment failed |
+| `EXPIRED` | Transaction expired |
 | `CANCELED` | Transaction was canceled |
+| `BLOCKED` | Transaction is blocked |
 
 ## Key Features
 

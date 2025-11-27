@@ -3,7 +3,6 @@ title: "List Coupons"
 description: "Retrieve and filter your coupons with pagination"
 ---
 
-# List Coupons
 
 Retrieve a paginated list of coupons with optional filtering by active status and discount kind.
 
@@ -18,7 +17,7 @@ GET /api/dashboard/v1/coupons
 | Parameter | Type | Required | Description | Values |
 |-----------|------|----------|-------------|--------|
 | `isActive` | boolean | ❌ | Filter by active status | `true`, `false` |
-| `discountKind` | string | ❌ | Filter by discount kind | `"PERCENTAGE"`, `"FIXED"`, `"FREE_SHIPPING"` |
+| `discountKind` | string | ❌ | Filter by discount kind | `"PERCENTAGE"` |
 | `page` | integer | ❌ | Page number | `1` (default) |
 | `limit` | integer | ❌ | Items per page | `10` (default, max: 100) |
 
@@ -146,8 +145,6 @@ Filter coupons by their active status:
 Filter coupons by their discount type:
 
 - `PERCENTAGE` - Percentage discount coupons
-- `FIXED` - Fixed amount discount coupons
-- `FREE_SHIPPING` - Free shipping coupons
 
 ## Pagination
 

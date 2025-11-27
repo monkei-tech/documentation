@@ -3,7 +3,6 @@ title: "Create Coupon"
 description: "Create a new discount coupon"
 ---
 
-# Create Coupon
 
 Create a new discount coupon with a code, discount type, and maximum redemption limit.
 
@@ -34,7 +33,7 @@ POST /api/dashboard/v1/coupons
 |-------|------|----------|-------------|--------|
 | `code` | string | ✅ | Coupon code | Unique code |
 | `description` | string | ❌ | Coupon description | Text description |
-| `discount_kind` | string | ✅ | Type of discount | `"PERCENTAGE"`, `"FIXED"`, `"FREE_SHIPPING"` |
+| `discount_kind` | string | ✅ | Type of discount | `"PERCENTAGE"` |
 | `discount_value` | integer | ✅ | Discount value | See below |
 | `max_redeems` | integer | ✅ | Maximum redemptions | `min=1` |
 
@@ -43,8 +42,6 @@ POST /api/dashboard/v1/coupons
 | Discount Kind | Min Value | Max Value | Description |
 |---------------|-----------|-----------|-------------|
 | `PERCENTAGE` | 1 | 100 | Percentage discount (1-100%) |
-| `FIXED` | 1 | 1000000 | Fixed discount in cents (R$0.01 - R$10,000.00) |
-| `FREE_SHIPPING` | 0 | 0 | Free shipping (must be 0) |
 
 <Warning>
   The discount value must be valid for the selected discount kind. Invalid combinations will be rejected.
@@ -163,32 +160,6 @@ def create_coupon():
 
 Applies a 20% discount to the bill total.
 
-### Fixed Discount
-
-```json
-{
-  "code": "FIXED5",
-  "discount_kind": "FIXED",
-  "discount_value": 500,
-  "max_redeems": 100
-}
-```
-
-Applies a R$5.00 discount (500 cents) to the bill total.
-
-### Free Shipping
-
-```json
-{
-  "code": "FREESHIP",
-  "discount_kind": "FREE_SHIPPING",
-  "discount_value": 0,
-  "max_redeems": 200
-}
-```
-
-Offers free shipping (discount value must be 0).
-
 ## Error Handling
 
 ### Common Errors
@@ -196,7 +167,7 @@ Offers free shipping (discount value must be 0).
 | Code | Description | Solution |
 |------|-------------|----------|
 | `VALIDATION_ERROR` | Invalid field | Check the parameters sent |
-| `INVALID_DISCOUNT_KIND` | Invalid discount kind | Use PERCENTAGE, FIXED, or FREE_SHIPPING |
+| `INVALID_DISCOUNT_KIND` | Invalid discount kind | Use PERCENTAGE only |
 | `INVALID_DISCOUNT` | Invalid discount value | Ensure value matches discount kind rules |
 | `INVALID_MAX_REDEEMS` | Invalid max redeems | Must be at least 1 |
 

@@ -3,13 +3,12 @@ title: "Health Overview"
 description: "Monitor system health and API availability"
 ---
 
-# Health Overview
 
 The Health API allows you to monitor the system status and verify that the Monkei API is operational and responding to requests.
 
 ## What is Health Check?
 
-Health checks provide a simple way to verify that the Monkei API is operational. This is essential for monitoring systems, load balancers, and automated health checks.
+Health checks provide a simple way to verify that the Monkei API is operational. The endpoint returns a simple "OK" response when the system is healthy. This is essential for monitoring systems, load balancers, and automated health checks.
 
 <Note>
   Health checks are public endpoints that don't require authentication. They're designed to be lightweight and fast, returning a simple response.
@@ -55,7 +54,7 @@ Health checks provide a simple way to verify that the Monkei API is operational.
 
 <Steps>
   <Step title="Check System Health">
-    Use the <a href="/health/health">Health Check</a> endpoint to verify the API is operational.
+    Use the <a href="/health/health">Health Check</a> endpoint (`GET /health`) to verify the API is operational.
   </Step>
   <Step title="Set Up Monitoring">
     Configure your monitoring system to poll the health endpoint periodically.

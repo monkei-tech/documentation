@@ -3,7 +3,6 @@ title: "Testing & Sandbox"
 description: "How to test your integration safely"
 ---
 
-# Testing & Sandbox
 
 Before going live, test your integration in a safe environment without affecting real transactions or payments.
 
@@ -37,23 +36,24 @@ In Test Mode, you can use specific values to simulate different payment outcomes
 
 ### Magic Amounts (PIX)
 
-Use these amounts (in cents) to trigger specific responses:
+Use these specific amounts (as decimal strings) to trigger different payment outcomes:
 
 | Amount | BRL Value | Result |
 |--------|-----------|--------|
-| `1000` | R$ 10.00 | Payment approved (instant) |
-| `2000` | R$ 20.00 | Payment failed |
-| `3000` | R$ 30.00 | Payment pending (expires after 1 hour) |
-| `5000` | R$ 50.00 | Payment approved (delayed by 30s) |
+| `"10.00"` | R$ 10.00 | Payment approved (instant) |
+| `"20.00"` | R$ 20.00 | Payment failed |
+| `"30.00"` | R$ 30.00 | Payment pending (expires after 1 hour) |
+| `"50.00"` | R$ 50.00 | Payment approved (delayed by 30s) |
 
 ### Example Test Request
 
 ```bash
-curl -X POST https://api.monkei.com/api/v1/transactions/payments/pix \
-  -H "Authorization: Bearer sk_test_YOUR_TEST_KEY" \
+curl -X POST https://api.monkei.co/api/v1/transactions/payments/pix \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: sk_test_YOUR_TEST_KEY" \
   -d '{
-    "amount_in_brl": 1000,
+    "amount_in_brl": "10.00",
+    "expires_in": 3600,
     "description": "Test payment",
     "idempotency_key": "test_order_123"
   }'
@@ -69,27 +69,32 @@ To test webhook events without waiting for real payments:
 
 1. Go to **Integrations > Webhooks** in the dashboard
 2. Select your webhook
-3. Click on **"Send Test Event"**
-4. Choose the event type (e.g., `PAYMENT_RECEIVED`)
+3. Click on **"Send Test Event"** (this feature will be implemented in the future)
+4. Choose the event type (e.g., `payment.completed`)
 5. Your endpoint will receive a test webhook payload
 
 ### Test Webhook Payload
 
 ```json
 {
-  "event": "PAYMENT_RECEIVED",
-  "test": true,
+  "id": "test_550e8400-e29b-41d4-a716-446655440000",
+  "event": "payment.completed",
   "data": {
-    "id": "test_550e8400-e29b-41d4-a716-446655440000",
-    "amount_in_brl": 1000,
-    "status": "PAID",
-    "paid_at": "2024-01-01T12:00:00Z"
-  }
+    "transaction": {
+      "id": "test_550e8400-e29b-41d4-a716-446655440000",
+      "amount": "10.00",
+      "status": "COMPLETED",
+      "type": "PAYMENT",
+      "method": "PIX",
+      "currency": "BRL"
+    }
+  },
+  "devMode": true
 }
 ```
 
 <Tip>
-  Test webhooks include a `"test": true` flag so you can identify them in your system.
+  Test webhooks include a `"devMode": true` flag so you can identify them in your system. The payload structure follows the same format as production webhooks.
 </Tip>
 
 ## Best Practices

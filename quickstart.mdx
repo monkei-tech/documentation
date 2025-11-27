@@ -42,18 +42,19 @@ After logging in, you need an API Key to authenticate your requests.
 Let's create a PIX payment to test the integration.
 
 ```bash
-curl -X POST https://api.monkei.com/api/v1/transactions/payments/pix \
-  -H "Authorization: Bearer YOUR_API_KEY" \
+curl -X POST https://api.monkei.co/api/v1/transactions/payments/pix \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
   -d '{
-    "amount_in_brl": 5000,
+    "amount_in_brl": "50.00",
+    "expires_in": 3600,
     "description": "My first Monkei payment",
     "idempotency_key": "order_123"
   }'
 ```
 
 <Note>
-  The `amount_in_brl` field is in cents. `5000` equals **R$ 50,00**.
+  The `amount_in_brl` field accepts decimal values as a string. For example, `"50.00"` equals R$ 50,00. The minimum amount is R$ 7,00.
 </Note>
 
 ### Response
@@ -63,8 +64,9 @@ You will receive a JSON with the QR Code to show your customer:
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
-  "amount_in_brl": 5000,
+  "amount_in_brl": "50.00",
   "status": "PENDING",
+  "expires_in": 3600,
   "qr_code": "00020126580014br.gov.bcb.pix...",
   "qr_code_url": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB..."
 }

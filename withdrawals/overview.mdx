@@ -3,7 +3,6 @@ title: "Withdrawals Overview"
 description: "Learn how to withdraw funds from your Monkei account"
 ---
 
-# Withdrawals Overview
 
 The Withdrawals API allows you to withdraw cryptocurrencies and fiat currencies from your account to external addresses or bank accounts. It supports multiple withdrawal methods with specific validations for each type.
 
@@ -24,7 +23,7 @@ Withdrawals enable you to transfer funds from your Monkei account balance to ext
       <li>Withdraw to bank account</li>
       <li>PIX key required</li>
       <li>Types: EMAIL, PHONE, CPF, CNPJ, RANDOM</li>
-      <li>Processing: Immediate</li>
+      <li>Processing: 18h to 7h (may have delays due to BACEN regulatory limits)</li>
     </ul>
   </Card>
   <Card title="Cryptocurrencies" icon="coins">
@@ -34,6 +33,7 @@ Withdrawals enable you to transfer funds from your Monkei account balance to ext
       <li>Destination address required</li>
       <li>Network-specific per currency</li>
       <li>Automatic address validation</li>
+      <li>Processing: 24/7 (blockchain never sleeps)</li>
     </ul>
   </Card>
 </CardGroup>
@@ -48,7 +48,7 @@ Withdrawals enable you to transfer funds from your Monkei account balance to ext
     Use the <a href="/withdrawals/create">Create Withdrawal</a> endpoint with the appropriate method and destination.
   </Step>
   <Step title="Processing">
-    The withdrawal is processed according to the method (immediate for PIX, network confirmation for crypto).
+    The withdrawal is processed according to the method (PIX withdrawals are processed between 18h and 7h, with possible delays due to BACEN regulatory limits; crypto withdrawals are processed 24/7 as the blockchain never sleeps).
   </Step>
   <Step title="Completion">
     Receive confirmation when the withdrawal is completed via webhook or status check.

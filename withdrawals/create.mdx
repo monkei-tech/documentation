@@ -3,7 +3,6 @@ title: "Create Withdrawal"
 description: "Create a new withdrawal to bank account or crypto wallet"
 ---
 
-# Create Withdrawal
 
 Create a new withdrawal transaction to transfer funds from your Monkei account to an external destination (bank account via PIX or cryptocurrency wallet).
 
@@ -92,9 +91,9 @@ POST /api/v1/transactions/withdrawals
 #### cURL
 
 ```bash
-curl -X POST https://api.monkei.com/api/v1/transactions/withdrawals \
-  -H "Authorization: Bearer sk_live_1234567890abcdef" \
+curl -X POST https://api.monkei.co/api/v1/transactions/withdrawals \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: sk_live_1234567890abcdef" \
   -d '{
     "idempotency_key": "pix_withdraw_123",
     "currency": "BRL",
@@ -110,11 +109,11 @@ curl -X POST https://api.monkei.com/api/v1/transactions/withdrawals \
 
 ```javascript
 async function createPixWithdrawal() {
-  const response = await fetch('https://api.monkei.com/api/v1/transactions/withdrawals', {
+  const response = await fetch('https://api.monkei.co/api/v1/transactions/withdrawals', {
     method: 'POST',
     headers: {
-      'Authorization': 'Bearer sk_live_1234567890abcdef',
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'X-API-Key': 'sk_live_1234567890abcdef'
     },
     body: JSON.stringify({
       idempotency_key: `pix_withdraw_${Date.now()}`,
@@ -136,9 +135,9 @@ async function createPixWithdrawal() {
 #### cURL
 
 ```bash
-curl -X POST https://api.monkei.com/api/v1/transactions/withdrawals \
-  -H "Authorization: Bearer sk_live_1234567890abcdef" \
+curl -X POST https://api.monkei.co/api/v1/transactions/withdrawals \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: sk_live_1234567890abcdef" \
   -d '{
     "idempotency_key": "usdt_withdraw_456",
     "currency": "USD",
@@ -155,9 +154,9 @@ curl -X POST https://api.monkei.com/api/v1/transactions/withdrawals \
 #### cURL
 
 ```bash
-curl -X POST https://api.monkei.com/api/v1/transactions/withdrawals \
-  -H "Authorization: Bearer sk_live_1234567890abcdef" \
+curl -X POST https://api.monkei.co/api/v1/transactions/withdrawals \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: sk_live_1234567890abcdef" \
   -d '{
     "idempotency_key": "btc_withdraw_789",
     "currency": "USD",

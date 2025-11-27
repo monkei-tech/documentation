@@ -3,7 +3,6 @@ title: "Find Coupon"
 description: "Get details of a specific coupon by ID or code"
 ---
 
-# Find Coupon
 
 Retrieve detailed information about a specific coupon by its unique identifier (UUID) or code. The coupon must belong to the authenticated account.
 
@@ -172,8 +171,8 @@ print(f"Coupon status: {coupon['status']}")
 |-------|------|-------------|
 | `code` | string | Coupon code |
 | `description` | string | Coupon description |
-| `discount_kind` | string | Type of discount (`PERCENTAGE`, `FIXED`, `FREE_SHIPPING`) |
-| `discount_value` | integer | Discount value (percentage, cents, or 0) |
+| `discount_kind` | string | Type of discount (`PERCENTAGE`) |
+| `discount_value` | integer | Discount value (percentage, 1-100) |
 | `max_redeems` | integer | Maximum number of redemptions |
 | `status` | string | Current coupon status |
 | `created_at` | string | Coupon creation timestamp |

@@ -3,9 +3,8 @@ title: "Coupons Overview"
 description: "Learn how to create and manage discount coupons with Monkei"
 ---
 
-# Coupons Overview
 
-The Coupons API allows you to create, manage, and validate discount coupons for your bills. Coupons can offer percentage discounts, fixed amount discounts, or free shipping.
+The Coupons API allows you to create, manage, and validate discount coupons for your bills. Coupons offer percentage discounts on bill totals.
 
 ## What are Coupons?
 
@@ -20,9 +19,7 @@ Coupons are discount codes that customers can apply to bills during checkout. Th
 <CardGroup cols={2}>
   <Card title="Discount Types" icon="percent">
     <ul>
-      <li>Percentage discounts (0-100%)</li>
-      <li>Fixed amount discounts (in cents)</li>
-      <li>Free shipping option</li>
+      <li>Percentage discounts (1-100%)</li>
     </ul>
   </Card>
   <Card title="Usage Control" icon="lock">
@@ -52,21 +49,9 @@ Coupons are discount codes that customers can apply to bills during checkout. Th
 
 ### Percentage Discount
 
-Apply a percentage discount to the bill total. The discount value must be between 0 and 100.
+Apply a percentage discount to the bill total. The discount value must be between 1 and 100.
 
 **Example**: A 10% discount means `discount_value: 10`
-
-### Fixed Discount
-
-Apply a fixed amount discount in cents. The discount value must be between 0 and 1,000,000 cents (R$10,000.00).
-
-**Example**: A R$5.00 discount means `discount_value: 500`
-
-### Free Shipping
-
-Offer free shipping. The discount value must be 0.
-
-**Example**: `discount_kind: "FREE_SHIPPING"` with `discount_value: 0`
 
 ## Coupon Statuses
 

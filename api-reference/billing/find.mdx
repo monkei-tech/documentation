@@ -40,6 +40,143 @@ fetch('https://api.monkei.co/api/v1/bills/019abcd2-240d-7dde-a2c9-0e2ca7144f56',
   .catch(err => console.error(err));
 ```
 
+```typescript TypeScript
+async function findBilling(billingId: string): Promise<any> {
+  const response = await fetch(`https://api.monkei.co/api/v1/bills/${billingId}`, {
+    method: 'GET',
+    headers: {
+      'X-API-Key': 'YOUR_API_KEY'
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+findBilling('019abcd2-240d-7dde-a2c9-0e2ca7144f56')
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
+```
+
+```python Python
+import requests
+
+url = "https://api.monkei.co/api/v1/bills/019abcd2-240d-7dde-a2c9-0e2ca7144f56"
+
+headers = {
+    "X-API-Key": "YOUR_API_KEY"
+}
+
+response = requests.get(url, headers=headers)
+
+if response.status_code == 200:
+    data = response.json()
+    print(data)
+else:
+    print(f"Error: {response.status_code}")
+    print(response.text)
+```
+
+```go Go
+package main
+
+import (
+    "fmt"
+    "io"
+    "net/http"
+    "encoding/json"
+)
+
+func main() {
+    url := "https://api.monkei.co/api/v1/bills/019abcd2-240d-7dde-a2c9-0e2ca7144f56"
+    
+    req, err := http.NewRequest("GET", url, nil)
+    if err != nil {
+        fmt.Printf("Error creating request: %v\n", err)
+        return
+    }
+    
+    req.Header.Set("X-API-Key", "YOUR_API_KEY")
+    
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        fmt.Printf("Error making request: %v\n", err)
+        return
+    }
+    defer resp.Body.Close()
+    
+    body, err := io.ReadAll(resp.Body)
+    if err != nil {
+        fmt.Printf("Error reading response: %v\n", err)
+        return
+    }
+    
+    var result map[string]interface{}
+    if err := json.Unmarshal(body, &result); err != nil {
+        fmt.Printf("Error unmarshaling response: %v\n", err)
+        return
+    }
+    
+    fmt.Printf("Response: %+v\n", result)
+}
+```
+
+```php PHP
+<?php
+
+$billingId = '019abcd2-240d-7dde-a2c9-0e2ca7144f56';
+$url = "https://api.monkei.co/api/v1/bills/{$billingId}";
+
+$ch = curl_init($url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'X-API-Key: YOUR_API_KEY'
+]);
+
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if ($httpCode === 200) {
+    $result = json_decode($response, true);
+    echo json_encode($result, JSON_PRETTY_PRINT);
+} else {
+    echo "Error: HTTP $httpCode\n";
+    echo $response;
+}
+```
+
+```rust Rust
+use reqwest;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let billing_id = "019abcd2-240d-7dde-a2c9-0e2ca7144f56";
+    let url = format!("https://api.monkei.co/api/v1/bills/{}", billing_id);
+    
+    let client = reqwest::Client::new();
+    
+    let response = client
+        .get(&url)
+        .header("X-API-Key", "YOUR_API_KEY")
+        .send()
+        .await?;
+    
+    if response.status().is_success() {
+        let result: serde_json::Value = response.json().await?;
+        println!("{:#}", result);
+    } else {
+        eprintln!("Error: HTTP {}", response.status());
+    }
+    
+    Ok(())
+}
+```
+
 </RequestExample>
 
 ## Response

@@ -67,9 +67,7 @@
             "icon": "arrow-up-from-bracket",
             "pages": [
               "withdrawals/overview",
-              "withdrawals/create",
-              "withdrawals/list",
-              "withdrawals/find"
+              "withdrawals/create"
             ]
           },
           {

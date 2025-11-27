@@ -27,13 +27,13 @@ The health check endpoint provides a simple way to verify that the Monkei API is
 ### GET Request
 
 ```bash
-curl -X GET https://api.monkei.com/health
+curl -X GET https://api.monkei.co/health
 ```
 
 ### HEAD Request
 
 ```bash
-curl -X HEAD https://api.monkei.com/health
+curl -X HEAD https://api.monkei.co/health
 ```
 
 <Note>
@@ -78,10 +78,10 @@ OK
 
 ```bash
 # Simple health check
-curl -X GET https://api.monkei.com/health
+curl -X GET https://api.monkei.co/health
 
 # Check only status code
-curl -I https://api.monkei.com/health
+curl -I https://api.monkei.co/health
 ```
 
 ### JavaScript
@@ -89,7 +89,7 @@ curl -I https://api.monkei.com/health
 ```javascript
 async function checkHealth() {
   try {
-    const response = await fetch('https://api.monkei.com/health');
+    const response = await fetch('https://api.monkei.co/health');
     
     if (response.ok) {
       const text = await response.text();
@@ -116,7 +116,7 @@ import requests
 
 def check_health():
     try:
-        response = requests.get('https://api.monkei.com/health')
+        response = requests.get('https://api.monkei.co/health')
         
         if response.status_code == 200:
             print('System is healthy:', response.text)
@@ -138,7 +138,7 @@ is_healthy = check_health()
 #!/bin/bash
 # health_monitor.sh
 
-HEALTH_URL="https://api.monkei.com/health"
+HEALTH_URL="https://api.monkei.co/health"
 MAX_RETRIES=3
 RETRY_DELAY=5
 
@@ -196,7 +196,7 @@ Use health checks in deployment pipelines:
 # Example GitHub Actions
 - name: Health Check
   run: |
-    curl -f https://api.monkei.com/health || exit 1
+    curl -f https://api.monkei.co/health || exit 1
 ```
 
 ## Best Practices

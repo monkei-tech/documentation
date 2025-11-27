@@ -54,6 +54,275 @@ fetch('https://api.monkei.co/api/v1/exchange/latest', options)
   .catch(err => console.error(err));
 ```
 
+```typescript TypeScript
+interface QuoteRequest {
+  fiat_currency: string;
+  crypto_currency: string;
+}
+
+interface QuoteResponse {
+  success: boolean;
+  data: {
+    quote: {
+      id: string;
+      symbol: string;
+      exchange_rate: string;
+      fiat_currency: string;
+      crypto_currency: string;
+      expires_at: string;
+      is_expired: boolean;
+    };
+  };
+  message: string;
+}
+
+async function getLatestQuote(): Promise<QuoteResponse> {
+  const request: QuoteRequest = {
+    fiat_currency: 'BRL',
+    crypto_currency: 'BTC'
+  };
+
+  const response = await fetch('https://api.monkei.co/api/v1/exchange/latest', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-API-Key': 'YOUR_API_KEY'
+    },
+    body: JSON.stringify(request)
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+getLatestQuote()
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
+```
+
+```python Python
+import requests
+import json
+
+url = "https://api.monkei.co/api/v1/exchange/latest"
+
+headers = {
+    "Content-Type": "application/json",
+    "X-API-Key": "YOUR_API_KEY"
+}
+
+payload = {
+    "fiat_currency": "BRL",
+    "crypto_currency": "BTC"
+}
+
+response = requests.post(url, headers=headers, json=payload)
+
+if response.status_code == 200:
+    data = response.json()
+    print(json.dumps(data, indent=2))
+else:
+    print(f"Error: {response.status_code}")
+    print(response.text)
+```
+
+```go Go
+package main
+
+import (
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "io"
+    "net/http"
+)
+
+type QuoteRequest struct {
+    FiatCurrency  string `json:"fiat_currency"`
+    CryptoCurrency string `json:"crypto_currency"`
+}
+
+type QuoteResponse struct {
+    Success bool `json:"success"`
+    Data    struct {
+        Quote struct {
+            ID             string `json:"id"`
+            Symbol         string `json:"symbol"`
+            ExchangeRate   string `json:"exchange_rate"`
+            FiatCurrency   string `json:"fiat_currency"`
+            CryptoCurrency string `json:"crypto_currency"`
+            ExpiresAt      string `json:"expires_at"`
+            IsExpired      bool   `json:"is_expired"`
+        } `json:"quote"`
+    } `json:"data"`
+    Message string `json:"message"`
+}
+
+func main() {
+    url := "https://api.monkei.co/api/v1/exchange/latest"
+    
+    requestBody := QuoteRequest{
+        FiatCurrency:  "BRL",
+        CryptoCurrency: "BTC",
+    }
+    
+    jsonData, err := json.Marshal(requestBody)
+    if err != nil {
+        fmt.Printf("Error marshaling JSON: %v\n", err)
+        return
+    }
+    
+    req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+    if err != nil {
+        fmt.Printf("Error creating request: %v\n", err)
+        return
+    }
+    
+    req.Header.Set("Content-Type", "application/json")
+    req.Header.Set("X-API-Key", "YOUR_API_KEY")
+    
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        fmt.Printf("Error making request: %v\n", err)
+        return
+    }
+    defer resp.Body.Close()
+    
+    body, err := io.ReadAll(resp.Body)
+    if err != nil {
+        fmt.Printf("Error reading response: %v\n", err)
+        return
+    }
+    
+    var quoteResponse QuoteResponse
+    if err := json.Unmarshal(body, &quoteResponse); err != nil {
+        fmt.Printf("Error unmarshaling response: %v\n", err)
+        return
+    }
+    
+    fmt.Printf("Response: %+v\n", quoteResponse)
+}
+```
+
+```php PHP
+<?php
+
+$url = 'https://api.monkei.co/api/v1/exchange/latest';
+
+$data = [
+    'fiat_currency' => 'BRL',
+    'crypto_currency' => 'BTC'
+];
+
+$options = [
+    'http' => [
+        'header' => [
+            'Content-Type: application/json',
+            'X-API-Key: YOUR_API_KEY'
+        ],
+        'method' => 'POST',
+        'content' => json_encode($data)
+    ]
+];
+
+$context = stream_context_create($options);
+$response = file_get_contents($url, false, $context);
+
+if ($response === false) {
+    echo "Error making request\n";
+} else {
+    $result = json_decode($response, true);
+    echo json_encode($result, JSON_PRETTY_PRINT);
+}
+
+// Alternative using cURL
+$ch = curl_init($url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Content-Type: application/json',
+    'X-API-Key: YOUR_API_KEY'
+]);
+
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if ($httpCode === 200) {
+    $result = json_decode($response, true);
+    echo json_encode($result, JSON_PRETTY_PRINT);
+} else {
+    echo "Error: HTTP $httpCode\n";
+}
+```
+
+```rust Rust
+use reqwest;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
+
+#[derive(Serialize)]
+struct QuoteRequest {
+    fiat_currency: String,
+    crypto_currency: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct QuoteResponse {
+    success: bool,
+    data: QuoteData,
+    message: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct QuoteData {
+    quote: Quote,
+}
+
+#[derive(Deserialize, Debug)]
+struct Quote {
+    id: String,
+    symbol: String,
+    exchange_rate: String,
+    fiat_currency: String,
+    crypto_currency: String,
+    expires_at: String,
+    is_expired: bool,
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = reqwest::Client::new();
+    
+    let request_body = json!({
+        "fiat_currency": "BRL",
+        "crypto_currency": "BTC"
+    });
+    
+    let response = client
+        .post("https://api.monkei.co/api/v1/exchange/latest")
+        .header("Content-Type", "application/json")
+        .header("X-API-Key", "YOUR_API_KEY")
+        .json(&request_body)
+        .send()
+        .await?;
+    
+    if response.status().is_success() {
+        let quote_response: QuoteResponse = response.json().await?;
+        println!("{:#?}", quote_response);
+    } else {
+        eprintln!("Error: HTTP {}", response.status());
+    }
+    
+    Ok(())
+}
+```
+
 </RequestExample>
 
 ## Response
