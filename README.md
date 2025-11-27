@@ -1,44 +1,128 @@
-# Mintlify Starter Kit
+# Monkei API Documentation
 
-Use the starter kit to get your docs deployed and ready to customize.
+Official documentation for the Monkei API - Payment platform with support for PIX, cryptocurrencies (BTC, USDT), and billing management.
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+## 📚 About the Documentation
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+This documentation is built with [Mintlify](https://mintlify.com) and covers:
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
+- **Guides**: Quick start guides, authentication, webhooks, rate limits
+- **API Reference**: Complete reference for all API endpoints
+- **Billing**: Creation and management of bills
+- **Coupons**: Discount coupon system
+- **Transactions**: Payments via PIX, BTC, and USDT
+- **Withdrawals**: Withdrawals to bank accounts and crypto wallets
+- **Accounts**: Account management, balance, and limits
+- **Health**: Health check endpoints
 
-## Development
+## 🚀 Local Development
 
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
+To preview the documentation locally and test your changes:
 
-```
+### Prerequisites
+
+Install the [Mintlify CLI](https://www.npmjs.com/package/mint) globally:
+
+```bash
 npm i -g mint
 ```
 
-Run the following command at the root of your documentation, where your `docs.json` is located:
+### Run Locally
 
-```
+Run the following command at the root of the `documentation` folder, where the `docs.json` file is located:
+
+```bash
 mint dev
 ```
 
-View your local preview at `http://localhost:3000`.
+The documentation will be available at `http://localhost:3000`.
 
-## Publishing changes
+### Update CLI
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
+If the development environment is not working, update the CLI:
 
-## Need help?
+```bash
+mint update
+```
 
-### Troubleshooting
+## 📁 Documentation Structure
 
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
+```
+documentation/
+├── docs.json              # Main Mintlify configuration
+├── index.mdx              # Home page
+├── quickstart.mdx         # Quick start guide
+├── testing.mdx            # Testing guide
+├── essentials/           # Essential concepts (auth, webhooks, etc.)
+├── billing/              # Billing documentation
+├── coupons/              # Coupons documentation
+├── transactions/         # Transactions documentation
+├── withdrawals/          # Withdrawals documentation
+├── accounts/             # Accounts documentation
+├── health/               # Health checks documentation
+└── api-reference/        # Complete API reference
+```
 
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
-- [Mintlify community](https://mintlify.com/community)
+## 📝 Documentation Conventions
+
+### URLs and Authentication
+
+- **Base URL**: `https://api.monkei.co`
+- **Authentication**: Use `X-API-Key` header (not `Authorization: Bearer`)
+- **Example**:
+  ```bash
+  curl -X GET https://api.monkei.co/api/v1/balance \
+    -H "X-API-Key: sk_live_..."
+  ```
+
+### Code Examples
+
+All examples should include:
+- **cURL**: For quick tests
+- **JavaScript**: For web integrations
+- **Python**: For scripts and automation
+
+Some endpoints also include examples in TypeScript, Go, PHP, and Rust.
+
+### Status and Fields
+
+- Use the correct statuses as defined in the API
+- Do not include private fields like `account_id` or `event_id` in example responses
+- Maintain consistency across different documentation files
+
+## 🚢 Publishing
+
+Changes are automatically published after pushing to the default branch through the Mintlify GitHub App.
+
+### Configuration
+
+The GitHub App must be installed from the [Mintlify dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
+
+## 🐛 Troubleshooting
+
+### Page loads as 404
+
+Make sure you are running the `mint dev` command in the folder that contains the `docs.json` file.
+
+### Development environment not working
+
+Run `mint update` to ensure you have the latest version of the CLI.
+
+### Broken links
+
+Verify that internal links are using the correct path relative to `docs.json` and that pages exist in the navigation structure.
+
+## 📚 Resources
+
+- [Mintlify Documentation](https://mintlify.com/docs)
+- [Mintlify Community](https://mintlify.com/community)
+- [Monkei Dashboard](https://app.monkei.co)
+- [Status Page](https://stats.uptimerobot.com/nAsS6FyoB3)
+- [Support](mailto:support@monkei.co)
+
+## 🔗 Useful Links
+
+- **Dashboard**: [app.monkei.co](https://app.monkei.co)
+- **Status**: [stats.uptimerobot.com/nAsS6FyoB3](https://stats.uptimerobot.com/nAsS6FyoB3)
+- **GitHub**: [github.com/monkei-tech](https://github.com/monkei-tech)
+- **Support**: support@monkei.co
