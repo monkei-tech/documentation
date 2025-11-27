@@ -3,17 +3,9 @@ title: 'API Reference'
 description: 'Technical reference for Monkei API v1 - REST endpoints, authentication, and integration details'
 ---
 
-# API Reference
 
 Complete technical reference for the Monkei API v1. This section covers all endpoints, request/response formats, authentication mechanisms, and technical specifications.
 
-<Card
-  title="OpenAPI Specification"
-  icon="code"
-  href="/api-reference/openapi.json"
->
-  Download or view the complete OpenAPI 3.1.0 specification
-</Card>
 
 ## API Overview
 
@@ -30,7 +22,7 @@ Complete technical reference for the Monkei API v1. This section covers all endp
 The API uses URL-based versioning. The current version is `v1`:
 
 ```
-https://api.monkei.com/api/v1/{resource}
+https://api.monkei.co/api/v1/{resource}
 ```
 
 Future versions will be released as `v2`, `v3`, etc., maintaining backward compatibility for at least 12 months.
@@ -39,8 +31,8 @@ Future versions will be released as `v2`, `v3`, etc., maintaining backward compa
 
 | Environment | Base URL | Description |
 |-------------|----------|-------------|
-| **Production** | `https://api.monkei.com` | Live environment for production use |
-| **Staging** | `https://staging-api.monkei.com` | Testing environment with test data |
+| **Production** | `https://api.monkei.co` | Live environment for production use |
+| **Staging** | `https://staging-api.monkei.co` | Testing environment with test data |
 
 <Warning>
   Always use Production URLs for live transactions. Staging environment is for testing only.
@@ -150,8 +142,6 @@ All error responses follow a consistent structure:
   "details": {
     "field": "amount",
     "reason": "Must be greater than 0",
-    "user": "user_id",
-    "account": "account_id",
     "operation": "CreatePayment"
   },
   "trace": "CreatePayment -> ValidateAmount -> CheckBalance"
