@@ -28,7 +28,7 @@
   ],
   "security": [
     {
-      "bearerAuth": []
+      "apiKeyAuth": []
     }
   ],
   "paths": {
@@ -605,19 +605,21 @@
       "InitPaymentRequest": {
         "type": "object",
         "required": [
-          "idempotency_key",
+          "request_id",
           "currency",
           "method",
           "billing_id"
         ],
         "properties": {
-          "idempotency_key": {
+          "request_id": {
             "type": "string",
-            "description": "Unique key to prevent duplicate payments",
+            "maxLength": 100,
+            "description": "Unique key to prevent duplicate payments. Will be sent back in webhook and guarantees idempotency",
             "example": "payment_123456789"
           },
           "currency": {
             "type": "string",
+            "enum": ["BRL", "USD"],
             "description": "Currency code for the payment",
             "example": "BRL"
           },
@@ -625,9 +627,8 @@
             "type": "string",
             "enum": [
               "PIX",
-              "BITCOIN",
-              "USDC",
-              "CARD"
+              "BTC",
+              "USDT"
             ],
             "description": "Payment method to use",
             "example": "PIX"
@@ -637,6 +638,21 @@
             "format": "uuid",
             "description": "UUID of the billing to pay",
             "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "customer_metadata": {
+            "type": "object",
+            "description": "Customer metadata (optional)",
+            "properties": {
+              "name": {"type": "string", "maxLength": 100},
+              "phone": {"type": "string", "maxLength": 50},
+              "email": {"type": "string", "format": "email", "maxLength": 255},
+              "tax_id": {"type": "string", "maxLength": 20}
+            }
+          },
+          "coupon_used": {
+            "type": "string",
+            "description": "Discount coupon (optional)",
+            "example": "DISCOUNT10"
           },
           "metadata": {
             "type": "object",
@@ -668,15 +684,25 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "Unique identifier for the transaction"
+            "format": "uuid",
+            "description": "Unique identifier for the transaction",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
           },
           "method": {
             "type": "string",
-            "description": "Transaction method"
+            "description": "Transaction method",
+            "example": "PIX"
           },
           "status": {
             "type": "string",
-            "description": "Transaction status"
+            "description": "Transaction status",
+            "example": "PENDING"
+          },
+          "expires_in": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Expiration time in seconds",
+            "example": 1800
           }
         }
       },
@@ -703,16 +729,16 @@
             "description": "Currency code for the payment",
             "example": "BRL"
           },
-          "amount": {
+          "fiat_amount": {
             "type": "integer",
             "format": "int64",
-            "description": "Amount of the payment in cents",
+            "description": "Amount of the payment in fiat currency (smallest unit, e.g., cents)",
             "example": 10000
           },
-          "amount_in_crypto": {
+          "crypto_amount": {
             "type": "integer",
             "format": "int64",
-            "description": "Amount in crypto for the payment",
+            "description": "Amount in crypto for the payment (smallest unit, e.g., satoshis for BTC, micro-USDT for USDT)",
             "example": 100
           },
           "expires_in": {
@@ -739,32 +765,42 @@
       "CreatePixQRCodeRequest": {
         "type": "object",
         "required": [
-          "amount_in_brl",
-          "idempotency_key"
+          "amount",
+          "currency",
+          "request_id"
         ],
         "properties": {
-          "amount_in_brl": {
+          "amount": {
             "type": "integer",
             "format": "int64",
-            "minimum": 500,
-            "description": "Payment amount in BRL cents",
+            "minimum": 700,
+            "description": "Payment amount in smallest unit (cents for BRL, cents for USD)",
             "example": 10050
+          },
+          "currency": {
+            "type": "string",
+            "enum": ["BRL", "USD"],
+            "description": "Currency to use",
+            "example": "BRL"
           },
           "expires_in": {
             "type": "integer",
             "format": "int64",
             "minimum": 120,
-            "description": "Expiration time in seconds (minimum 120)",
-            "example": 3600
+            "maximum": 172800,
+            "description": "Expiration time in seconds (minimum 120, maximum 48 hours)",
+            "example": 1800
           },
           "description": {
             "type": "string",
+            "maxLength": 100,
             "description": "Payment description",
             "example": "Payment for services"
           },
-          "idempotency_key": {
+          "request_id": {
             "type": "string",
-            "description": "Unique key to prevent duplicate payments",
+            "maxLength": 100,
+            "description": "Unique key to prevent duplicate payments. Will be sent back in webhook and guarantees idempotency",
             "example": "pix_123456789"
           },
           "customer": {
@@ -781,10 +817,10 @@
             "description": "Unique payment ID",
             "example": "550e8400-e29b-41d4-a716-446655440000"
           },
-          "amount_in_brl": {
+          "fiat_amount": {
             "type": "integer",
             "format": "int64",
-            "description": "Payment amount in BRL cents",
+            "description": "Payment amount in fiat currency (smallest unit, e.g., cents)",
             "example": 10050
           },
           "status": {
@@ -835,37 +871,48 @@
       "CreateUSDTTransactionRequest": {
         "type": "object",
         "required": [
-          "amount_in_brl",
-          "idempotency_key",
+          "amount",
+          "currency",
+          "request_id",
           "network"
         ],
         "properties": {
-          "amount_in_brl": {
+          "amount": {
             "type": "integer",
             "format": "int64",
-            "minimum": 100,
-            "description": "Payment amount in BRL cents",
+            "minimum": 700,
+            "description": "Payment amount in smallest unit (cents for BRL, cents for USD)",
             "example": 10050
+          },
+          "currency": {
+            "type": "string",
+            "enum": ["BRL", "USD"],
+            "description": "Currency to use",
+            "example": "BRL"
           },
           "expires_in": {
             "type": "integer",
             "format": "int64",
             "minimum": 120,
-            "description": "Expiration time in seconds (minimum 120)",
-            "example": 3600
+            "maximum": 172800,
+            "description": "Expiration time in seconds (minimum 120, maximum 48 hours)",
+            "example": 1800
           },
           "description": {
             "type": "string",
+            "maxLength": 100,
             "description": "Payment description",
             "example": "Payment for services"
           },
-          "idempotency_key": {
+          "request_id": {
             "type": "string",
-            "description": "Unique key to prevent duplicate payments",
+            "maxLength": 100,
+            "description": "Unique key to prevent duplicate payments. Will be sent back in webhook and guarantees idempotency",
             "example": "usdt_123456789"
           },
           "network": {
             "type": "string",
+            "enum": ["polygon"],
             "description": "Network to use",
             "example": "polygon"
           }
@@ -877,34 +924,41 @@
           "id": {
             "type": "string",
             "format": "uuid",
-            "description": "Unique transaction ID"
+            "description": "Unique transaction ID",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
           },
-          "amount_in_brl": {
+          "fiat_amount": {
             "type": "integer",
             "format": "int64",
-            "description": "Payment amount in BRL cents"
+            "description": "Payment amount in fiat currency (smallest unit, e.g., cents)",
+            "example": 10050
           },
-          "amount_in_usdt": {
+          "crypto_amount": {
             "type": "integer",
             "format": "int64",
-            "description": "Payment amount in USDT"
+            "description": "Payment amount in crypto (smallest unit, e.g., micro-USDT)",
+            "example": 19888299
           },
           "status": {
             "type": "string",
-            "description": "Transaction status"
+            "description": "Transaction status",
+            "example": "PENDING"
           },
-          "wallet_address": {
+          "qr_code": {
             "type": "string",
-            "description": "Wallet address for payment"
+            "description": "QR Code for payment",
+            "example": "..."
           },
-          "network": {
+          "qr_code_url": {
             "type": "string",
-            "description": "Network used"
+            "description": "QR Code URL",
+            "example": "..."
           },
           "expires_in": {
             "type": "integer",
             "format": "int64",
-            "description": "Expiration time in seconds"
+            "description": "Expiration time in seconds",
+            "example": 1800
           }
         }
       },
@@ -986,69 +1040,106 @@
       "CreateWithdrawalRequest": {
         "type": "object",
         "required": [
-          "amount",
+          "request_id",
           "currency",
-          "destination"
+          "method"
         ],
         "properties": {
-          "amount": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Withdrawal amount"
+          "request_id": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "Unique key to prevent duplicate withdrawals. Will be sent back in webhook and guarantees idempotency",
+            "example": "withdraw_123456789"
           },
           "currency": {
             "type": "string",
             "enum": [
               "BRL",
+              "USD"
+            ],
+            "description": "Withdrawal currency",
+            "example": "BRL"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "PIX",
+              "BTC",
               "USDT"
             ],
-            "description": "Withdrawal currency"
+            "description": "Withdrawal method",
+            "example": "PIX"
           },
-          "destination": {
-            "type": "object",
-            "description": "Withdrawal destination details",
-            "properties": {
-              "pix_key": {
-                "type": "string",
-                "description": "PIX key (for BRL withdrawals)"
-              },
-              "wallet_address": {
-                "type": "string",
-                "description": "Wallet address (for USDT withdrawals)"
-              },
-              "network": {
-                "type": "string",
-                "description": "Network (for USDT withdrawals)"
-              }
-            }
+          "fiat_amount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Amount to withdraw in smallest unit (cents for fiat currency, required for fiat withdrawals)",
+            "example": 10050
+          },
+          "crypto_amount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Amount in crypto to withdraw in smallest unit (required for crypto withdrawals)",
+            "example": 100000
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Description for the withdrawal",
+            "example": "Withdrawal to bank account"
+          },
+          "network": {
+            "type": "string",
+            "enum": ["POLYGON", "LIGHTNING"],
+            "description": "Network for crypto withdrawals (required for USDT/USDC)",
+            "example": "POLYGON"
+          },
+          "to_address": {
+            "type": "string",
+            "description": "Destination address for crypto withdrawals (required for USDT/USDC)",
+            "example": "0x1234567890123456789012345678901234567890"
+          },
+          "pix_key": {
+            "type": "string",
+            "description": "PIX key for PIX withdrawals (required for PIX)",
+            "example": "user@example.com"
+          },
+          "pix_key_type": {
+            "type": "string",
+            "enum": ["EMAIL", "PHONE", "CPF", "CNPJ", "RANDOM"],
+            "description": "PIX key type for PIX withdrawals (required for PIX)",
+            "example": "EMAIL"
           }
         }
       },
       "WithdrawalResponse": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Unique withdrawal ID"
+          "transaction": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Unique transaction ID",
+                "example": "550e8400-e29b-41d4-a716-446655440000"
+              },
+              "method": {
+                "type": "string",
+                "description": "Withdrawal method",
+                "example": "PIX"
+              },
+              "status": {
+                "type": "string",
+                "description": "Transaction status",
+                "example": "PENDING"
+              }
+            }
           },
-          "amount": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Withdrawal amount"
-          },
-          "currency": {
+          "next_step": {
             "type": "string",
-            "description": "Withdrawal currency"
-          },
-          "status": {
-            "type": "string",
-            "description": "Withdrawal status"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Creation timestamp"
+            "description": "Next step in the withdrawal process",
+            "example": "PENDING"
           }
         }
       },
@@ -1063,18 +1154,30 @@
           "completion_url"
         ],
         "properties": {
+          "currency": {
+            "type": "string",
+            "enum": ["BRL", "USD"],
+            "description": "Currency code for the billing. Defaults to BRL if not provided",
+            "example": "BRL"
+          },
+          "idiom": {
+            "type": "string",
+            "enum": ["pt-BR", "en-US"],
+            "description": "Primary language for the payment page. Defaults to pt-BR if not provided",
+            "example": "pt-BR"
+          },
           "frequency": {
             "type": "string",
             "enum": [
               "ONE_TIME",
-              "RECURRING"
+              "MULTIPLE_PAYMENTS"
             ],
             "description": "Billing frequency",
             "example": "ONE_TIME"
           },
           "customer_data": {
             "$ref": "#/components/schemas/BillingCustomer",
-            "description": "Dados do cliente para a cobrança"
+            "description": "Customer information for the billing"
           },
           "payment_methods": {
             "type": "array",
@@ -1082,15 +1185,14 @@
               "type": "string",
               "enum": [
                 "PIX",
-                "BITCOIN",
-                "USDC",
+                "BTC",
                 "USDT"
               ]
             },
             "description": "Available payment methods",
             "example": [
               "PIX",
-              "BITCOIN",
+              "BTC",
               "USDT"
             ]
           },
@@ -1113,19 +1215,16 @@
           "return_url": {
             "type": "string",
             "format": "uri",
+            "maxLength": 255,
             "description": "URL to redirect after payment",
             "example": "https://example.com/return"
           },
           "completion_url": {
             "type": "string",
             "format": "uri",
+            "maxLength": 255,
             "description": "URL to redirect after payment completion",
             "example": "https://example.com/completion"
-          },
-          "is_transparent": {
-            "type": "boolean",
-            "description": "Whether to use transparent checkout",
-            "example": false
           },
           "allow_coupon": {
             "type": "boolean",
@@ -1135,7 +1234,8 @@
           "coupons_allowed": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 100
             },
             "description": "Coupons allowed",
             "example": []
@@ -1188,51 +1288,51 @@
         "type": "object",
         "required": [
           "external_id",
+          "name",
           "price",
-          "quantity",
-          "name"
+          "quantity"
         ],
         "properties": {
           "id": {
             "type": "string",
-            "description": "ID do produto"
+            "description": "Product ID (for responses only)"
           },
           "external_id": {
             "type": "string",
-            "description": "ID externo do produto",
+            "maxLength": 100,
+            "description": "External product ID",
             "example": "prod_001"
           },
           "name": {
             "type": "string",
-            "description": "Nome do produto",
-            "example": "Produto Teste"
+            "maxLength": 100,
+            "description": "Product name",
+            "example": "Product Test"
           },
           "description": {
             "type": "string",
-            "description": "Descrição do produto",
-            "example": "Descrição detalhada do produto"
+            "maxLength": 255,
+            "description": "Product description",
+            "example": "Detailed product description"
           },
           "price": {
             "type": "integer",
             "format": "int64",
-            "description": "Preço do produto em centavos",
+            "minimum": 700,
+            "description": "Product price in smallest unit (cents for fiat currency, minimum 700 cents)",
             "example": 10050
           },
           "quantity": {
             "type": "integer",
-            "description": "Quantidade do produto",
+            "minimum": 1,
+            "description": "Product quantity",
             "example": 1
           },
           "category": {
             "type": "string",
-            "description": "Categoria do produto",
+            "maxLength": 100,
+            "description": "Product category",
             "example": "electronics"
-          },
-          "shipping_price": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Preço do frete em centavos",
-            "example": 1500
           }
         }
       },
@@ -1265,8 +1365,19 @@
                 "description": "Payment URL"
               },
               "amount": {
+                "type": "integer",
+                "format": "int64",
+                "description": "Billing amount in smallest unit (cents for fiat currency)"
+              },
+              "currency": {
                 "type": "string",
-                "description": "Billing amount"
+                "description": "Currency code",
+                "example": "BRL"
+              },
+              "idiom": {
+                "type": "string",
+                "description": "Primary language for the payment page",
+                "example": "pt-BR"
               },
               "allow_coupon": {
                 "type": "boolean",
@@ -1426,45 +1537,54 @@
             "type": "number"
           }
         }
-      }
-    },
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT",
-        "description": "JWT token for API authentication"
       },
       "CreateBTCTransactionRequest": {
         "type": "object",
         "required": [
-          "amount_in_brl",
-          "idempotency_key"
+          "amount",
+          "currency",
+          "request_id",
+          "network"
         ],
         "properties": {
-          "amount_in_brl": {
+          "amount": {
             "type": "integer",
             "format": "int64",
-            "minimum": 100,
-            "description": "Payment amount in BRL cents",
+            "minimum": 700,
+            "description": "Payment amount in smallest unit (cents for BRL, cents for USD)",
             "example": 10050
+          },
+          "currency": {
+            "type": "string",
+            "enum": ["BRL", "USD"],
+            "description": "Currency to use",
+            "example": "BRL"
           },
           "expires_in": {
             "type": "integer",
             "format": "int64",
             "minimum": 120,
-            "description": "Expiration time in seconds (minimum 120)",
-            "example": 3600
+            "maximum": 172800,
+            "description": "Expiration time in seconds (minimum 120, maximum 48 hours)",
+            "example": 1800
           },
           "description": {
             "type": "string",
+            "maxLength": 100,
             "description": "Payment description",
             "example": "Payment for services"
           },
-          "idempotency_key": {
+          "request_id": {
             "type": "string",
-            "description": "Unique key to prevent duplicate payments",
+            "maxLength": 100,
+            "description": "Unique key to prevent duplicate payments. Will be sent back in webhook and guarantees idempotency",
             "example": "btc_123456789"
+          },
+          "network": {
+            "type": "string",
+            "enum": ["lightning"],
+            "description": "Network to use",
+            "example": "lightning"
           }
         }
       },
@@ -1474,32 +1594,51 @@
           "id": {
             "type": "string",
             "format": "uuid",
-            "description": "Unique transaction ID"
+            "description": "Unique transaction ID",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
           },
-          "amount_in_brl": {
+          "fiat_amount": {
             "type": "integer",
             "format": "int64",
-            "description": "Payment amount in BRL cents"
+            "description": "Payment amount in fiat currency (smallest unit, e.g., cents)",
+            "example": 10050
           },
-          "amount_in_btc": {
-            "type": "number",
-            "format": "decimal",
-            "description": "Payment amount in BTC"
+          "crypto_amount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Payment amount in crypto (smallest unit, e.g., satoshis)",
+            "example": 3224
           },
           "status": {
             "type": "string",
-            "description": "Transaction status"
+            "description": "Transaction status",
+            "example": "PENDING"
           },
-          "wallet_address": {
+          "qr_code": {
             "type": "string",
-            "description": "Wallet address for payment"
+            "description": "QR Code for payment",
+            "example": "..."
+          },
+          "qr_code_url": {
+            "type": "string",
+            "description": "QR Code URL",
+            "example": "..."
           },
           "expires_in": {
             "type": "integer",
             "format": "int64",
-            "description": "Expiration time in seconds"
+            "description": "Expiration time in seconds",
+            "example": 1800
           }
         }
+      }
+    },
+    "securitySchemes": {
+      "apiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "API Key for authentication. Format: sk_live_... or sk_test_..."
       }
     }
   }

@@ -39,7 +39,9 @@ GET /api/v1/bills?status=ACTIVE&frequency=ONE_TIME&page=1&limit=20
         "frequency": "ONE_TIME",
         "status": "ACTIVE",
         "url": "https://pay.monkei.co/bill/550e8400-e29b-41d4-a716-446655440000",
-        "amount": 125.50,
+        "amount": 12550,
+        "currency": "BRL",
+        "idiom": "pt-BR",
         "created_at": "2024-01-01T12:00:00Z",
         "customer": {
           "customer_id": "12345678901",
@@ -134,6 +136,34 @@ def list_bills(status='ACTIVE', page=1, limit=20):
 result = list_bills('ACTIVE', page=1)
 print(f"Total bills: {result['pagination']['total']}")
 ```
+
+## Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `data` | array | Array of bill objects |
+| `data[].id` | string | Unique bill identifier (UUID) |
+| `data[].frequency` | string | Billing frequency (`ONE_TIME` or `MULTIPLE_PAYMENTS`) |
+| `data[].status` | string | Current bill status |
+| `data[].url` | string | Payment URL for the customer |
+| `data[].amount` | integer | Total bill amount in smallest unit (cents) |
+| `data[].currency` | string | Currency code displayed on payment page (BRL or USD) |
+| `data[].idiom` | string | Primary language of the payment page (pt-BR or en-US) |
+| `data[].customer` | object | Customer information |
+| `data[].created_at` | string | Bill creation timestamp |
+| `pagination` | object | Pagination information |
+| `pagination.page` | integer | Current page number |
+| `pagination.limit` | integer | Items per page |
+| `pagination.total` | integer | Total number of bills |
+| `pagination.total_pages` | integer | Total number of pages |
+
+<Info>
+  **Currency**: The `currency` field indicates which currency will be displayed and charged on the payment page. This affects how amounts are shown to customers (e.g., R$ for BRL, $ for USD).
+</Info>
+
+<Info>
+  **Idiom**: The `idiom` field sets the primary language of the payment page. This controls the language of labels, messages, and interface elements shown to customers during checkout (e.g., "pt-BR" for Portuguese, "en-US" for English).
+</Info>
 
 ## Filtering
 

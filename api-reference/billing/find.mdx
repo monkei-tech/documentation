@@ -191,14 +191,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "frequency": "ONE_TIME",
         "status": "ACTIVE",
         "url": "https://pay.monkei.co/mon_test_abc123xyz",
-        "amount": "100.5",
+        "amount": 10050,
         "allow_coupon": false,
         "coupons_codes": [],
         "payment_methods": [
             "PIX",
-            "BITCOIN",
+            "BTC",
             "USDT"
         ],
+        "currency": "BRL",
+        "idiom": "pt-BR",
         "customer": {
             "customer_id": "019a9354-7093-7ea8-b139-d5a9f687b693",
             "customer_metadata": {
@@ -212,7 +214,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             {
                 "id": "019abcb4-8721-78aa-9679-ac9ae66275d0",
                 "external_id": "prod_test_001",
-                "price": "100.5",
+                "price": 10050,
                 "quantity": 1
             }
         ],
@@ -257,5 +259,5 @@ Each product object contains:
 |-------|------|-------------|
 | `id` | string (UUID) | Product identifier |
 | `external_id` | string | External product ID from your system |
-| `price` | string | Product price |
+| `price` | integer | Product price in smallest unit (cents) |
 | `quantity` | integer | Product quantity |

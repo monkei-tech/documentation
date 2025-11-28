@@ -4,8 +4,13 @@ openapi: "POST /api/v1/transactions/payments/usdt"
 description: "Create a USDT QR code for payment"
 ---
 
-<ParamField body="amount_in_brl" type="string" required>
-  Payment amount in Brazilian Reais (BRL).
+<ParamField body="amount" type="integer" required>
+  Payment amount in smallest unit (cents for BRL/USD). Minimum: 700 cents (R$ 7.00 or $7.00).
+</ParamField>
+
+<ParamField body="currency" type="string" required>
+  Currency code for the payment.
+  Allowed values: `BRL`, `USD`.
 </ParamField>
 
 <ParamField body="expires_in" type="integer" required>
@@ -16,8 +21,8 @@ description: "Create a USDT QR code for payment"
   Payment description (optional, max 255 characters).
 </ParamField>
 
-<ParamField body="idempotency_key" type="string" required>
-  Unique key to prevent duplicate payments. This key also serves for idempotency - using the same `idempotency_key` will return the same payment.
+<ParamField body="request_id" type="string" required>
+  Unique key to prevent duplicate payments. This key is a correlation identifier between your transaction and Monkei's transaction. It will be sent back in the webhook and guarantees idempotency - using the same `request_id` will return the same payment.
 </ParamField>
 
 <ParamField body="network" type="string" required>
@@ -33,10 +38,11 @@ curl --request POST \
   --header 'Content-Type: application/json' \
   --header 'X-API-Key: YOUR_API_KEY' \
   --data '{
-  "amount_in_brl": "100.50",
+  "amount": 10050,
+  "currency": "BRL",
   "expires_in": 1800,
   "description": "Payment for services",
-  "idempotency_key": "usdt_test_001",
+  "request_id": "usdt_test_001",
   "network": "polygon"
 }'
 ```
@@ -72,9 +78,8 @@ fetch('https://api.monkei.co/api/v1/transactions/payments/usdt', options)
     "success": true,
     "data": {
         "id": "019abce1-2d38-7627-b656-fd559aef7370",
-        "amount_in_brl": "100.50",
-        "amount_in_crypto": "18.75",
-        "platform_fee": "0.05",
+        "fiat_amount": 10050,
+        "crypto_amount": 18750000,
         "status": "PENDING",
         "expires_in": 1800,
         "qr_code": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
@@ -91,9 +96,8 @@ fetch('https://api.monkei.co/api/v1/transactions/payments/usdt', options)
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | string (UUID) | Unique payment transaction identifier |
-| `amount_in_brl` | string | Payment amount in Brazilian Reais |
-| `amount_in_crypto` | string | Payment amount in USDT (crypto) |
-| `platform_fee` | string | Platform fee charged for the transaction (optional) |
+| `fiat_amount` | integer | Payment amount in fiat currency (smallest unit - cents) |
+| `crypto_amount` | integer | Payment amount in USDT (smallest unit - micro-USDT, 6 decimals) |
 | `status` | string | Payment status: `PENDING`, `PROCESSING`, `COMPLETED`, `FAILED`, `CANCELED` |
 | `expires_in` | integer | Expiration time in seconds |
 | `qr_code` | string | QR code image in base64 format (for display) |
@@ -108,7 +112,7 @@ fetch('https://api.monkei.co/api/v1/transactions/payments/usdt', options)
 </Warning>
 
 <Note>
-  The `amount_in_crypto` field shows the equivalent amount in USDT based on the exchange rate at the time of transaction creation. This value is locked and remains fixed until the payment expires or is completed, regardless of cryptocurrency price fluctuations.
+  The `crypto_amount` field shows the equivalent amount in USDT (in micro-USDT, 6 decimals) based on the exchange rate at the time of transaction creation. This value is locked and remains fixed until the payment expires or is completed, regardless of cryptocurrency price fluctuations.
 </Note>
 
 <Note>
@@ -135,5 +139,5 @@ fetch('https://api.monkei.co/api/v1/transactions/payments/usdt', options)
 </Warning>
 
 <Note>
-  The `amount_in_crypto` value is locked at the time of transaction creation based on the current exchange rate. This value remains fixed until the payment expires or is completed, regardless of cryptocurrency price fluctuations.
+  The `crypto_amount` value (in micro-USDT) is locked at the time of transaction creation based on the current exchange rate. This value remains fixed until the payment expires or is completed, regardless of cryptocurrency price fluctuations.
 </Note>

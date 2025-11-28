@@ -4,8 +4,13 @@ openapi: "POST /api/v1/transactions/payments/pix"
 description: "Create a PIX QR code for payment"
 ---
 
-<ParamField body="amount_in_brl" type="string" required>
-  Payment amount in Brazilian Reais (BRL).
+<ParamField body="amount" type="integer" required>
+  Payment amount in smallest unit (cents for BRL/USD). Minimum: 700 cents (R$ 7.00 or $7.00).
+</ParamField>
+
+<ParamField body="currency" type="string" required>
+  Currency code for the payment.
+  Allowed values: `BRL`, `USD`.
 </ParamField>
 
 <ParamField body="expires_in" type="integer" required>
@@ -16,8 +21,8 @@ description: "Create a PIX QR code for payment"
   Payment description (optional, max 255 characters).
 </ParamField>
 
-<ParamField body="idempotency_key" type="string" required>
-  Unique key to prevent duplicate payments. This key also serves for idempotency - using the same `idempotency_key` will return the same payment.
+<ParamField body="request_id" type="string" required>
+  Unique key to prevent duplicate payments. This key is a correlation identifier between your transaction and Monkei's transaction. It will be sent back in the webhook and guarantees idempotency - using the same `request_id` will return the same payment.
 </ParamField>
 
 <ParamField body="customer" type="object">
@@ -47,10 +52,11 @@ curl --request POST \
   --header 'Content-Type: application/json' \
   --header 'X-API-Key: YOUR_API_KEY' \
   --data '{
-  "amount_in_brl": "200.2",
+  "amount": 20020,
+  "currency": "BRL",
   "expires_in": 3600,
   "description": "Payment for services",
-  "idempotency_key": "pix_test_001",
+  "request_id": "pix_test_001",
   "customer": {
     "customer_id": "12345678901",
     "metadata": {
@@ -71,10 +77,11 @@ const options = {
     'X-API-Key': 'YOUR_API_KEY'
   },
   body: JSON.stringify({
-    amount_in_brl: '200.2',
+    amount: 20020,
+    currency: 'BRL',
     expires_in: 3600,
     description: 'Payment for services',
-    idempotency_key: 'pix_test_001',
+    request_id: 'pix_test_001',
     customer: {
       customer_id: '12345678901',
       metadata: {
@@ -107,19 +114,21 @@ interface Customer {
 }
 
 interface CreatePixPaymentRequest {
-  amount_in_brl: string;
+  amount: number;
+  currency: 'BRL' | 'USD';
   expires_in: number;
   description?: string;
-  idempotency_key: string;
+  request_id: string;
   customer?: Customer;
 }
 
 async function createPixPayment(): Promise<any> {
   const request: CreatePixPaymentRequest = {
-    amount_in_brl: '200.2',
+    amount: 20020,
+    currency: 'BRL',
     expires_in: 3600,
     description: 'Payment for services',
-    idempotency_key: 'pix_test_001',
+    request_id: 'pix_test_001',
     customer: {
       customer_id: '12345678901',
       metadata: {
@@ -164,10 +173,11 @@ headers = {
 }
 
 payload = {
-    "amount_in_brl": "200.2",
+    "amount": 20020,
+    "currency": "BRL",
     "expires_in": 3600,
     "description": "Payment for services",
-    "idempotency_key": "pix_test_001",
+    "request_id": "pix_test_001",
     "customer": {
         "customer_id": "12345678901",
         "metadata": {
@@ -213,21 +223,23 @@ type Customer struct {
 }
 
 type CreatePixPaymentRequest struct {
-    AmountInBRL   string    `json:"amount_in_brl"`
-    ExpiresIn     int       `json:"expires_in"`
-    Description   string    `json:"description,omitempty"`
-    IdempotencyKey string   `json:"idempotency_key"`
-    Customer      *Customer `json:"customer,omitempty"`
+    Amount      int        `json:"amount"`
+    Currency    string     `json:"currency"`
+    ExpiresIn   int        `json:"expires_in"`
+    Description string     `json:"description,omitempty"`
+    RequestId   string     `json:"request_id"`
+    Customer    *Customer  `json:"customer,omitempty"`
 }
 
 func main() {
     url := "https://api.monkei.co/api/v1/transactions/payments/pix"
     
     requestBody := CreatePixPaymentRequest{
-        AmountInBRL: "200.2",
-        ExpiresIn:   3600,
+        Amount:     20020,
+        Currency:    "BRL",
+        ExpiresIn:  3600,
         Description: "Payment for services",
-        IdempotencyKey: "pix_test_001",
+        RequestId:  "pix_test_001",
         Customer: &Customer{
             CustomerID: "12345678901",
             Metadata: &CustomerMetadata{
@@ -284,10 +296,11 @@ func main() {
 $url = 'https://api.monkei.co/api/v1/transactions/payments/pix';
 
 $data = [
-    'amount_in_brl' => '200.2',
+    'amount' => 20020,
+    'currency' => 'BRL',
     'expires_in' => 3600,
     'description' => 'Payment for services',
-    'idempotency_key' => 'pix_test_001',
+    'request_id' => 'pix_test_001',
     'customer' => [
         'customer_id' => '12345678901',
         'metadata' => [
@@ -330,10 +343,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = reqwest::Client::new();
     
     let request_body = json!({
-        "amount_in_brl": "200.2",
+        "amount": 20020,
+        "currency": "BRL",
         "expires_in": 3600,
         "description": "Payment for services",
-        "idempotency_key": "pix_test_001",
+        "request_id": "pix_test_001",
         "customer": {
             "customer_id": "12345678901",
             "metadata": {
@@ -373,7 +387,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     "success": true,
     "data": {
         "id": "019abce1-2d38-7627-b656-fd559aef7370",
-        "amount_in_brl": "200.2",
+        "fiat_amount": 20020,
         "status": "PENDING",
         "expires_in": 3600,
         "qr_code": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
@@ -390,7 +404,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | string (UUID) | Unique payment transaction identifier |
-| `amount_in_brl` | string | Payment amount in Brazilian Reais |
+| `fiat_amount` | integer | Payment amount in fiat currency (smallest unit - cents) |
 | `status` | string | Payment status: `PENDING`, `PROCESSING`, `COMPLETED`, `FAILED`, `CANCELED` |
 | `expires_in` | integer | Expiration time in seconds |
 | `qr_code` | string | QR code image in base64 format (for display) |
@@ -428,10 +442,11 @@ async function createPixPayment(apiKey, amount, expiresIn) {
         'X-API-Key': apiKey
       },
       body: JSON.stringify({
-        amount_in_brl: amount,
+        amount: amount,
+        currency: 'BRL',
         expires_in: expiresIn,
         description: 'Payment for services',
-        idempotency_key: `pix_${Date.now()}`
+        request_id: `pix_${Date.now()}`
       })
     }
   );
@@ -464,10 +479,11 @@ async function createPixPaymentWithCustomer(apiKey, amount, expiresIn, customer)
         'X-API-Key': apiKey
       },
       body: JSON.stringify({
-        amount_in_brl: amount,
+        amount: amount,
+        currency: 'BRL',
         expires_in: expiresIn,
         description: 'Payment for services',
-        idempotency_key: `pix_${Date.now()}`,
+        request_id: `pix_${Date.now()}`,
         customer: {
           customer_id: customer.id,
           metadata: {
@@ -514,10 +530,11 @@ def create_pix_payment(api_key, amount, expires_in, customer=None):
     }
     
     payload = {
-        'amount_in_brl': amount,
+        'amount': amount,
+        'currency': 'BRL',
         'expires_in': expires_in,
         'description': 'Payment for services',
-        'idempotency_key': f'pix_{int(time.time())}'
+        'request_id': f'pix_{int(time.time())}'
     }
     
     if customer:
@@ -601,7 +618,7 @@ async function checkPixPaymentStatus(apiKey, paymentId) {
   "code": "VALIDATION_ERROR",
   "message": "Request validation failed",
   "details": {
-    "amount_in_brl": "amount_in_brl is required"
+    "amount": "amount is required"
   }
 }
 ```

@@ -8,10 +8,10 @@ The Billing API allows you to create, manage, and process one-time or recurring 
 
 ## What is Billing?
 
-Billing enables you to create invoices that customers can pay using PIX, Bitcoin, or USDT. You can configure multiple products per bill, apply discount coupons, and customize the checkout experience.
+Billing enables you to create invoices that customers can pay using PIX, Bitcoin, or USDT. You can configure multiple products per bill, apply discount coupons, and customize the checkout experience. Product prices are specified in the smallest unit (cents), with a minimum of 700 cents (R$ 7.00 or $7.00) per product.
 
 <Note>
-  Bills can be used for one-time charges (ONE_TIME) or multiple payments (MULTIPLE_PAYMENTS), with support for coupons and different payment methods.
+  Bills can be used for one-time charges (ONE_TIME) or multiple payments (MULTIPLE_PAYMENTS), with support for coupons and different payment methods. MULTIPLE_PAYMENTS bills can be paid by different customers, allowing multiple people to contribute to the same invoice. The billing system supports BRL and USD currencies, and all prices are specified in the smallest unit (cents).
 </Note>
 
 ## Key Features
@@ -21,7 +21,7 @@ Billing enables you to create invoices that customers can pay using PIX, Bitcoin
     <ul>
       <li>Add multiple products per bill</li>
       <li>Configurable quantities and prices</li>
-      <li>Minimum price: R$5.00 per product</li>
+      <li>Minimum price: 700 cents (R$ 7.00 or $7.00) per product</li>
     </ul>
   </Card>
   <Card title="Payment Methods" icon="credit-card">
@@ -29,9 +29,9 @@ Billing enables you to create invoices that customers can pay using PIX, Bitcoin
     <Badge text="BTC" color="orange"/>
     <Badge text="USDT" color="green"/>
     <ul>
-      <li>PIX (Brazilian Real)</li>
-      <li>Bitcoin (USD)</li>
-      <li>USDT (USD)</li>
+      <li>PIX (BRL)</li>
+      <li>BTC (BRL/USD)</li>
+      <li>USDT (BRL/USD)</li>
     </ul>
   </Card>
   <Card title="Discount Coupons" icon="ticket">

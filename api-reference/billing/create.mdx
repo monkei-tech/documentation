@@ -4,6 +4,16 @@ openapi: "POST /api/v1/bills"
 description: "Create a new billing charge for a customer."
 ---
 
+<ParamField body="currency" type="string">
+  Currency code for the billing. Defaults to `BRL` if not provided.
+  Allowed values: `BRL`, `USD`.
+</ParamField>
+
+<ParamField body="idiom" type="string">
+  Language/idiom for the payment page. Defaults to `pt-BR` if not provided.
+  Allowed values: `pt-BR`, `en-US`.
+</ParamField>
+
 <ParamField body="frequency" type="string" required>
   The frequency of the billing.
   Allowed values: `ONE_TIME`, `MULTIPLE_PAYMENTS`.
@@ -34,7 +44,7 @@ description: "Create a new billing charge for a customer."
 
 <ParamField body="payment_methods" type="array" required>
   List of allowed payment methods.
-  Allowed values: `PIX`, `BITCOIN`, `USDT`.
+  Allowed values: `PIX`, `BTC`, `USDT`.
 </ParamField>
 
 <ParamField body="metadata" type="object">
@@ -49,7 +59,7 @@ description: "Create a new billing charge for a customer."
     </ParamField>
     <ParamField body="name" type="string" required>Product name.</ParamField>
     <ParamField body="description" type="string">Product description.</ParamField>
-    <ParamField body="price" type="integer" required>Price in cents.</ParamField>
+    <ParamField body="price" type="integer" required>Price in smallest unit (cents). Minimum value: 700 cents (R$ 7.00 or $7.00).</ParamField>
     <ParamField body="quantity" type="integer" required>Quantity.</ParamField>
     <ParamField body="category" type="string">Product category.</ParamField>
   </Expandable>
@@ -89,9 +99,9 @@ curl --request POST \
       "tax_id": "12345678901"
     }
   },
-  "payment_methods": [
+    "payment_methods": [
     "PIX",
-    "BITCOIN",
+    "BTC",
     "USDT"
   ],
   "metadata": {
@@ -124,6 +134,8 @@ const options = {
     'X-API-Key': 'YOUR_API_KEY'
   },
   body: JSON.stringify({
+    currency: 'BRL',
+    idiom: 'pt-BR',
     frequency: 'ONE_TIME',
     customer_data: {
       customer_id: '12345678901',
@@ -134,7 +146,7 @@ const options = {
         tax_id: '12345678901'
       }
     },
-    payment_methods: ['PIX', 'BITCOIN', 'USDT'],
+    payment_methods: ['PIX', 'BTC', 'USDT'],
     metadata: {order_id: '123', customer_id: '456', source: 'ecommerce'},
     products: [
       {
@@ -182,9 +194,11 @@ interface Product {
 }
 
 interface CreateBillingRequest {
+  currency?: 'BRL' | 'USD';
+  idiom?: 'pt-BR' | 'en-US';
   frequency: 'ONE_TIME' | 'MULTIPLE_PAYMENTS';
   customer_data?: CustomerData;
-  payment_methods: ('PIX' | 'BITCOIN' | 'USDT')[];
+  payment_methods: ('PIX' | 'BTC' | 'USDT')[];
   metadata?: Record<string, any>;
   products: Product[];
   return_url: string;
@@ -205,7 +219,7 @@ async function createBilling(): Promise<any> {
         tax_id: '12345678901'
       }
     },
-    payment_methods: ['PIX', 'BITCOIN', 'USDT'],
+    payment_methods: ['PIX', 'BTC', 'USDT'],
     metadata: { order_id: '123', customer_id: '456', source: 'ecommerce' },
     products: [
       {
@@ -266,7 +280,7 @@ payload = {
             "tax_id": "12345678901"
         }
     },
-    "payment_methods": ["PIX", "BITCOIN", "USDT"],
+    "payment_methods": ["PIX", "BTC", "USDT"],
     "metadata": {
         "order_id": "123",
         "customer_id": "456",
@@ -331,6 +345,8 @@ type Product struct {
 }
 
 type CreateBillingRequest struct {
+    Currency       string        `json:"currency,omitempty"`
+    Idiom          string        `json:"idiom,omitempty"`
     Frequency      string        `json:"frequency"`
     CustomerData   *CustomerData `json:"customer_data,omitempty"`
     PaymentMethods []string      `json:"payment_methods"`
@@ -346,6 +362,8 @@ func main() {
     url := "https://api.monkei.co/api/v1/bills"
     
     requestBody := CreateBillingRequest{
+        Currency: "BRL",
+        Idiom: "pt-BR",
         Frequency: "ONE_TIME",
         CustomerData: &CustomerData{
             CustomerID: "12345678901",
@@ -356,7 +374,7 @@ func main() {
                 TaxID: "12345678901",
             },
         },
-        PaymentMethods: []string{"PIX", "BITCOIN", "USDT"},
+        PaymentMethods: []string{"PIX", "BTC", "USDT"},
         Metadata: map[string]interface{}{
             "order_id":    "123",
             "customer_id": "456",
@@ -423,6 +441,8 @@ func main() {
 $url = 'https://api.monkei.co/api/v1/bills';
 
 $data = [
+    'currency' => 'BRL',
+    'idiom' => 'pt-BR',
     'frequency' => 'ONE_TIME',
     'customer_data' => [
         'customer_id' => '12345678901',
@@ -433,7 +453,7 @@ $data = [
             'tax_id' => '12345678901'
         ]
     ],
-    'payment_methods' => ['PIX', 'BITCOIN', 'USDT'],
+    'payment_methods' => ['PIX', 'BTC', 'USDT'],
     'metadata' => [
         'order_id' => '123',
         'customer_id' => '456',
@@ -511,6 +531,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = reqwest::Client::new();
     
     let request_body = json!({
+        "currency": "BRL",
+        "idiom": "pt-BR",
         "frequency": "ONE_TIME",
         "customer_data": {
             "customer_id": "12345678901",
@@ -521,7 +543,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "tax_id": "12345678901"
             }
         },
-        "payment_methods": ["PIX", "BITCOIN", "USDT"],
+        "payment_methods": ["PIX", "BTC", "USDT"],
         "metadata": {
             "order_id": "123",
             "customer_id": "456",
@@ -573,14 +595,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "frequency": "ONE_TIME",
         "status": "ACTIVE",
         "url": "https://pay.monkei.co/mon_test_abc123xyz",
-        "amount": "100.5",
+        "amount": 10050,
         "allow_coupon": false,
         "coupons_codes": [],
-        "payment_methods": [
-            "PIX",
-            "BITCOIN",
-            "USDT"
-        ],
+    "payment_methods": [
+    "PIX",
+    "BTC",
+    "USDT"
+  ],
+        "currency": "BRL",
+        "idiom": "pt-BR",
         "customer": {
             "customer_id": "019a9354-7093-7ea8-b139-d5a9f687b693",
             "customer_metadata": {
@@ -594,7 +618,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             {
                 "id": "019abcb4-8721-78aa-9679-ac9ae66275d0",
                 "external_id": "prod_test_001",
-                "price": "100.5",
+                "price": 10050,
                 "quantity": 1
             }
         ],

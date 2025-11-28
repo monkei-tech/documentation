@@ -38,23 +38,37 @@ USDT payments are processed on the Polygon network, which offers low transaction
   <Title>CreateUSDTPaymentRequest</Title>
   ```json
   {
-    "amount_in_brl": 100.50,
-    "expires_in": 3600,
-    "description": "Payment in cryptocurrency",
-    "idempotency_key": "usdt_123456789",
+    "amount": 2050,
+    "currency": "BRL",
+    "expires_in": 1800,
+    "description": "Payment for services",
+    "request_id": "usdt_1234343423432342342344343442345234643789",
     "network": "polygon"
   }
   ```
 </Request>
 
+<Info>
+  **Amount**: The `amount` field represents the fiat currency amount that will be charged, specified in the smallest unit (cents). For example, `2050` represents R$ 20.50 when currency is BRL or $20.50 when currency is USD.
+</Info>
+
+<Info>
+  **Currency**: The `currency` field specifies the conversion currency. Currently supported: `BRL` (Brazilian Real) and `USD` (US Dollar). We plan to expand support for more currencies in the future.
+</Info>
+
+<Info>
+  **Request ID**: The `request_id` is a client-side identification ID that guarantees idempotency and will be sent via transaction webhook as `request_id`. This allows you to correlate webhook events with your original payment requests. Use a unique identifier for each payment request (e.g., UUID, timestamp-based ID, or your internal order ID). If you send the same `request_id` multiple times, the system will return the same transaction instead of creating duplicates.
+</Info>
+
 ## Parameters
 
 | Field | Type | Required | Values | Description |
 |-------|------|----------|--------|-------------|
-| `amount_in_brl` | decimal | ✅ | `min=7.00` | Amount in Brazilian Real |
-| `expires_in` | integer | ✅ | `min=120` | Expiration in seconds |
-| `description` | string | ❌ | - | Payment description |
-| `idempotency_key` | string | ✅ | - | Idempotency key |
+| `amount` | integer | ✅ | `min=700` | Payment amount in smallest unit (cents for BRL/USD). Example: `2050` = R$ 20.50 or $20.50 |
+| `currency` | string | ✅ | `"BRL"`, `"USD"` | Conversion currency. Currently supports BRL and USD, with more currencies planned for the future |
+| `expires_in` | integer | ✅ | `min=120, max=1800` | Expiration time in seconds (minimum 120 seconds, maximum 1800 seconds / 30 minutes) |
+| `description` | string | ❌ | `max=100` | Payment description |
+| `request_id` | string | ✅ | `max=100` | Client-side identification ID that will be sent via transaction webhook as `request_id` |
 | `network` | string | ✅ | `"polygon"` | Blockchain network |
 
 ## Response
@@ -63,15 +77,16 @@ USDT payments are processed on the Polygon network, which offers low transaction
   <Title>CreateUSDTPaymentResponse</Title>
   ```json
   {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "amount_in_brl": 100.50,
-    "amount_in_crypto": 18.012345,
-    "platform_fee": 0.10,
-    "status": "PENDING",
-    "expires_in": 3600,
-    "qr_code": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
-    "qr_code_url": "polygon:0x1234567890123456789012345678901234567890?value=18012345",
-    "address": "0x1234567890123456789012345678901234567890"
+    "success": true,
+    "data": {
+      "id": "019ac78f-b3d6-718f-a094-cba8ff6291a5",
+      "status": "PENDING",
+      "expires_in": 1800,
+      "fiat_amount": 2050,
+      "qr_code": "/9j/2wCEAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh",
+      "crypto_amount": 4180000
+    },
+    "message": "Resource created successfully"
   }
   ```
 </Response>
@@ -94,10 +109,11 @@ curl -X POST https://api.monkei.co/api/v1/transactions/payments/usdt \
   -H "Content-Type: application/json" \
   -H "X-API-Key: sk_live_1234567890abcdef" \
   -d '{
-    "amount_in_brl": 100.50,
-    "expires_in": 3600,
-    "description": "Payment in cryptocurrency",
-    "idempotency_key": "usdt_123456789",
+    "amount": 2050,
+    "currency": "BRL",
+    "expires_in": 1800,
+    "description": "Payment for services",
+    "request_id": "usdt_1234343423432342342344343442345234643789",
     "network": "polygon"
   }'
 ```
@@ -113,18 +129,24 @@ async function createUSDTPayment() {
       'X-API-Key': 'sk_live_1234567890abcdef'
     },
     body: JSON.stringify({
-      amount_in_brl: 100.50,
-      expires_in: 3600,
-      description: 'Payment in cryptocurrency',
-      idempotency_key: `usdt_${Date.now()}`,
+      amount: 2050, // R$ 20.50 in cents
+      currency: 'BRL',
+      expires_in: 1800,
+      description: 'Payment for services',
+      request_id: `usdt_${Date.now()}`,
       network: 'polygon'
     })
   });
 
-  const payment = await response.json();
-  console.log('USDT Amount:', payment.amount_in_crypto);
-  console.log('Payment Address:', payment.address);
-  return payment;
+  const result = await response.json();
+  if (result.success) {
+    console.log('Transaction ID:', result.data.id);
+    console.log('Fiat Amount:', result.data.fiat_amount); // 2050 (cents)
+    console.log('Crypto Amount (micro-USDT):', result.data.crypto_amount); // 4180000 (smallest unit)
+    console.log('Crypto Amount (USDT):', result.data.crypto_amount / 1000000); // Convert micro-USDT to USDT
+    console.log('QR Code (Base64):', result.data.qr_code);
+  }
+  return result;
 }
 ```
 
@@ -141,10 +163,11 @@ def create_usdt_payment():
     }
     
     data = {
-        'amount_in_brl': 100.50,
-        'expires_in': 3600,
-        'description': 'Payment in cryptocurrency',
-        'idempotency_key': f'usdt_{int(time.time())}',
+        'amount': 2050,  # R$ 20.50 in cents
+        'currency': 'BRL',
+        'expires_in': 1800,
+        'description': 'Payment for services',
+        'request_id': f'usdt_{int(time.time())}',
         'network': 'polygon'
     }
     
@@ -154,28 +177,36 @@ def create_usdt_payment():
         json=data
     )
     
-    return response.json()
+    result = response.json()
+    if result.get('success'):
+        print(f"Transaction ID: {result['data']['id']}")
+        print(f"Fiat Amount: {result['data']['fiat_amount']}")  # 2050 (cents)
+        print(f"Crypto Amount (micro-USDT): {result['data']['crypto_amount']}")  # 4180000 (smallest unit)
+        print(f"Crypto Amount (USDT): {result['data']['crypto_amount'] / 1000000}")  # Convert micro-USDT to USDT
+    
+    return result
 ```
 
 ## Response Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `id` | string | Transaction ID |
-| `amount_in_brl` | decimal | Original amount in BRL |
-| `amount_in_crypto` | decimal | Amount in USDT (6 decimals) |
-| `platform_fee` | decimal | Platform fee deducted |
-| `status` | string | Transaction status |
-| `expires_in` | integer | Expiration time in seconds |
-| `qr_code` | string | Base64-encoded QR code image that can be directly embedded in HTML |
-| `qr_code_url` | string | Payment address string that can be copied and pasted |
-| `address` | string | Polygon wallet address for payment |
+| `success` | boolean | Indicates if the request was successful |
+| `data` | object | Response data object |
+| `data.id` | string | Transaction ID |
+| `data.status` | string | Transaction status (PENDING, CONFIRMED, etc.) |
+| `data.expires_in` | integer | Expiration time in seconds |
+| `data.fiat_amount` | integer | Payment amount in fiat currency (smallest unit, e.g., cents for BRL/USD) |
+| `data.crypto_amount` | integer | Amount in USDT (smallest unit, 6 decimals - micro-USDT) |
+| `data.qr_code` | string | Base64-encoded QR code image that can be directly embedded in HTML |
+| `data.qr_code_url` | string | Payment address string that can be copied and pasted |
+| `message` | string | Response message |
 
 ## Payment Flow
 
 <Steps>
   <Step title="Create Payment">
-    Create a USDT payment specifying the amount in BRL.
+    Create a USDT payment specifying the amount in fiat currency (BRL or USD) and the conversion currency.
   </Step>
   <Step title="Get Address">
     Receive a Polygon wallet address and QR code.
@@ -188,10 +219,45 @@ def create_usdt_payment():
   </Step>
 </Steps>
 
+## Crypto Amount Calculation
+
+<Info>
+  **How `crypto_amount` is calculated:**
+  
+  The `crypto_amount` field represents the USDT amount in the smallest unit (micro-USDT), which uses 10^6 (1,000,000) as the multiplier.
+  
+  **Calculation process:**
+  1. The system receives the `amount` in fiat currency (smallest unit, e.g., cents for BRL/USD)
+  2. It fetches the current exchange rate (e.g., how many BRL per 1 USDT)
+  3. It converts: `(fiat_amount_in_cents / 100) / exchange_rate = crypto_amount (in USDT)`
+  4. It multiplies by 10^6 to get the smallest unit: `crypto_amount * 1,000,000 = crypto_amount (micro-USDT)`
+  
+  **Example:**
+  - Input: `amount: 2050` (R$ 20.50 in cents), `currency: "BRL"`
+  - Exchange rate: 1 USDT = 4.90 BRL (example - quantos BRL por 1 USDT)
+  - First convert cents to BRL: `2050 / 100 = 20.50 BRL`
+  - Then divide by exchange rate: `20.50 BRL / 4.90 BRL/USDT = 4.18 USDT`
+  - Convert to smallest unit: `4.18 * 1,000,000 = 4,180,000 micro-USDT`
+  - Response: `crypto_amount: 4180000`
+  
+  **To convert back to USDT:**
+  - Divide by 10^6: `4180000 / 1,000,000 = 4.18 USDT`
+  
+  **Note:** The exchange rate represents how many BRL you need to buy 1 USDT (e.g., 1 USDT = X BRL). The calculation is: `(fiat_amount_in_cents / 100) / exchange_rate * 1,000,000 = crypto_amount_in_micro_usdt`. The actual value depends on the current exchange rate at the time of the request.
+</Info>
+
 ## Important Notes
 
 <Info>
-  The amount is automatically converted from BRL to USDT based on current exchange rates. The `amount_in_crypto` field shows the exact USDT amount to receive.
+  The `amount` field represents the fiat currency amount that will be charged, specified in the smallest unit. The system automatically converts this amount to USDT based on current exchange rates. The `crypto_amount` field in the response shows the exact USDT amount to receive (in smallest unit, 6 decimals - micro-USDT).
+</Info>
+
+<Info>
+  The `currency` field specifies the conversion currency. Currently, we support `BRL` (Brazilian Real) and `USD` (US Dollar). We plan to expand support for more currencies in the future.
+</Info>
+
+<Info>
+  The `request_id` is a client-side identification ID that guarantees idempotency and will be sent via transaction webhook as `request_id`. This allows you to correlate webhook events with your original payment requests. Make sure to use a unique identifier for each payment request. If you send the same `request_id` multiple times, the system will return the same transaction instead of creating duplicates.
 </Info>
 
 <Warning>
@@ -213,7 +279,7 @@ def create_usdt_payment():
 |------|-------------|----------|
 | `VALIDATION_ERROR` | Invalid field | Check the parameters sent |
 | `INVALID_NETWORK` | Invalid network | Use "polygon" |
-| `AMOUNT_TOO_LOW` | Amount below minimum | Increase to at least R$7.00 |
+| `VALIDATION_ERROR` | Invalid field value | Check field 'amount' must be at least 700 (R$ 7.00 or $7.00) |
 
 ## Next Steps
 

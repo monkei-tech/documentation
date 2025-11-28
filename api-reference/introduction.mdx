@@ -76,7 +76,6 @@ Content-Type: application/json
 Optional headers:
 
 ```http
-X-Idempotency-Key: unique-key-123
 X-Request-ID: request-uuid-456
 User-Agent: YourApp/1.0
 ```
@@ -183,16 +182,6 @@ X-RateLimit-Remaining: 95
 X-RateLimit-Reset: 1640995200
 ```
 
-**Idempotency Headers (when applicable):**
-```http
-Idempotency-Key: payment_20240101_001
-X-Idempotent: false
-```
-
-The `X-Idempotent` header indicates:
-- `true`: Response is from a previously processed request (replay)
-- `false`: Response is from a newly processed request
-
 **Content Type:**
 ```http
 Content-Type: application/json
@@ -204,8 +193,8 @@ Content-Type: application/json
 
 | Code | Description | Usage |
 |------|-------------|-------|
-| `200 OK` | Request successful | GET operations |
-| `201 Created` | Resource created | POST operations |
+| `200 OK` | Request successful | GET operations, or when `request_id` matches existing transaction (idempotency) |
+| `201 Created` | Resource created | POST operations (new resource) |
 | `202 Accepted` | Request accepted for processing | Async POST operations |
 
 ### Client Error Codes
@@ -216,7 +205,6 @@ Content-Type: application/json
 | `401 Unauthorized` | Authentication failed | Missing/invalid API key |
 | `403 Forbidden` | Access denied | Insufficient permissions |
 | `404 Not Found` | Resource not found | Invalid ID or endpoint |
-| `409 Conflict` | Resource conflict | Duplicate idempotency key |
 | `422 Unprocessable Entity` | Validation error | Business rule violation |
 | `429 Too Many Requests` | Rate limit exceeded | Too many requests in time window |
 
@@ -232,20 +220,21 @@ Content-Type: application/json
 
 All POST operations support idempotency to prevent duplicate operations.
 
-### Using Idempotency Keys
+### Using Request ID
 
-Include an `idempotency_key` in your request:
+Include a `request_id` in your request body to guarantee idempotency:
 
 ```json
 {
-  "idempotency_key": "payment_20240101_001",
-    "amount_in_brl": 10050,
+  "request_id": "payment_20240101_001",
+  "amount": 10050,
+  "currency": "BRL",
   "description": "Payment"
 }
 ```
 
 <Info>
-  Idempotency keys are valid for 24 hours. Requests with the same key within this period return the same response.
+  The `request_id` field is a correlation identifier between your transaction and Monkei's transaction. It will be sent back in the webhook and guarantees idempotency - if you send the same `request_id` again, the system will return `200 OK` with the same transaction record instead of creating duplicates.
 </Info>
 
 ## Pagination
@@ -319,23 +308,41 @@ Webhooks deliver real-time events to your application. Configure webhook endpoin
 
 ```http
 X-Monkei-Signature: sha256=abc123...
-X-Monkei-Event: PAYMENT_RECEIVED
-X-Monkei-Delivery-ID: delivery-uuid
 Content-Type: application/json
 ```
+
+<Info>
+  The `X-Monkei-Signature` header contains the HMAC-SHA256 signature of the webhook payload, generated using your webhook secret. Always verify this signature before processing the webhook to ensure it comes from Monkei.
+</Info>
 
 ### Webhook Payload
 
 ```json
 {
-  "event": "PAYMENT_RECEIVED",
-  "timestamp": "2024-01-01T12:00:00Z",
+  "id": "019ac174-3bc8-7e3d-855f-4f9864c71250",
+  "event": "payment.pending",
   "data": {
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-    "status": "COMPLETED"
-  }
+    "transaction": {
+      "id": "019ac174-3bc8-7e3d-855f-4f9864c71250",
+      "request_id": "payment_20240101_001",
+      "type": "PAYMENT",
+      "method": "BTC",
+      "status": "PENDING",
+      "currency": "USD",
+      "amount": "0.00002072",
+      "fee": "0.00000006",
+      "hash": "6c447cfb90bfa71e3829fa78092a743f4d55ae6725687a0bebf588f31156d4e2",
+      "status_paid": null,
+      "remaining_amount": "0"
+    }
+  },
+  "devMode": true
 }
 ```
+
+<Info>
+  The `request_id` field in the webhook payload corresponds to the `request_id` you sent in the original request. This allows you to correlate webhook events with your original payment requests.
+</Info>
 
 <Card
   title="Webhooks Guide"
@@ -398,7 +405,6 @@ All errors follow the standard error response format (see [Response Format](#res
 | `UNAUTHORIZED` | Authentication required | 401 |
 | `FORBIDDEN` | Access denied | 403 |
 | `NOT_FOUND` | Resource not found | 404 |
-| `CONFLICT` | Resource conflict (e.g., duplicate idempotency key) | 409 |
 | `RATE_LIMIT_EXCEEDED` | Too many requests | 429 |
 | `INTERNAL_ERROR` | Server error | 500 |
 
@@ -426,8 +432,7 @@ The `details` object provides additional context about the error:
 | Type | Format | Example |
 |------|--------|---------|
 | `string` | UTF-8 text | `"Hello World"` |
-| `integer` | 64-bit signed | `10050` |
-| `decimal` | String representation | `"100.50"` |
+| `integer` | 64-bit signed | `10050` (used for all monetary amounts) |
 | `uuid` | UUID v4 | `"550e8400-e29b-41d4-a716-446655440000"` |
 | `datetime` | ISO 8601 | `"2024-01-01T12:00:00Z"` |
 | `boolean` | true/false | `true` |
@@ -436,11 +441,21 @@ The `details` object provides additional context about the error:
 
 ### Amounts
 
-All monetary amounts are represented in **cents** (smallest currency unit):
+All monetary amounts are represented as **integers** in the smallest currency unit:
 
-- `10050` = R$ 100.50 (BRL)
-- `100` = $1.00 (USD)
-- `1000000` = 1.000000 USDT
+**Fiat Currencies (BRL/USD):**
+- `10050` = R$ 100.50 (BRL) or $100.50 (USD) - represented in cents
+- `700` = R$ 7.00 (BRL) or $7.00 (USD) - minimum value
+
+**Cryptocurrencies:**
+- **BTC**: Represented in satoshis (8 decimals)
+  - `100000` = 0.001 BTC (100,000 satoshis)
+- **USDT**: Represented in micro-USDT (6 decimals)
+  - `100500000` = 100.5 USDT (100,500,000 micro-USDT)
+
+<Info>
+  All amounts are sent and received as integers, never as decimals. This ensures precision and avoids floating-point rounding errors.
+</Info>
 
 ### Dates and Times
 

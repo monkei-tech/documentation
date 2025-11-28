@@ -18,10 +18,10 @@ POST /api/v1/transactions/withdrawals
   <Title>InitWithdrawRequest</Title>
   ```json
   {
-    "idempotency_key": "withdraw_123456789",
+    "request_id": "withdraw_123456789",
     "currency": "BRL",
     "method": "PIX",
-    "amount_in_brl": 1000.50,
+    "fiat_amount": 100050,
     "description": "Withdrawal to personal account",
     "pix_key": "user@example.com",
     "pix_key_type": "EMAIL"
@@ -33,20 +33,32 @@ POST /api/v1/transactions/withdrawals
 
 | Field | Type | Required | Validation | Description |
 |-------|------|----------|------------|-------------|
-| `idempotency_key` | string | ✅ | - | Idempotency key to prevent duplicates |
-| `currency` | string | ✅ | Enum | Currency code |
-| `method` | string | ✅ | Enum | Withdrawal method |
-| `amount_in_brl` | decimal | ⚠️¹ | `min=7.00` | Amount in BRL (if currency=BRL) |
-| `amount_in_crypto` | decimal | ⚠️¹ | `min=0.00001` | Amount in crypto (if crypto) |
-| `description` | string | ❌ | - | Withdrawal description |
-| `network` | string | ⚠️² | Enum | Blockchain network (crypto only) |
-| `to_address` | string | ⚠️² | - | Destination address (crypto only) |
-| `pix_key` | string | ⚠️³ | - | PIX key (PIX only) |
-| `pix_key_type` | string | ⚠️³ | Enum | PIX key type |
+| `request_id` | string | ✅ | `max=100` | Unique key to prevent duplicate withdrawals (guarantees idempotency) |
+| `currency` | string | ✅ | `oneof=BRL USD` | Currency code |
+| `method` | string | ✅ | `oneof=PIX BTC USDT` | Withdrawal method |
+| `fiat_amount` | integer | ⚠️¹ | `min=700` | Amount in smallest unit (cents for BRL/USD). Minimum: 700 cents (R$ 7.00 or $7.00) |
+| `crypto_amount` | integer | ⚠️¹ | - | Amount in crypto smallest unit (satoshis for BTC, micro-USDT for USDT) |
+| `description` | string | ❌ | `max=255` | Withdrawal description |
+| `network` | string | ⚠️² | `oneof=POLYGON LIGHTNING` | Blockchain network (required for crypto) |
+| `to_address` | string | ⚠️² | - | Destination address (required for crypto) |
+| `pix_key` | string | ⚠️³ | - | PIX key (required for PIX) |
+| `pix_key_type` | string | ⚠️³ | `oneof=EMAIL PHONE CPF CNPJ RANDOM` | PIX key type (required for PIX) |
 
-¹ **One of the amount fields is required**  
-² **Required for cryptocurrencies**  
+¹ **One of the amount fields is required** (fiat_amount for PIX, crypto_amount for BTC/USDT)  
+² **Required for cryptocurrencies** (BTC and USDT)  
 ³ **Required for PIX**
+
+<Info>
+  **Request ID**: The `request_id` field guarantees idempotency. If you send the same `request_id` multiple times, the system will return the same transaction instead of creating duplicates.
+</Info>
+
+<Info>
+  **Fiat Amount**: The `fiat_amount` field represents the withdrawal amount in the smallest unit (cents). For example, `100050` represents R$ 1,000.50 when currency is BRL, or $1,000.50 when currency is USD. Minimum value: 700 cents (R$ 7.00 or $7.00).
+</Info>
+
+<Info>
+  **Crypto Amount**: The `crypto_amount` field represents the withdrawal amount in the smallest unit for cryptocurrencies. For BTC, this is satoshis (8 decimals). For USDT, this is micro-USDT (6 decimals).
+</Info>
 
 ### Allowed Values
 
@@ -56,6 +68,10 @@ POST /api/v1/transactions/withdrawals
 | `method` | `"PIX"`, `"BTC"`, `"USDT"` |
 | `network` | `"POLYGON"` (USDT), `"LIGHTNING"` (BTC) |
 | `pix_key_type` | `"EMAIL"`, `"PHONE"`, `"CPF"`, `"CNPJ"`, `"RANDOM"` |
+
+<Info>
+  **Currency**: The `currency` field determines which currency will be used for the withdrawal. For PIX, use `"BRL"`. For crypto withdrawals (BTC/USDT), use `"USD"` as the base currency.
+</Info>
 
 ## Response
 
@@ -95,10 +111,10 @@ curl -X POST https://api.monkei.co/api/v1/transactions/withdrawals \
   -H "Content-Type: application/json" \
   -H "X-API-Key: sk_live_1234567890abcdef" \
   -d '{
-    "idempotency_key": "pix_withdraw_123",
+    "request_id": "pix_withdraw_123",
     "currency": "BRL",
     "method": "PIX",
-    "amount_in_brl": 1000.00,
+    "fiat_amount": 100000,
     "description": "Monthly withdrawal",
     "pix_key": "joao.silva@example.com",
     "pix_key_type": "EMAIL"
@@ -116,10 +132,10 @@ async function createPixWithdrawal() {
       'X-API-Key': 'sk_live_1234567890abcdef'
     },
     body: JSON.stringify({
-      idempotency_key: `pix_withdraw_${Date.now()}`,
+      request_id: `pix_withdraw_${Date.now()}`,
       currency: 'BRL',
       method: 'PIX',
-      amount_in_brl: 1000.00,
+      fiat_amount: 100000, // R$ 1,000.00 in cents
       description: 'Monthly withdrawal',
       pix_key: 'joao.silva@example.com',
       pix_key_type: 'EMAIL'
@@ -128,6 +144,37 @@ async function createPixWithdrawal() {
 
   return await response.json();
 }
+```
+
+#### Python
+
+```python
+import requests
+import time
+
+def create_pix_withdrawal():
+    headers = {
+        'Content-Type': 'application/json',
+        'X-API-Key': 'sk_live_1234567890abcdef'
+    }
+    
+    data = {
+        'request_id': f'pix_withdraw_{int(time.time())}',
+        'currency': 'BRL',
+        'method': 'PIX',
+        'fiat_amount': 100000,  # R$ 1,000.00 in cents
+        'description': 'Monthly withdrawal',
+        'pix_key': 'joao.silva@example.com',
+        'pix_key_type': 'EMAIL'
+    }
+    
+    response = requests.post(
+        'https://api.monkei.co/api/v1/transactions/withdrawals',
+        headers=headers,
+        json=data
+    )
+    
+    return response.json()
 ```
 
 ### USDT Withdrawal
@@ -139,14 +186,70 @@ curl -X POST https://api.monkei.co/api/v1/transactions/withdrawals \
   -H "Content-Type: application/json" \
   -H "X-API-Key: sk_live_1234567890abcdef" \
   -d '{
-    "idempotency_key": "usdt_withdraw_456",
+    "request_id": "usdt_withdraw_456",
     "currency": "USD",
     "method": "USDT",
-    "amount_in_crypto": 100.5,
+    "crypto_amount": 100500000,
     "description": "Transfer to external wallet",
     "network": "POLYGON",
     "to_address": "0x1234567890123456789012345678901234567890"
   }'
+```
+
+#### JavaScript
+
+```javascript
+async function createUSDTWithdrawal() {
+  const response = await fetch('https://api.monkei.co/api/v1/transactions/withdrawals', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-API-Key': 'sk_live_1234567890abcdef'
+    },
+    body: JSON.stringify({
+      request_id: `usdt_withdraw_${Date.now()}`,
+      currency: 'USD',
+      method: 'USDT',
+      crypto_amount: 100500000, // 100.5 USDT in micro-USDT (6 decimals)
+      description: 'Transfer to external wallet',
+      network: 'POLYGON',
+      to_address: '0x1234567890123456789012345678901234567890'
+    })
+  });
+
+  return await response.json();
+}
+```
+
+#### Python
+
+```python
+import requests
+import time
+
+def create_usdt_withdrawal():
+    headers = {
+        'Content-Type': 'application/json',
+        'X-API-Key': 'sk_live_1234567890abcdef'
+    }
+    
+    data = {
+        'request_id': f'usdt_withdraw_{int(time.time())}',
+        'currency': 'USD',
+        'method': 'USDT',
+        'crypto_amount': 100500000,  # 100.5 USDT in micro-USDT (6 decimals)
+        'description': 'Transfer to external wallet',
+        'network': 'POLYGON',
+        'to_address': '0x1234567890123456789012345678901234567890'
+    }
+    
+    response = requests.post(
+        'https://api.monkei.co/api/v1/transactions/withdrawals',
+        headers=headers,
+        json=data
+    )
+    
+    return response.json()
 ```
 
 ### BTC Withdrawal
@@ -158,14 +261,70 @@ curl -X POST https://api.monkei.co/api/v1/transactions/withdrawals \
   -H "Content-Type: application/json" \
   -H "X-API-Key: sk_live_1234567890abcdef" \
   -d '{
-    "idempotency_key": "btc_withdraw_789",
+    "request_id": "btc_withdraw_789",
     "currency": "USD",
     "method": "BTC",
-    "amount_in_crypto": 0.001,
+    "crypto_amount": 100000,
     "description": "Bitcoin withdrawal",
     "network": "LIGHTNING",
     "to_address": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
   }'
+```
+
+#### JavaScript
+
+```javascript
+async function createBTCWithdrawal() {
+  const response = await fetch('https://api.monkei.co/api/v1/transactions/withdrawals', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-API-Key': 'sk_live_1234567890abcdef'
+    },
+    body: JSON.stringify({
+      request_id: `btc_withdraw_${Date.now()}`,
+      currency: 'USD',
+      method: 'BTC',
+      crypto_amount: 100000, // 0.001 BTC in satoshis (8 decimals)
+      description: 'Bitcoin withdrawal',
+      network: 'LIGHTNING',
+      to_address: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'
+    })
+  });
+
+  return await response.json();
+}
+```
+
+#### Python
+
+```python
+import requests
+import time
+
+def create_btc_withdrawal():
+    headers = {
+        'Content-Type': 'application/json',
+        'X-API-Key': 'sk_live_1234567890abcdef'
+    }
+    
+    data = {
+        'request_id': f'btc_withdraw_{int(time.time())}',
+        'currency': 'USD',
+        'method': 'BTC',
+        'crypto_amount': 100000,  # 0.001 BTC in satoshis (8 decimals)
+        'description': 'Bitcoin withdrawal',
+        'network': 'LIGHTNING',
+        'to_address': 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'
+    }
+    
+    response = requests.post(
+        'https://api.monkei.co/api/v1/transactions/withdrawals',
+        headers=headers,
+        json=data
+    )
+    
+    return response.json()
 ```
 
 ## PIX Key Types

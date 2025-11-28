@@ -14,8 +14,8 @@ POST /api/v1/transactions/withdrawals
 
 ## Request Body
 
-<ParamField body="idempotency_key" type="string" required>
-  Unique key to prevent duplicate withdrawals. This key also serves for idempotency - using the same `idempotency_key` will return the same withdrawal transaction.
+<ParamField body="request_id" type="string" required>
+  Unique key to prevent duplicate withdrawals. This key is a correlation identifier between your transaction and Monkei's transaction. It will be sent back in the webhook and guarantees idempotency - using the same `request_id` will return the same withdrawal transaction.
 </ParamField>
 
 <ParamField body="currency" type="string" required>
@@ -26,12 +26,14 @@ POST /api/v1/transactions/withdrawals
   Withdrawal method to use. Allowed values: `PIX`, `BTC`, `USDT`.
 </ParamField>
 
-<ParamField body="amount_in_brl" type="string">
-  Amount to withdraw in Brazilian Reais (BRL). Required for BRL withdrawals.
+<ParamField body="fiat_amount" type="integer">
+  Amount to withdraw in smallest unit (cents for BRL/USD). Required for PIX withdrawals. Minimum: 700 cents (R$ 7.00 or $7.00).
 </ParamField>
 
-<ParamField body="amount_in_crypto" type="string">
-  Amount in cryptocurrency to withdraw. Required for cryptocurrency withdrawals (BTC, USDT).
+<ParamField body="crypto_amount" type="integer">
+  Amount in cryptocurrency to withdraw in smallest unit. Required for cryptocurrency withdrawals (BTC, USDT).
+  - For BTC: amount in satoshis (8 decimals)
+  - For USDT: amount in micro-USDT (6 decimals)
 </ParamField>
 
 <ParamField body="description" type="string">
@@ -87,10 +89,10 @@ curl --request POST \
   --header 'Content-Type: application/json' \
   --header 'X-API-Key: YOUR_API_KEY' \
   --data '{
-  "idempotency_key": "withdraw_test_001",
+  "request_id": "withdraw_test_001",
   "currency": "BRL",
   "method": "PIX",
-  "amount_in_brl": "100.50",
+  "fiat_amount": 10050,
   "description": "Withdrawal to bank account",
   "pix_key": "user@example.com",
   "pix_key_type": "EMAIL"
@@ -105,10 +107,10 @@ const options = {
     'X-API-Key': 'YOUR_API_KEY'
   },
   body: JSON.stringify({
-    idempotency_key: 'withdraw_test_001',
+    request_id: 'withdraw_test_001',
     currency: 'BRL',
     method: 'PIX',
-    amount_in_brl: '100.50',
+    fiat_amount: 10050,
     description: 'Withdrawal to bank account',
     pix_key: 'user@example.com',
     pix_key_type: 'EMAIL'
@@ -129,10 +131,10 @@ curl --request POST \
   --header 'Content-Type: application/json' \
   --header 'X-API-Key: YOUR_API_KEY' \
   --data '{
-  "idempotency_key": "withdraw_test_001",
+  "request_id": "withdraw_test_001",
   "currency": "USD",
   "method": "BTC",
-  "amount_in_crypto": "0.00049342",
+  "crypto_amount": 49342,
   "description": "BTC Lightning withdrawal",
   "to_address": "monkei@walletofsatoshi.com",
   "network": "LIGHTNING"
@@ -180,7 +182,7 @@ curl --request POST \
 | `expires_in` | integer | Expiration time in seconds (may be `0` for withdrawals) |
 
 <Note>
-  The `idempotency_key` ensures that duplicate requests with the same key will return the same transaction. If a transaction with the same `idempotency_key` already exists, the API will return status `200 OK` instead of `201 Created`.
+  The `request_id` ensures that duplicate requests with the same key will return the same transaction. If a transaction with the same `request_id` already exists, the API will return status `200 OK` instead of `201 Created`.
 </Note>
 
 <Note>

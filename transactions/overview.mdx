@@ -11,7 +11,7 @@ The Transactions API allows you to create and manage payments using multiple met
 Transactions represent payment operations in the Monkei system. Each transaction can be a payment (incoming money) or a withdrawal (outgoing money). Payments generate QR codes that customers can scan to complete the transaction.
 
 <Note>
-  All payment endpoints require API Key authentication (via `X-API-Key` header) and implement idempotency through the `idempotency_key` field.
+  All payment endpoints require API Key authentication (via `X-API-Key` header) and implement idempotency through the `request_id` field. If you send the same `request_id` multiple times, the system will return the same transaction instead of creating duplicates.
 </Note>
 
 ## Supported Payment Methods
@@ -21,27 +21,29 @@ Transactions represent payment operations in the Monkei system. Each transaction
     <Badge text="BRL" color="blue"/>
     <ul>
       <li>Currency: Brazilian Real (BRL)</li>
-      <li>Min: R$ 7.00</li>
+      <li>Min: 700 cents (R$ 7.00 or $7.00)</li>
       <li>Precision: 2 decimals</li>
       <li>EMVCo QR Code</li>
     </ul>
   </Card>
   <Card title="USDT" icon="coins">
-    <Badge text="USD" color="green"/>
+    <Badge text="BRL/USD" color="green"/>
     <ul>
       <li>Currency: Tether (USDT)</li>
       <li>Network: Polygon</li>
       <li>Precision: 6 decimals</li>
       <li>ERC-20 Token</li>
+      <li>Supports BRL and USD</li>
     </ul>
   </Card>
   <Card title="BTC" icon="bitcoinsign">
-    <Badge text="USD" color="orange"/>
+    <Badge text="BRL/USD" color="orange"/>
     <ul>
       <li>Currency: Bitcoin (BTC)</li>
       <li>Network: Lightning Network</li>
       <li>Precision: 8 decimals</li>
       <li>Instant confirmation</li>
+      <li>Supports BRL and USD</li>
     </ul>
   </Card>
 </CardGroup>
@@ -76,10 +78,10 @@ Transactions represent payment operations in the Monkei system. Each transaction
 
 ## Key Features
 
-- **Idempotency**: Prevent duplicate transactions using `idempotency_key`
+- **Idempotency**: Prevent duplicate transactions using `request_id` - the same `request_id` will return the same transaction
 - **QR Codes**: Automatic QR code generation for all payment methods
 - **Real-time Updates**: Webhook notifications for status changes
-- **Multiple Currencies**: Support for BRL (PIX) and USD (crypto)
+- **Multiple Currencies**: Support for BRL and USD conversion (PIX uses BRL, crypto methods support both BRL and USD)
 - **Expiration Control**: Set expiration times for payment requests
 
 ## Use Cases

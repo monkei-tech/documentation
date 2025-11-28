@@ -38,23 +38,37 @@ Bitcoin payments are processed on the Bitcoin blockchain, providing a decentrali
   <Title>CreateBTCPaymentRequest</Title>
   ```json
   {
-    "amount_in_brl": "100.50",
-    "expires_in": 3600,
-    "description": "Payment in Bitcoin",
-    "idempotency_key": "btc_123456789",
+    "amount": 2050,
+    "currency": "BRL",
+    "expires_in": 1800,
+    "description": "Payment for services",
+    "request_id": "btc_123456789",
     "network": "lightning"
   }
   ```
 </Request>
 
+<Info>
+  **Amount**: The `amount` field represents the fiat currency amount that will be charged, specified in the smallest unit (cents). For example, `2050` represents R$ 20.50 when currency is BRL, or $20.50 when currency is USD.
+</Info>
+
+<Info>
+  **Currency**: The `currency` field specifies the conversion currency. Currently supported: `BRL` (Brazilian Real) and `USD` (US Dollar). We plan to expand support for more currencies in the future.
+</Info>
+
+<Info>
+  **Request ID**: The `request_id` is a client-side identification ID that guarantees idempotency and will be sent via transaction webhook as `request_id`. This allows you to correlate webhook events with your original payment requests. Use a unique identifier for each payment request (e.g., UUID, timestamp-based ID, or your internal order ID). If you send the same `request_id` multiple times, the system will return the same transaction instead of creating duplicates.
+</Info>
+
 ## Parameters
 
 | Field | Type | Required | Values | Description |
 |-------|------|----------|--------|-------------|
-| `amount_in_brl` | decimal | ✅ | `min=7.00` | Amount in Brazilian Real |
-| `expires_in` | integer | ✅ | `min=120` | Expiration in seconds |
-| `description` | string | ❌ | - | Payment description |
-| `idempotency_key` | string | ✅ | - | Idempotency key |
+| `amount` | integer | ✅ | `min=700` | Payment amount in smallest unit (cents for BRL/USD). Example: `2050` = R$ 20.50 or $20.50 |
+| `currency` | string | ✅ | `"BRL"`, `"USD"` | Conversion currency. Currently supports BRL and USD, with more currencies planned for the future |
+| `expires_in` | integer | ✅ | `min=120, max=1800` | Expiration time in seconds (minimum 120 seconds, maximum 1800 seconds / 30 minutes) |
+| `description` | string | ❌ | `max=100` | Payment description |
+| `request_id` | string | ✅ | `max=100` | Client-side identification ID that will be sent via transaction webhook as `request_id` |
 | `network` | string | ✅ | `"lightning"` | Blockchain network (Lightning Network for payments) |
 
 ## Response
@@ -63,14 +77,17 @@ Bitcoin payments are processed on the Bitcoin blockchain, providing a decentrali
   <Title>CreateBTCPaymentResponse</Title>
   ```json
   {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "amount_in_brl": 100.50,
-    "amount_in_crypto": 0.00123456,
-    "platform_fee": 0.00001,
-    "status": "PENDING",
-    "expires_in": 3600,
-    "qr_code": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
-    "qr_code_url": "lightning:lnbc1234567890abcdef..."
+    "success": true,
+    "data": {
+      "id": "019ac78f-b3d6-718f-a094-cba8ff6291a5",
+      "status": "PENDING",
+      "expires_in": 1800,
+      "fiat_amount": 2050,
+      "crypto_amount": 836700,
+      "qr_code": "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",
+      "qr_code_url": "lightning:lnbc1234567890abcdef..."
+    },
+    "message": "Resource created successfully"
   }
   ```
 </Response>
@@ -93,10 +110,11 @@ curl -X POST https://api.monkei.co/api/v1/transactions/payments/btc \
   -H "Content-Type: application/json" \
   -H "X-API-Key: sk_live_1234567890abcdef" \
   -d '{
-    "amount_in_brl": 100.50,
-    "expires_in": 3600,
-    "description": "Payment in Bitcoin",
-    "idempotency_key": "btc_123456789",
+    "amount": 2050,
+    "currency": "BRL",
+    "expires_in": 1800,
+    "description": "Payment for services",
+    "request_id": "btc_123456789",
     "network": "lightning"
   }'
 ```
@@ -112,19 +130,25 @@ async function createBTCPayment() {
       'X-API-Key': 'sk_live_1234567890abcdef'
     },
     body: JSON.stringify({
-      amount_in_brl: 100.50,
-      expires_in: 3600,
-      description: 'Payment in Bitcoin',
-      idempotency_key: `btc_${Date.now()}`,
+      amount: 2050, // R$ 20.50 in cents
+      currency: 'BRL',
+      expires_in: 1800,
+      description: 'Payment for services',
+      request_id: `btc_${Date.now()}`,
       network: 'lightning'
     })
   });
 
-  const payment = await response.json();
-  console.log('BTC Amount:', payment.amount_in_crypto);
-  console.log('QR Code (Base64):', payment.qr_code);
-  console.log('Lightning Invoice (Copy/Paste):', payment.qr_code_url);
-  return payment;
+  const result = await response.json();
+  if (result.success) {
+    console.log('Transaction ID:', result.data.id);
+    console.log('BTC Amount (satoshis):', result.data.crypto_amount);
+    console.log('BTC Amount (BTC):', result.data.crypto_amount / 100000000); // Convert satoshis to BTC
+    console.log('Fiat Amount (cents):', result.data.fiat_amount);
+    console.log('QR Code (Base64):', result.data.qr_code);
+    console.log('Lightning Invoice:', result.data.qr_code_url);
+  }
+  return result;
 }
 ```
 
@@ -141,10 +165,11 @@ def create_btc_payment():
     }
     
     data = {
-        'amount_in_brl': 100.50,
-        'expires_in': 3600,
-        'description': 'Payment in Bitcoin',
-        'idempotency_key': f'btc_{int(time.time())}',
+        'amount': 2050,  # R$ 20.50 in cents
+        'currency': 'BRL',
+        'expires_in': 1800,
+        'description': 'Payment for services',
+        'request_id': f'btc_{int(time.time())}',
         'network': 'lightning'
     }
     
@@ -154,27 +179,36 @@ def create_btc_payment():
         json=data
     )
     
-    return response.json()
+    result = response.json()
+    if result.get('success'):
+        print(f"Transaction ID: {result['data']['id']}")
+        print(f"BTC Amount (satoshis): {result['data']['crypto_amount']}")
+        print(f"BTC Amount (BTC): {result['data']['crypto_amount'] / 100000000}")  # Convert satoshis to BTC
+        print(f"Fiat Amount (cents): {result['data']['fiat_amount']}")
+    
+    return result
 ```
 
 ## Response Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `id` | string | Transaction ID |
-| `amount_in_brl` | decimal | Original amount in BRL |
-| `amount_in_crypto` | decimal | Amount in BTC (8 decimals) |
-| `platform_fee` | decimal | Platform fee deducted |
-| `status` | string | Transaction status |
-| `expires_in` | integer | Expiration time in seconds |
-| `qr_code` | string | Base64-encoded QR code image that can be directly embedded in HTML |
-| `qr_code_url` | string | Lightning invoice string that can be copied and pasted |
+| `success` | boolean | Indicates if the request was successful |
+| `data` | object | Response data object |
+| `data.id` | string | Transaction ID |
+| `data.status` | string | Transaction status (PENDING, CONFIRMED, etc.) |
+| `data.expires_in` | integer | Expiration time in seconds |
+| `data.fiat_amount` | integer | Payment amount in fiat currency (smallest unit, e.g., cents for BRL/USD) |
+| `data.crypto_amount` | integer | Amount in BTC (smallest unit, 8 decimals - satoshis) |
+| `data.qr_code` | string | Base64-encoded QR code image that can be directly embedded in HTML |
+| `data.qr_code_url` | string | Lightning invoice string that can be copied and pasted |
+| `message` | string | Response message |
 
 ## Payment Flow
 
 <Steps>
   <Step title="Create Payment">
-    Create a Bitcoin payment specifying the amount in BRL.
+    Create a Bitcoin payment specifying the amount in fiat currency (BRL or USD) and the conversion currency.
   </Step>
   <Step title="Get Lightning Invoice">
     Receive a Lightning Network invoice and QR code.
@@ -187,10 +221,44 @@ def create_btc_payment():
   </Step>
 </Steps>
 
+## Crypto Amount Calculation
+
+<Info>
+  **How `crypto_amount` is calculated:**
+  
+  The `crypto_amount` field represents the BTC amount in the smallest unit (satoshis), which uses 10^8 (100,000,000) as the multiplier.
+  
+  **Calculation process:**
+  1. The system receives the `amount` in fiat currency (smallest unit, e.g., cents for BRL/USD)
+  2. It fetches the current exchange rate (e.g., BRL/BTC or USD/BTC)
+  3. It converts: `fiat_amount (cents) / exchange_rate = crypto_amount (in BTC)`
+  4. It multiplies by 10^8 to get the smallest unit: `crypto_amount * 100,000,000 = crypto_amount (satoshis)`
+  
+  **Example:**
+  - Input: `amount: 2050` (R$ 20.50 in cents), `currency: "BRL"`
+  - Exchange rate: 1 BTC = R$ 245,000 (example)
+  - Calculation: `2050 cents / 245000 = 0.008367 BTC`
+  - Convert to smallest unit: `0.008367 * 100,000,000 = 836,700 satoshis`
+  - Response: `crypto_amount: 836700`
+  
+  **To convert back to BTC:**
+  - Divide by 10^8: `836700 / 100,000,000 = 0.008367 BTC`
+  
+  **Note:** 1 BTC = 100,000,000 satoshis (10^8). This is the standard Bitcoin unit conversion. The example response shows `crypto_amount: 836700` which represents 0.008367 BTC. The actual value depends on the current exchange rate at the time of the request.
+</Info>
+
 ## Important Notes
 
 <Info>
-  The amount is automatically converted from BRL to BTC based on current exchange rates. The `amount_in_crypto` field shows the exact BTC amount to receive.
+  The `amount` field represents the fiat currency amount that will be charged, specified in the smallest unit. The system automatically converts this amount to BTC based on current exchange rates. The `crypto_amount` field in the response shows the exact BTC amount to receive (in smallest unit, 8 decimals - satoshis).
+</Info>
+
+<Info>
+  The `currency` field specifies the conversion currency. Currently, we support `BRL` (Brazilian Real) and `USD` (US Dollar). We plan to expand support for more currencies in the future.
+</Info>
+
+<Info>
+  The `request_id` is a client-side identification ID that guarantees idempotency and will be sent via transaction webhook as `request_id`. This allows you to correlate webhook events with your original payment requests. Make sure to use a unique identifier for each payment request. If you send the same `request_id` multiple times, the system will return the same transaction instead of creating duplicates.
 </Info>
 
 <Warning>
@@ -224,7 +292,7 @@ Bitcoin payments on the Lightning Network are confirmed instantly:
 |------|-------------|----------|
 | `VALIDATION_ERROR` | Invalid field | Check the parameters sent |
 | `INVALID_NETWORK` | Invalid network | Use "lightning" |
-| `AMOUNT_TOO_LOW` | Amount below minimum | Increase to at least R$7.00 |
+| `VALIDATION_ERROR` | Invalid field value | Check field 'amount' must be at least 700 (R$ 7.00 or $7.00) |
 
 ## Next Steps
 

@@ -28,10 +28,12 @@ GET /api/v1/bills/{billingId}
     "frequency": "ONE_TIME",
     "status": "ACTIVE",
     "url": "https://pay.monkei.co/bill/550e8400-e29b-41d4-a716-446655440000",
-    "amount": 125.50,
+    "amount": 12550,
+    "currency": "BRL",
+    "idiom": "pt-BR",
     "allow_coupon": true,
     "coupons_codes": ["DISCOUNT10", "WELCOME20"],
-    "payment_methods": ["PIX", "BITCOIN"],
+    "payment_methods": ["PIX", "BTC"],
     "customer": {
       "customer_id": "12345678901",
       "customer_metadata": {
@@ -45,7 +47,7 @@ GET /api/v1/bills/{billingId}
       {
         "id": "prod_001",
         "external_id": "SKU-001",
-        "price": 50.00,
+        "price": 5000,
         "quantity": 2
       }
     ],
@@ -135,16 +137,26 @@ print(f"Bill status: {bill['status']}")
 | `frequency` | string | Billing frequency (`ONE_TIME` or `MULTIPLE_PAYMENTS`) |
 | `status` | string | Current bill status |
 | `url` | string | Payment URL for the customer |
-| `amount` | decimal | Total bill amount |
+| `amount` | integer | Total bill amount in smallest unit (cents) |
+| `currency` | string | Currency code displayed on payment page (BRL or USD) |
+| `idiom` | string | Primary language of the payment page (pt-BR or en-US) |
 | `allow_coupon` | boolean | Whether coupons are allowed |
 | `coupons_codes` | array | List of allowed coupon codes |
 | `payment_methods` | array | Available payment methods |
 | `customer` | object | Customer information |
-| `products` | array | List of products in the bill |
+| `products` | array | List of products in the bill (price in smallest unit - cents) |
 | `completion_url` | string | URL to redirect after payment |
 | `return_url` | string | URL to redirect on cancellation |
 | `created_at` | string | Bill creation timestamp |
 | `updated_at` | string | Last update timestamp |
+
+<Info>
+  **Currency**: The `currency` field indicates which currency will be displayed and charged on the payment page. This affects how amounts are shown to customers (e.g., R$ for BRL, $ for USD).
+</Info>
+
+<Info>
+  **Idiom**: The `idiom` field sets the primary language of the payment page. This controls the language of labels, messages, and interface elements shown to customers during checkout (e.g., "pt-BR" for Portuguese, "en-US" for English).
+</Info>
 
 ## Bill Statuses
 

@@ -18,6 +18,8 @@ POST /api/v1/bills
   <Title>CreateBillingRequest</Title>
   ```json
   {
+    "currency": "BRL",
+    "idiom": "pt-BR",
     "frequency": "ONE_TIME",
     "customer_data": {
       "customer_id": "12345678901",
@@ -28,28 +30,29 @@ POST /api/v1/bills
         "tax_id": "12345678901"
       }
     },
-    "payment_methods": ["PIX", "BITCOIN"],
+    "payment_methods": ["PIX", "BTC"],
     "metadata": {
       "order_id": "ORD-12345",
       "source": "mobile_app"
     },
     "products": [
       {
-        "id": "prod_001",
         "external_id": "SKU-001",
-        "price": 50.00,
+        "name": "Product 1",
+        "description": "Product description",
+        "price": 5000,
         "quantity": 2
       },
       {
-        "id": "prod_002",
         "external_id": "SKU-002",
-        "price": 25.50,
+        "name": "Product 2",
+        "description": "Product description",
+        "price": 2550,
         "quantity": 1
       }
     ],
     "return_url": "https://example.com/return",
     "completion_url": "https://example.com/success",
-    "is_transparent": false,
     "allow_coupon": true,
     "coupons_allowed": ["DISCOUNT10", "WELCOME20"]
   }
@@ -60,16 +63,25 @@ POST /api/v1/bills
 
 | Field | Type | Required | Description | Values |
 |-------|------|----------|-------------|--------|
+| `currency` | string | ❌ | Currency code | `"BRL"` (default), `"USD"` |
+| `idiom` | string | ❌ | Language/idiom | `"pt-BR"` (default), `"en-US"` |
 | `frequency` | string | ✅ | Billing frequency | `"ONE_TIME"`, `"MULTIPLE_PAYMENTS"` |
 | `customer_data` | object | ✅ | Customer information | See below |
-| `payment_methods` | array | ✅ | Allowed payment methods | `["PIX"]`, `["BITCOIN"]`, `["USDT"]` |
+| `payment_methods` | array | ✅ | Allowed payment methods | `["PIX"]`, `["BTC"]`, `["USDT"]` |
 | `metadata` | object | ❌ | Additional metadata | `{}` |
 | `products` | array | ✅ | List of products | See below |
 | `return_url` | string | ✅ | Return URL (cancellation) | Valid URL |
 | `completion_url` | string | ✅ | Success URL (after payment) | Valid URL |
-| `is_transparent` | boolean | ❌ | Transparent checkout | `false` (default) |
 | `allow_coupon` | boolean | ❌ | Allow coupons | `false` (default) |
 | `coupons_allowed` | array | ❌ | Allowed coupon codes | `["CODE1"]` |
+
+<Info>
+  **Currency**: The `currency` field determines which currency will be displayed and charged on the payment page. This affects how amounts are shown to customers (e.g., R$ for BRL, $ for USD).
+</Info>
+
+<Info>
+  **Idiom**: The `idiom` field sets the primary language of the payment page. This controls the language of labels, messages, and interface elements shown to customers during checkout (e.g., "pt-BR" for Portuguese, "en-US" for English).
+</Info>
 
 ### Customer Data
 
@@ -91,14 +103,20 @@ POST /api/v1/bills
 
 | Field | Type | Required | Validation | Description |
 |-------|------|----------|------------|-------------|
-| `id` | string | ✅ | - | Internal product ID |
-| `external_id` | string | ✅ | - | External product ID/SKU |
-| `price` | decimal | ✅ | `min=5.00` | Unit price (min: R$5.00) |
+| `external_id` | string | ✅ | `max=100` | External product ID/SKU |
+| `name` | string | ✅ | `max=100` | Product name |
+| `description` | string | ❌ | `max=255` | Product description |
+| `price` | integer | ✅ | `min=700` | Unit price in smallest unit (cents). Minimum: 700 cents (R$ 7.00 or $7.00) |
 | `quantity` | integer | ✅ | `min=1` | Product quantity |
+| `category` | string | ❌ | `max=100` | Product category |
 
 <Warning>
-  The minimum price per product is R$5.00 (500 cents). Values below will be rejected.
+  The minimum price per product is 700 cents (R$ 7.00 or $7.00). Values below will be rejected.
 </Warning>
+
+<Info>
+  **Price**: The `price` field represents the product price in the smallest unit (cents). For example, `5000` represents R$ 50.00 when currency is BRL, or $50.00 when currency is USD.
+</Info>
 
 ## Response
 
@@ -110,10 +128,12 @@ POST /api/v1/bills
     "frequency": "ONE_TIME",
     "status": "ACTIVE",
     "url": "https://pay.monkei.co/bill/550e8400-e29b-41d4-a716-446655440000",
-    "amount": 125.50,
+    "amount": 12550,
+    "currency": "BRL",
+    "idiom": "pt-BR",
     "allow_coupon": true,
     "coupons_codes": ["DISCOUNT10", "WELCOME20"],
-    "payment_methods": ["PIX", "BITCOIN"],
+    "payment_methods": ["PIX", "BTC"],
     "customer": {
       "customer_id": "12345678901",
       "customer_metadata": {
@@ -127,13 +147,13 @@ POST /api/v1/bills
       {
         "id": "prod_001",
         "external_id": "SKU-001",
-        "price": 50.00,
+        "price": 5000,
         "quantity": 2
       },
       {
         "id": "prod_002",
         "external_id": "SKU-002",
-        "price": 25.50,
+        "price": 2550,
         "quantity": 1
       }
     ],
@@ -161,6 +181,8 @@ curl -X POST https://api.monkei.co/api/v1/bills \
   -H "Content-Type: application/json" \
   -H "X-API-Key: sk_live_1234567890abcdef" \
   -d '{
+    "currency": "BRL",
+    "idiom": "pt-BR",
     "frequency": "ONE_TIME",
     "customer_data": {
       "customer_id": "12345678901",
@@ -173,9 +195,10 @@ curl -X POST https://api.monkei.co/api/v1/bills \
     "payment_methods": ["PIX"],
     "products": [
       {
-        "id": "premium_plan",
         "external_id": "PLAN-PREMIUM-001",
-        "price": 99.90,
+        "name": "Premium Plan",
+        "description": "Premium subscription plan",
+        "price": 9990,
         "quantity": 1
       }
     ],
@@ -237,6 +260,8 @@ def create_bill():
     }
     
     data = {
+        'currency': 'BRL',
+        'idiom': 'pt-BR',
         'frequency': 'ONE_TIME',
         'customer_data': {
             'customer_id': '12345678901',
@@ -249,9 +274,10 @@ def create_bill():
         'payment_methods': ['PIX'],
         'products': [
             {
-                'id': 'premium_plan',
                 'external_id': 'PLAN-PREMIUM-001',
-                'price': 99.90,
+                'name': 'Premium Plan',
+                'description': 'Premium subscription plan',
+                'price': 9990,  # R$ 99.90 in cents
                 'quantity': 1
             }
         ],
@@ -276,16 +302,16 @@ def create_bill():
 | Code | Description | Solution |
 |------|-------------|----------|
 | `VALIDATION_ERROR` | Invalid field | Check the parameters sent |
-| `PRODUCT_PRICE_TOO_LOW` | Price below minimum | Adjust to R$5.00 or more |
-| `INVALID_PAYMENT_METHOD` | Invalid payment method | Use PIX, BITCOIN or USDT |
+| `VALIDATION_ERROR` | Price below minimum | Adjust to 700 cents (R$ 7.00 or $7.00) or more |
+| `INVALID_PAYMENT_METHOD` | Invalid payment method | Use PIX, BTC or USDT |
 
 ### Error Response
 
 ```json
 {
   "error": "VALIDATION_ERROR",
-  "message": "Minimum price per product is R$5.00",
-  "details": "products[0].price must be greater than or equal to 500",
+  "message": "Minimum price per product is 700 cents (R$ 7.00 or $7.00)",
+  "details": "products[0].price must be greater than or equal to 700",
   "code": 400,
   "operation": "billing.Create"
 }
