@@ -76,6 +76,10 @@ POST /api/v1/bills
 | `coupons_allowed` | array | ❌ | Allowed coupon codes | `["CODE1"]` |
 
 <Info>
+  **Payment Methods**: The `payment_methods` field accepts an array of payment methods. **PIX is only available when currency is BRL**. If currency is USD, only `BTC` and `USDT` are allowed. Attempting to use PIX with USD currency will result in a validation error.
+</Info>
+
+<Info>
   **Currency**: The `currency` field determines which currency will be displayed and charged on the payment page. This affects how amounts are shown to customers (e.g., R$ for BRL, $ for USD).
 </Info>
 
@@ -303,6 +307,7 @@ def create_bill():
 |------|-------------|----------|
 | `VALIDATION_ERROR` | Invalid field | Check the parameters sent |
 | `VALIDATION_ERROR` | Price below minimum | Adjust to 700 cents (R$ 7.00 or $7.00) or more |
+| `VALIDATION_ERROR` | PIX not allowed with USD | Remove PIX from payment_methods when currency is USD, or change currency to BRL |
 | `INVALID_PAYMENT_METHOD` | Invalid payment method | Use PIX, BTC or USDT |
 
 ### Error Response

@@ -46,31 +46,40 @@ curl -X POST https://api.monkei.co/api/v1/transactions/payments/pix \
   -H "Content-Type: application/json" \
   -H "X-API-Key: YOUR_API_KEY" \
   -d '{
-    "amount_in_brl": "50.00",
-    "expires_in": 3600,
+    "amount": 5000,
+    "currency": "BRL",
+    "expires_in": 1800,
     "description": "My first Monkei payment",
-    "idempotency_key": "order_123"
+    "request_id": "order_123"
   }'
 ```
 
 <Note>
-  The `amount_in_brl` field accepts decimal values as a string. For example, `"50.00"` equals R$ 50,00. The minimum amount is R$ 7,00.
+  The `amount` field represents the payment amount in the smallest unit (cents). For example, `5000` equals R$ 50,00. The minimum amount is 700 cents (R$ 7,00).
 </Note>
 
 ### Response
 
-You will receive a JSON with the QR Code to show your customer:
+You will receive a JSON with the QR Code image to show your customer:
 
 ```json
 {
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "amount_in_brl": "50.00",
-  "status": "PENDING",
-  "expires_in": 3600,
-  "qr_code": "00020126580014br.gov.bcb.pix...",
-  "qr_code_url": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB..."
+  "success": true,
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "fiat_amount": 5000,
+    "status": "PENDING",
+    "expires_in": 1800,
+    "qr_code": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+    "qr_code_url": "00020126580014br.gov.bcb.pix0136123e4567-e89b-12d3-a456-4266141740005204000053039865405100.005802BR5913Test integration6008Brasilia62070503***6304E2CA"
+  },
+  "message": "Resource created successfully"
 }
 ```
+
+<Info>
+  The `qr_code` field contains a base64-encoded PNG image that can be directly displayed in your application. You can use it in an HTML img tag like: `<img src="data:image/png;base64,{qr_code}" />`. The `qr_code_url` field contains the PIX QR code string that payment apps can use to process the payment.
+</Info>
 
 ## 4. Configure Webhooks
 

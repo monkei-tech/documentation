@@ -36,14 +36,18 @@ In Test Mode, you can use specific values to simulate different payment outcomes
 
 ### Magic Amounts (PIX)
 
-Use these specific amounts (as decimal strings) to trigger different payment outcomes:
+Use these specific amounts (in cents) to trigger different payment outcomes:
 
-| Amount | BRL Value | Result |
-|--------|-----------|--------|
-| `"10.00"` | R$ 10.00 | Payment approved (instant) |
-| `"20.00"` | R$ 20.00 | Payment failed |
-| `"30.00"` | R$ 30.00 | Payment pending (expires after 1 hour) |
-| `"50.00"` | R$ 50.00 | Payment approved (delayed by 30s) |
+| Amount (cents) | BRL Value | Result |
+|----------------|-----------|--------|
+| `1000` | R$ 10.00 | Payment approved (instant) |
+| `2000` | R$ 20.00 | Payment failed |
+| `3000` | R$ 30.00 | Payment pending (expires after 1 hour) |
+| `5000` | R$ 50.00 | Payment approved (delayed by 30s) |
+
+<Note>
+  The `amount` field is specified in the smallest unit (cents). For example, `1000` represents R$ 10,00.
+</Note>
 
 ### Example Test Request
 
@@ -52,10 +56,11 @@ curl -X POST https://api.monkei.co/api/v1/transactions/payments/pix \
   -H "Content-Type: application/json" \
   -H "X-API-Key: sk_test_YOUR_TEST_KEY" \
   -d '{
-    "amount_in_brl": "10.00",
-    "expires_in": 3600,
+    "amount": 1000,
+    "currency": "BRL",
+    "expires_in": 1800,
     "description": "Test payment",
-    "idempotency_key": "test_order_123"
+    "request_id": "test_order_123"
   }'
 ```
 
@@ -82,7 +87,7 @@ To test webhook events without waiting for real payments:
   "data": {
     "transaction": {
       "id": "test_550e8400-e29b-41d4-a716-446655440000",
-      "amount": "10.00",
+      "amount": 1000,
       "status": "COMPLETED",
       "type": "PAYMENT",
       "method": "PIX",

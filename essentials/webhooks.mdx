@@ -110,7 +110,13 @@ app.post('/webhooks/monkei', express.raw({ type: 'application/json' }), (req, re
 
 ## Webhook Payload Structure
 
-All webhook payloads follow a consistent structure:
+All webhook payloads follow a consistent structure. The `amount`, `fee`, and `remaining_amount` fields are integers representing the value in the smallest unit based on the payment method:
+
+- **PIX (fiat)**: Amount in cents (e.g., `5000` = R$ 50,00)
+- **USDT**: Amount in smallest unit with 6 decimals (e.g., `1000000` = 1.000000 USDT)
+- **BTC**: Amount in satoshis with 8 decimals (e.g., `2072` = 0.00002072 BTC)
+
+### Example: PIX Payment
 
 ```json
 {
@@ -119,15 +125,40 @@ All webhook payloads follow a consistent structure:
     "data": {
         "transaction": {
             "id": "019ac174-3bc8-7e3d-855f-4f9864c71250",
-            "fee": "0.00000006",
+            "fee": 50,
+            "type": "PAYMENT",
+            "amount": 5000,
+            "method": "PIX",
+            "status": "COMPLETED",
+            "currency": "BRL",
+            "status_paid": null,
+            "remaining_amount": 0,
+            "request_id": "order_123"
+        }
+    },
+    "devMode": false
+}
+```
+
+### Example: BTC Payment
+
+```json
+{
+    "id": "019ac174-3bc8-7e3d-855f-4f9864c71250",
+    "event": "payment.completed",
+    "data": {
+        "transaction": {
+            "id": "019ac174-3bc8-7e3d-855f-4f9864c71250",
+            "fee": 6,
             "hash": "6c447cfb90bfa71e3829fa78092a743f4d55ae6725687a0bebf588f31156d4e2",
             "type": "PAYMENT",
-            "amount": "0.00002072",
+            "amount": 2072,
             "method": "BTC",
             "status": "COMPLETED",
             "currency": "USD",
             "status_paid": "FULL_PAID",
-            "remaining_amount": "0"
+            "remaining_amount": 0,
+            "request_id": "order_123"
         }
     },
     "devMode": false
@@ -143,15 +174,16 @@ All webhook payloads follow a consistent structure:
     "data": {
         "transaction": {
             "id": "019ac176-878a-71d8-9f37-4c72e2cd4ec4",
-            "fee": "0.00000006",
+            "fee": 6,
             "hash": "75535e60c5f33eae80b43085b7f49ffbab54de4158d2fae56ddb3cfff15325df",
             "type": "WITHDRAWAL",
-            "amount": "0.00002066",
+            "amount": 2066,
             "method": "BTC",
             "status": "COMPLETED",
             "currency": "USD",
             "status_paid": null,
-            "remaining_amount": "0"
+            "remaining_amount": 0,
+            "request_id": "withdrawal_456"
         }
     },
     "devMode": false
@@ -167,15 +199,16 @@ All webhook payloads follow a consistent structure:
     "data": {
         "transaction": {
             "id": "019ac174-3bc8-7e3d-855f-4f9864c71250",
-            "fee": "0.00000006",
+            "fee": 6,
             "hash": "6c447cfb90bfa71e3829fa78092a743f4d55ae6725687a0bebf588f31156d4e2",
             "type": "PAYMENT",
-            "amount": "0.00002072",
+            "amount": 2072,
             "method": "BTC",
             "status": "COMPLETED",
             "currency": "USD",
             "status_paid": "FULL_PAID",
-            "remaining_amount": "0"
+            "remaining_amount": 0,
+            "request_id": "order_123"
         },
         "billing": {
             "id": "019ac175-1234-5678-9abc-def012345678",
@@ -210,6 +243,20 @@ All webhook payloads follow a consistent structure:
 - **event**: Event type in the format `{type}.{status}` (e.g., `payment.completed`, `withdrawal.failed`)
 - **data**: Event-specific data object containing the relevant information (transaction or billing data)
 - **devMode**: (Optional) Boolean flag indicating if the webhook was sent in development mode
+
+### Transaction Fields
+
+- **id**: Transaction UUID
+- **amount**: Integer value in smallest unit (cents for PIX, satoshis for BTC, smallest unit for USDT)
+- **fee**: Integer value in smallest unit representing the platform fee
+- **remaining_amount**: Integer value in smallest unit representing any remaining amount
+- **method**: Payment method (`PIX`, `BTC`, `USDT`)
+- **status**: Transaction status (`PENDING`, `COMPLETED`, `FAILED`, `EXPIRED`)
+- **type**: Transaction type (`PAYMENT`, `WITHDRAWAL`)
+- **currency**: Currency code (`BRL`, `USD`)
+- **status_paid**: Crypto payment state (`FULL_PAID`, `PARTIAL_PAID`, `OVERPAID_PAID`, or `null`)
+- **hash**: Blockchain transaction hash (if applicable)
+- **request_id**: Client-side identification ID used for idempotency
 
 ## Monitoring Webhook Deliveries
 

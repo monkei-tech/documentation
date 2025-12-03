@@ -15,7 +15,7 @@ POST /api/v1/exchange/latest
 ## Request Body
 
 <ParamField body="fiat_currency" type="string" required>
-  The fiat currency code (e.g., `BRL`).
+  The fiat currency code. Supported values: `BRL`, `USD`.
 </ParamField>
 
 <ParamField body="crypto_currency" type="string" required>
@@ -69,17 +69,19 @@ interface QuoteResponse {
       exchange_rate: string;
       fiat_currency: string;
       crypto_currency: string;
-      expires_at: string;
-      is_expired: boolean;
+      decimal_factor: string;
+      consulted_at: string;
+      created_at: string;
+      updated_at: string;
     };
   };
   message: string;
 }
 
-async function getLatestQuote(): Promise<QuoteResponse> {
+async function getLatestQuote(fiatCurrency: string = 'BRL', cryptoCurrency: string = 'BTC'): Promise<QuoteResponse> {
   const request: QuoteRequest = {
-    fiat_currency: 'BRL',
-    crypto_currency: 'BTC'
+    fiat_currency: fiatCurrency,
+    crypto_currency: cryptoCurrency
   };
 
   const response = await fetch('https://api.monkei.co/api/v1/exchange/latest', {
@@ -119,6 +121,12 @@ payload = {
     "crypto_currency": "BTC"
 }
 
+# Example with USD
+payload_usd = {
+    "fiat_currency": "USD",
+    "crypto_currency": "USDT"
+}
+
 response = requests.post(url, headers=headers, json=payload)
 
 if response.status_code == 200:
@@ -154,8 +162,10 @@ type QuoteResponse struct {
             ExchangeRate   string `json:"exchange_rate"`
             FiatCurrency   string `json:"fiat_currency"`
             CryptoCurrency string `json:"crypto_currency"`
-            ExpiresAt      string `json:"expires_at"`
-            IsExpired      bool   `json:"is_expired"`
+            DecimalFactor  string `json:"decimal_factor"`
+            ConsultedAt    string `json:"consulted_at"`
+            CreatedAt      string `json:"created_at"`
+            UpdatedAt      string `json:"updated_at"`
         } `json:"quote"`
     } `json:"data"`
     Message string `json:"message"`
@@ -167,6 +177,12 @@ func main() {
     requestBody := QuoteRequest{
         FiatCurrency:  "BRL",
         CryptoCurrency: "BTC",
+    }
+    
+    // Example with USD
+    requestBodyUSD := QuoteRequest{
+        FiatCurrency:  "USD",
+        CryptoCurrency: "USDT",
     }
     
     jsonData, err := json.Marshal(requestBody)
@@ -216,6 +232,12 @@ $url = 'https://api.monkei.co/api/v1/exchange/latest';
 $data = [
     'fiat_currency' => 'BRL',
     'crypto_currency' => 'BTC'
+];
+
+// Example with USD
+$dataUSD = [
+    'fiat_currency' => 'USD',
+    'crypto_currency' => 'USDT'
 ];
 
 $options = [
@@ -291,8 +313,10 @@ struct Quote {
     exchange_rate: String,
     fiat_currency: String,
     crypto_currency: String,
-    expires_at: String,
-    is_expired: bool,
+    decimal_factor: String,
+    consulted_at: String,
+    created_at: String,
+    updated_at: String,
 }
 
 #[tokio::main]
@@ -302,6 +326,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let request_body = json!({
         "fiat_currency": "BRL",
         "crypto_currency": "BTC"
+    });
+    
+    // Example with USD
+    let request_body_usd = json!({
+        "fiat_currency": "USD",
+        "crypto_currency": "USDT"
     });
     
     let response = client
@@ -334,26 +364,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     "success": true,
     "data": {
         "quote": {
-            "id": "019abd31-5784-749c-8e2e-e7c00b0f2759",
-            "symbol": "BTC",
-            "exchange_rate": "471496",
-            "source": "SYSTEM",
-            "exchange_rate_source": "FOXBIT",
+            "id": "019ae1e8-ed99-78a6-b641-5a2e52fb5417",
+            "symbol": "BTC/BRL",
+            "exchange_rate": "491849",
             "fiat_currency": "BRL",
             "crypto_currency": "BTC",
             "decimal_factor": "8",
-            "consulted_at": "2025-11-25T22:45:18.852296Z",
-            "expires_at": "2025-11-25T23:00:18.852296Z",
-            "variation": "-1.70162908",
-            "icon": "471496.00000000",
-            "market": "BRL",
-            "volume_usd": "0.00760142",
-            "volume_brl": "0.00760142",
-            "created_at": "2025-11-25T22:45:18.852302Z",
-            "updated_at": "2025-11-25T22:45:18.852302Z",
-            "time_until_expiration": 514,
-            "is_expired": false,
-            "is_expiring_soon": false
+            "consulted_at": "2025-12-03T01:52:10.137565Z",
+            "created_at": "2025-12-03T01:52:10.137567Z",
+            "updated_at": "2025-12-03T01:52:10.137567Z"
         }
     },
     "message": "Operation completed successfully"
@@ -373,36 +392,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | string (UUID) | Unique quote identifier |
-| `symbol` | string | Quote symbol (e.g., "BTC", "USDT") |
+| `symbol` | string | Quote symbol in format "CRYPTO/FIAT" (e.g., "BTC/BRL", "USDT/USD") |
 | `exchange_rate` | string | Current exchange rate |
-| `source` | string | Quote source (e.g., "SYSTEM") |
-| `exchange_rate_source` | string | Exchange rate provider (e.g., "FOXBIT", "BRASIL_BITCOIN") |
-| `fiat_currency` | string | Fiat currency code (e.g., "BRL") |
+| `fiat_currency` | string | Fiat currency code (e.g., "BRL", "USD") |
 | `crypto_currency` | string | Cryptocurrency code (e.g., "BTC", "USDT") |
-| `decimal_factor` | string | Decimal precision factor |
+| `decimal_factor` | string | Decimal precision factor for the cryptocurrency |
 | `consulted_at` | string (ISO 8601) | Timestamp when the quote was consulted |
-| `expires_at` | string (ISO 8601) | Timestamp when the quote expires |
-| `variation` | string | Price variation percentage (can be negative) |
-| `icon` | string | Icon identifier or URL |
-| `market` | string | Market identifier |
-| `volume_usd` | string | Trading volume in USD |
-| `volume_brl` | string | Trading volume in BRL |
 | `created_at` | string (ISO 8601) | Quote creation timestamp |
 | `updated_at` | string (ISO 8601) | Quote last update timestamp |
-| `time_until_expiration` | integer | Seconds remaining until expiration |
-| `is_expired` | boolean | Whether the quote has expired |
-| `is_expiring_soon` | boolean | Whether the quote is expiring soon |
 
 <Note>
-  The `exchange_rate` value represents how many units of the fiat currency are needed to buy one unit of the cryptocurrency. For example, if `exchange_rate` is "471496" for BTC/BRL, it means 1 BTC costs 471,496 BRL.
+  The `exchange_rate` value represents how many units of the fiat currency are needed to buy one unit of the cryptocurrency. For example, if `exchange_rate` is "491849" for BTC/BRL, it means 1 BTC costs 491,849 BRL.
 </Note>
 
 <Note>
-  The `variation` field shows the percentage change in price. A negative value indicates a price decrease, while a positive value indicates a price increase.
-</Note>
-
-<Note>
-  Quotes have an expiration time. Use `is_expired` and `time_until_expiration` to check if a quote is still valid before using it in transactions.
+  The `symbol` field follows the format "CRYPTO/FIAT" (e.g., "BTC/BRL", "USDT/USD") to clearly identify the currency pair.
 </Note>
 
 ## Status Codes
@@ -416,12 +420,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 | `500` | Internal server error |
 
 
-<Warning>
-  Always check the `is_expired` and `time_until_expiration` fields before using a quote in transactions. Using an expired quote may result in incorrect conversions or transaction failures.
-</Warning>
-
 <Note>
-  Exchange rates are updated every 30 seconds. The `expires_at` field indicates when the quote becomes invalid. Quotes typically expire after 15 minutes, but this may vary.
+  Exchange rates are updated regularly. Always use the latest quote for accurate conversions in transactions.
 </Note>
 
 <Note>
