@@ -36,7 +36,7 @@ POST /api/v1/transactions/withdrawals
 | `request_id` | string | ✅ | `max=100` | Unique key to prevent duplicate withdrawals (guarantees idempotency) |
 | `currency` | string | ✅ | `oneof=BRL USD` | Currency code |
 | `method` | string | ✅ | `oneof=PIX BTC USDT` | Withdrawal method |
-| `fiat_amount` | integer | ⚠️¹ | `min=700` | Amount in smallest unit (cents for BRL/USD). Minimum: 700 cents (R$ 7.00 or $7.00) |
+| `fiat_amount` | integer | ⚠️¹ | `min=1000` | Amount in smallest unit (cents for BRL/USD). Minimum: 1000 cents (R$ 10.00 or $10.00) |
 | `crypto_amount` | integer | ⚠️¹ | - | Amount in crypto smallest unit (satoshis for BTC, micro-USDT for USDT) |
 | `description` | string | ❌ | `max=255` | Withdrawal description |
 | `network` | string | ⚠️² | `oneof=POLYGON LIGHTNING` | Blockchain network (required for crypto) |
@@ -53,7 +53,7 @@ POST /api/v1/transactions/withdrawals
 </Info>
 
 <Info>
-  **Fiat Amount**: The `fiat_amount` field represents the withdrawal amount in the smallest unit (cents). For example, `100050` represents R$ 1,000.50 when currency is BRL, or $1,000.50 when currency is USD. Minimum value: 700 cents (R$ 7.00 or $7.00).
+  **Fiat Amount**: The `fiat_amount` field represents the withdrawal amount in the smallest unit (cents). For example, `100050` represents R$ 1,000.50 when currency is BRL, or $1,000.50 when currency is USD. Minimum value: 1000 cents (R$ 10.00 or $10.00).
 </Info>
 
 <Info>
