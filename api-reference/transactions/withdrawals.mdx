@@ -4,7 +4,7 @@ openapi: "POST /api/v1/transactions/withdrawals"
 description: "Initialize a new withdrawal transaction"
 ---
 
-Initialize a new withdrawal transaction to transfer funds from your account to an external destination (bank account via PIX, or cryptocurrency wallet).
+Initialize a new withdrawal transaction to transfer funds from your account to an external destination (bank account via PIX/DePix, or cryptocurrency wallet). PIX withdrawals currently support DePix (via Liquid Network), with traditional PIX bank transfers coming in the future.
 
 ## Endpoint
 
@@ -41,47 +41,52 @@ POST /api/v1/transactions/withdrawals
 </ParamField>
 
 <ParamField body="network" type="string">
-  Blockchain network to use for cryptocurrency withdrawals. Required for `BTC` and `USDT` methods.
+  Blockchain network to use for withdrawals. Required for `BTC`, `USDT`, and `PIX` (DePix) methods.
   
   Allowed values:
   - `POLYGON` - For USDT withdrawals
   - `LIGHTNING` - For BTC withdrawals
+  - `LIQUID` - For PIX withdrawals via DePix (Liquid Network)
 </ParamField>
 
 <ParamField body="to_address" type="string">
-  Destination address for cryptocurrency withdrawals. Required for `BTC` and `USDT` methods.
+  Destination address for withdrawals. Required for `BTC`, `USDT`, and `PIX` (DePix) methods.
   
   <Note>
-    For BTC Lightning Network withdrawals, this can be a Lightning invoice (BOLT11) or an email address (e.g., for Wallet of Satoshi). For USDT, this should be a Polygon wallet address (starting with `0x`).
+    - For **BTC Lightning Network** withdrawals: this can be a Lightning invoice (BOLT11) or an email address (e.g., for Wallet of Satoshi).
+    - For **USDT** withdrawals: this should be a Polygon wallet address (starting with `0x`).
+    - For **PIX with `network="LIQUID"` (DePix)**: this should be a Liquid Network address (starting with `lq1...` for confidential addresses or `ex1...` for unconfidential addresses).
   </Note>
 </ParamField>
 
 <ParamField body="pix_key" type="string">
-  PIX key for PIX withdrawals. Required for `PIX` method.
+  PIX key for traditional PIX bank transfers. Currently, PIX withdrawals use DePix (via Liquid Network) with `to_address` and `network="LIQUID"`. Traditional PIX with `pix_key` will be available in the future.
   
   <Note>
-    The PIX key can be an email, phone number, CPF, CNPJ, or random key depending on the `pix_key_type`.
+    The PIX key can be an email, phone number, CPF, CNPJ, or random key depending on the `pix_key_type`. This field is for future use when traditional PIX bank transfers are implemented.
   </Note>
 </ParamField>
 
 <ParamField body="pix_key_type" type="string">
-  Type of PIX key. Required for `PIX` method.
+  Type of PIX key for traditional PIX bank transfers. Currently, PIX withdrawals use DePix (via Liquid Network). Traditional PIX with `pix_key` and `pix_key_type` will be available in the future.
   
   Allowed values: `EMAIL`, `PHONE`, `CPF`, `CNPJ`, `RANDOM`.
 </ParamField>
 
 <Warning>
   The required fields vary based on the withdrawal method:
-  - **PIX**: `pix_key` and `pix_key_type` are required
+  - **PIX**: `to_address` and `network="LIQUID"` are required (DePix mode - currently supported). Traditional PIX with `pix_key` and `pix_key_type` will be available in the future.
   - **BTC**: `network` (must be `LIGHTNING`) and `to_address` are required
   - **USDT**: `network` (must be `POLYGON`) and `to_address` are required
 </Warning>
 
 <Warning>
-  **Important**: USDT and BTC withdrawals are **irreversible**. Once the transaction is completed, it cannot be undone. For your first withdrawal, consider making a small test transfer to verify the destination address is correct. The minimum withdrawal amount is $10 USD. Always double-check the destination address before confirming the withdrawal.
+  **Important**: USDT, BTC, and DePix (PIX via Liquid Network) withdrawals are **irreversible**. Once the transaction is completed, it cannot be undone. For your first withdrawal, consider making a small test transfer to verify the destination address is correct. The minimum withdrawal amount is $10 USD (or R$ 10.00 for PIX). Always double-check the destination address before confirming the withdrawal.
 </Warning>
 
 <RequestExample>
+
+**Example: DePix (PIX via Liquid Network) Withdrawal**
 
 ```bash cURL
 curl --request POST \
@@ -89,13 +94,13 @@ curl --request POST \
   --header 'Content-Type: application/json' \
   --header 'X-API-Key: YOUR_API_KEY' \
   --data '{
-  "request_id": "withdraw_test_001",
+  "request_id": "withdraw_depix_001",
   "currency": "BRL",
   "method": "PIX",
   "fiat_amount": 10050,
-  "description": "Withdrawal to bank account",
-  "pix_key": "user@example.com",
-  "pix_key_type": "EMAIL"
+  "description": "DePix withdrawal via Liquid Network",
+  "to_address": "lq1qqg8y24rukv9nmshwm20rd8qn7rw2ae2dfryv4dqj2sjhjww8d7nza2x8v0w7neggsfe0e998kaz6ktxzm39eqhhd3tejeglec",
+  "network": "LIQUID"
 }'
 ```
 
@@ -107,13 +112,13 @@ const options = {
     'X-API-Key': 'YOUR_API_KEY'
   },
   body: JSON.stringify({
-    request_id: 'withdraw_test_001',
+    request_id: 'withdraw_depix_001',
     currency: 'BRL',
     method: 'PIX',
     fiat_amount: 10050,
-    description: 'Withdrawal to bank account',
-    pix_key: 'user@example.com',
-    pix_key_type: 'EMAIL'
+    description: 'DePix withdrawal via Liquid Network',
+    to_address: 'lq1qqg8y24rukv9nmshwm20rd8qn7rw2ae2dfryv4dqj2sjhjww8d7nza2x8v0w7neggsfe0e998kaz6ktxzm39eqhhd3tejeglec',
+    network: 'LIQUID'
   })
 };
 
@@ -210,5 +215,5 @@ curl --request POST \
 </Note>
 
 <Note>
-  PIX withdrawals are typically processed within minutes during business hours. Cryptocurrency withdrawals may take longer depending on network congestion.
+  PIX withdrawals currently use DePix (via Liquid Network) and are processed on the blockchain. Traditional PIX bank transfers will be available in the future and will be processed within minutes during business hours. Cryptocurrency withdrawals may take longer depending on network congestion.
 </Note>
